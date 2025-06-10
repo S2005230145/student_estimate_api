@@ -1,0 +1,43 @@
+import actor.TimerActor;
+import com.google.inject.AbstractModule;
+import com.typesafe.config.Config;
+import play.Environment;
+import play.libs.akka.AkkaGuiceSupport;
+import service.AppInit;
+import service.FixedTimeExecutor;
+import utils.*;
+
+/**
+ * This class is a Guice module that tells Guice how to bind several
+ * different types. This Guice module is created when the Play
+ * application starts.
+ * <p>
+ * Play will automatically use any class called `Module` that is in
+ * the root package. You can create modules in other locations by
+ * adding `play.modules.enabled` settings to the `application.conf`
+ * configuration file.
+ */
+public class Module extends AbstractModule implements AkkaGuiceSupport {
+    private final Environment environment;
+    private final Config config;
+
+    public Module(Environment environment, Config configuration) {
+        this.environment = environment;
+        this.config = configuration;
+    }
+
+    @Override
+    public void configure() {
+        // Use the system clock as the default implementation of Clock
+        // Ask Guice to create an instance of ApplicationTimer when the
+        // application starts.
+        bind(IdcardValidator.class).asEagerSingleton();
+        bind(CacheUtils.class).asEagerSingleton();
+        bind(DateUtils.class).asEagerSingleton();
+        bind(EncodeUtils.class).asEagerSingleton();
+        bind(Pinyin4j.class).asEagerSingleton();
+        bind(AppInit.class).asEagerSingleton();
+        bindActor(TimerActor.class, "timerActor");
+        bind(FixedTimeExecutor.class).asEagerSingleton();
+    }
+}
