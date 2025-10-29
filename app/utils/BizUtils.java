@@ -5,7 +5,6 @@ import constants.BusinessConstant;
 import models.admin.ShopAdmin;
 import models.system.AdminConfig;
 import models.user.Member;
-import models.user.MemberBalance;
 import play.Logger;
 import play.cache.NamedCache;
 import play.i18n.Messages;
@@ -200,15 +199,6 @@ public class BizUtils {
             return Integer.parseInt(value);
         }
         return GROUPON_REQUIRE_ORDERS;
-    }
-
-    public boolean checkBalanceEnough(long uid, long totalAmount) {
-        MemberBalance cashBalance = MemberBalance.find.query().where().eq("uid", uid)
-                .eq("itemId", BusinessItem.CASH).setMaxRows(1).findOne();
-        if (null != cashBalance) {
-            if (cashBalance.leftBalance >= totalAmount) return true;
-        }
-        return false;
     }
 
 

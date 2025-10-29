@@ -16,8 +16,6 @@ public class TimerActor extends AbstractLoggingActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(ActorProtocol.BALANCE_LOG.class, param -> {
-                })
                 .build();
     }
  

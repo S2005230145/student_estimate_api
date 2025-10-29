@@ -4,14 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import constants.BusinessConstant;
 import controllers.BaseSecurityController;
-import io.ebean.DB;
 import io.ebean.Expr;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import models.admin.ShopAdmin;
 import models.user.Member;
-import models.user.MemberBalance;
-import models.user.MemberLevel;
 import myannotation.EscapeHtmlSerializer;
 import play.Logger;
 import play.db.ebean.Transactional;
@@ -27,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static constants.BusinessConstant.*;
-import static utils.BusinessItem.CASH;
 
 /**
  * 用户管理
@@ -72,27 +68,20 @@ public class MemberController extends BaseSecurityController {
             int status = requestNode.findPath("status").asInt();
             int hasDealer = requestNode.findPath("hasDealer").asInt();
             long uid = requestNode.findPath("uid").asLong();
-            int level = requestNode.findPath("level").asInt();
             long dealerId = requestNode.findPath("dealerId").asLong();
             long orgId = requestNode.findPath("orgId").asLong();
 
             String filter = requestNode.findPath("filter").asText();
             ShopAdmin admin = businessUtils.getUserIdByAuthToken2(request);
             if (null == admin) return unauth403(request);
-            List<MemberLevel> memberLevelList = MemberLevel.find.query().where()
-                    //.eq("orgId", admin.orgId)
-                    .findList();
-            Map<Integer, String> levelMap = new HashMap<>();
-            memberLevelList.forEach((memberLevel) -> {
-                levelMap.put(memberLevel.level, memberLevel.levelName);
-            });
+
+
             ExpressionList<Member> expressionList = Member.find.query().where();
             //.eq("orgId", admin.orgId);
             if (uid > 0) expressionList.eq("id", uid);
             if (status > 0) expressionList.eq("status", status);
             if (dealerId > 0) expressionList.eq("dealerId", dealerId);
             if (orgId > 0) expressionList.eq("orgId", orgId);
-            if (level > 0) expressionList.eq("level", level);
             if (hasDealer > 0) {
                 if (hasDealer == 1) expressionList.gt("dealerId", 0);
                 else expressionList.eq("dealerId", 0);
@@ -115,22 +104,6 @@ public class MemberController extends BaseSecurityController {
             Set<Long> set = new HashSet<>();
             list.forEach((member) -> set.add(member.id));
 
-            Map<Long, Long> balanceMap = new HashMap<>();
-            if (set.size() > 0) {
-                List<MemberBalance> balanceList = MemberBalance.find.query().where()
-                        .eq("itemId", CASH)
-                        .eq("orgId", admin.orgId)
-                        .in("uid", set)
-                        .findList();
-                balanceList.forEach((balance) -> balanceMap.put(balance.uid, balance.leftBalance));
-            }
-            list.parallelStream().forEach((member) -> {
-                String levelName = levelMap.get(member.level);
-                if (null != levelName) member.levelName = levelName;
-                long leftBalance = 0;
-                if (null != balanceMap.get(member.id)) leftBalance = balanceMap.get(member.id);
-                member.leftBalance = leftBalance;
-            });
             int pages = pagedList.getTotalPageCount();
             ObjectNode node = Json.newObject();
             node.put(CODE, CODE200);
@@ -180,17 +153,8 @@ public class MemberController extends BaseSecurityController {
             if (null == admin) return unauth403(request);
             Member member = Member.find.byId(uid);
             if (null == member) return okCustomJson(request, CODE40001, "user.member.empty");
-            MemberLevel memberLevel = MemberLevel.find.query().where().eq("orgId", admin.orgId)
-                    .eq("level", member.level)
-                    .orderBy().asc("id")
-                    .setMaxRows(1)
-                    .findOne();
-            if (null != memberLevel) member.levelName = memberLevel.levelName;
             ObjectNode result = (ObjectNode) Json.toJson(member);
-            result.put("totalOrderMoney", member.totalOrderMoney);
-            List<MemberBalance> list = MemberBalance.find.query().where().eq("uid", uid).findList();
             result.put(CODE, CODE200);
-            result.set("balanceList", Json.toJson(list));
             businessUtils.addOperationLog(request, admin, "查看用户详情，uid:" + member.id);
             return ok(result);
         });

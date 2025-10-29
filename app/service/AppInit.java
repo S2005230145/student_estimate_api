@@ -1,7 +1,6 @@
 package service;
 
 import models.admin.GroupAction;
-import models.user.MemberLevel;
 import play.Logger;
 import play.cache.AsyncCacheApi;
 import play.cache.NamedCache;
@@ -38,8 +37,6 @@ public class AppInit {
     public void saveToCache(long orgId) {
         try {
             loadParamConfig();
-            saveLevelScoreToCache();
-            loadCouponConfig();
             saveAdminCache(orgId);
         } catch (Exception e) {
             logger.error("saveToCache:" + e.getMessage());
@@ -74,26 +71,6 @@ public class AppInit {
         cacheUtils.updateParamConfigCache();
     }
 
-    //加载优惠券配置
-    private void loadCouponConfig() {
-        logger.info("加载优惠券缓存");
-    }
 
-    /**
-     * 设置用户积分到缓存中
-     */
-    public void saveLevelScoreToCache() {
-        String allLevelKeySet = cacheUtils.getAllLevelKeySet();
-        List<String> keySet = cache.getOrElseUpdate(allLevelKeySet, () -> new ArrayList<>());
-        if (null != keySet && keySet.size() > 0) return;
-        logger.info("保存用户等级到缓存");
-        List<MemberLevel> memberLevels = MemberLevel.find.query().orderBy().asc("level").findList();
-        memberLevels.forEach((memberLevel) -> {
-            String key = cacheUtils.getEachLevelKey(memberLevel.level);
-            cache.set(key, memberLevel);
-            keySet.add(key);
-        });
-        cache.set(allLevelKeySet, keySet);
-    }
 
 }

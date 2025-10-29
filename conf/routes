@@ -2,16 +2,11 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-#upload
-GET         /v2/s/captcha/gen/noauth/                         controllers.captcha.ImageCaptchaController.getCaptcha(request: Request)
-POST        /v2/s/captcha/check/noauth/                       controllers.captcha.ImageCaptchaController.validate(request: Request)
-
 +nocsrf
 POST        /v2/s/upload/                                     controllers.basic.UploaderManager.upload(request: Request)
 POST        /v2/s/upload2/                                    controllers.basic.UploaderManager.upload2(request: Request)
 POST        /v2/s/upload_base64/                              controllers.basic.UploaderManager.uploadBase64(request: Request)
 #ADMIN MODULE
-#POST        /v2/s/clone_product/noauth/                                      controllers.TestController.cloneProduct(request: Request)
 
 POST        /v2/s/reset_login_password/                       controllers.basic.LoginController.resetLoginPassword(request: Request)
 POST        /v2/s/set_login_password/                         controllers.basic.LoginController.setLoginPassword(request: Request)
@@ -42,11 +37,10 @@ POST        /v2/s/action/                                     controllers.basic.
 GET         /v2/s/action/:actionId/                           controllers.basic.ActionController.getAction(request: Request,actionId:String)
 GET         /v2/s/actions_by_filter/:groupId/                 controllers.basic.ActionController.getGroupActionByGroupId(request: Request,groupId:Int)
 
-GET         /v2/s/admin_member/info/                          controllers.basic.ShopAdminController.getAdminMemberInfo(request:Request)
+POST        /v2/s/admin_member/:id/                           controllers.basic.ShopAdminController.updateAdminMember(request:Request,id:Long)
 GET         /v2/s/admin_members/                              controllers.basic.ShopAdminController.listShopMembers(request:Request)
 GET         /v2/s/admin_members/:memberId/                    controllers.basic.ShopAdminController.getAdminMember(request:Request,memberId:Long)
 POST        /v2/s/admin_members/new/                          controllers.basic.ShopAdminController.addAdminMember(request:Request)
-POST        /v2/s/admin_member/:id/                           controllers.basic.ShopAdminController.updateAdminMember(request:Request,id:Long)
 POST        /v2/s/admin_member/                               controllers.basic.ShopAdminController.delAdminMember(request:Request)
 POST        /v2/s/admin_members/status/                       controllers.basic.ShopAdminController.setAdminMemberStatus(request:Request)
 POST        /v2/s/bind_member_to_group/                       controllers.basic.ShopAdminController.bindMemberToGroup(request:Request)
@@ -59,8 +53,6 @@ POST        /v2/s/group_user/new/                             controllers.basic.
 POST        /v2/s/group_user/                                 controllers.basic.GroupUserController.delGroupUser(request: Request)
 GET         /v2/s/group_user/:groupId/                        controllers.basic.GroupUserController.listUsersByGroupId(request: Request,groupId:Int)
 
-GET         /v2/s/home_page_stat/                             controllers.stat.StatManager.homepageStat(request: Request)
-
 POST        /v2/s/members/                                    controllers.member.MemberController.listMembers(request:Request)
 GET         /v2/s/members/:uid/                               controllers.member.MemberController.getMember(request: Request,uid:Long)
 POST        /v2/s/members/status/                             controllers.member.MemberController.setMemberStatus(request:Request)
@@ -72,8 +64,6 @@ GET         /v2/s/param_config/:id/                           controllers.basic.
 POST        /v2/s/param_config/new/                           controllers.basic.SystemController.addParamConfig(request: Request)
 POST        /v2/s/param_config/:id/                           controllers.basic.SystemController.updateParamConfig(request: Request,id:Long)
 
-GET         /v2/s/suggestion/                                 controllers.basic.SuggestionManager.listSuggestion(request: Request,page:Int?=1, status:Int?=0)
-POST        /v2/s/suggestion/                                 controllers.basic.SuggestionManager.setSuggestionStatus(request: Request)
 
 GET         /v2/s/menu/                                       controllers.basic.MenuManager.listMenu(name:String?="",parentId:Int?=0)
 GET         /v2/s/menu/:id/                                   controllers.basic.MenuManager.getMenu(request: Request,id:Int)
@@ -86,18 +76,7 @@ GET         /v2/s/member_menu/                                controllers.basic.
 
 GET         /v2/s/operation_logs/                             controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
 
-GET         /v2/s/enterprise_info/                            controllers.enterprise.EnterpriseInfoController.getEnterpriseInfo(request: Request)
-POST        /v2/s/enterprise_info/:id/                        controllers.enterprise.EnterpriseInfoController.updateEnterpriseInfo(request: Request,id:Long)
 
-POST        /v2/s/enterprise_dept/new/                        controllers.enterprise.EnterpriseDeptController.addEnterpriseDept(request: Request)
-GET         /v2/s/enterprise_dept/:id/                        controllers.enterprise.EnterpriseDeptController.getEnterpriseDept(request: Request,id:Long)
-POST        /v2/s/enterprise_dept/:id/                        controllers.enterprise.EnterpriseDeptController.updateEnterpriseDept(request: Request,id:Long)
-POST        /v2/s/enterprise_dept/                            controllers.enterprise.EnterpriseDeptController.deleteEnterpriseDept(request: Request)
-GET         /v2/s/enterprise_dept_list/                       controllers.enterprise.EnterpriseDeptController.listEnterpriseDept(request: Request,page:Int?=1)
-GET         /v2/s/enterprise_dept_staff_list/:id/             controllers.enterprise.EnterpriseDeptController.listEnterpriseDeptStaff(request: Request, id:Long, page:Int?=1)
-GET         /v2/s/enterprise_dept_staff_no_bind_list/         controllers.enterprise.EnterpriseDeptController.listNoBindEnterpriseDeptStaff(request: Request,page:Int?=1)
-POST        /v2/s/enterprise_dept_batch_bind_staff/           controllers.enterprise.EnterpriseDeptController.bindEnterpriseDeptStaff(request: Request)
-POST        /v2/s/enterprise_dept_batch_unbind_staff/         controllers.enterprise.EnterpriseDeptController.unbindEnterpriseDeptStaff(request: Request)
 
 
 
