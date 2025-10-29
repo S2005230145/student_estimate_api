@@ -23,6 +23,7 @@ libraryDependencies ++= Seq(
   cacheApi,
   "mysql" % "mysql-connector-java" % "8.0.17",
   "commons-io" % "commons-io" % "2.5",
+  "org.projectlombok" % "lombok" % "1.18.30" % "provided",
   "commons-validator" % "commons-validator" % "1.5.1",
   "com.github.bingoohuang" % "patchca" % "0.0.1",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.55",

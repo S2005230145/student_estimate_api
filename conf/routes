@@ -14,70 +14,122 @@ POST        /v2/s/set_login_password/                         controllers.basic.
 +nocsrf
 POST        /v2/s/login/noauth/                               controllers.basic.LoginController.login(request:Request)
 +nocsrf
-GET         /v2/s/is_login/                                   controllers.basic.LoginController.isLogin(request:Request)
+GET        /v2/s/is_login/                                    controllers.basic.LoginController.isLogin(request:Request)
 +nocsrf
 POST        /v2/s/user/new/                                   controllers.basic.LoginController.signUp(request:Request)
-GET         /v2/s/admin_member/info/                          controllers.basic.LoginController.getAdminMemberInfo(request:Request)
-GET         /v2/s/shop_info/                                  controllers.basic.LoginController.getShopInfo(request:Request)
+GET        /v2/s/admin_member/info/                           controllers.basic.LoginController.getAdminMemberInfo(request:Request)
+GET        /v2/s/shop_info/                                   controllers.basic.LoginController.getShopInfo(request:Request)
 
 +nocsrf
 POST        /v2/s/logout/                                     controllers.basic.LogoutController.logout(request:Request)
 
 
 
-GET         /v2/s/groups/                                     controllers.basic.GroupController.listGroups()
+GET        /v2/s/groups/                                      controllers.basic.GroupController.listGroups()
 POST        /v2/s/group/new/                                  controllers.basic.GroupController.addGroup(request: Request)
 POST        /v2/s/group/                                      controllers.basic.GroupController.delGroup(request: Request)
 POST        /v2/s/group/:id/                                  controllers.basic.GroupController.updateGroup(request: Request,id:Int)
-GET         /v2/s/groups/:groupId/                            controllers.basic.GroupController.getGroup(request: Request,groupId:Int)
-GET         /v2/s/actions/                                    controllers.basic.ActionController.listActions()
+GET        /v2/s/groups/:groupId/                             controllers.basic.GroupController.getGroup(request: Request,groupId:Int)
+GET        /v2/s/actions/                                     controllers.basic.ActionController.listActions()
 POST        /v2/s/action/new/                                 controllers.basic.ActionController.addAction(request: Request)
 POST        /v2/s/action/:id/                                 controllers.basic.ActionController.updateAction(request: Request,id:String)
 POST        /v2/s/action/                                     controllers.basic.ActionController.delAction(request: Request)
-GET         /v2/s/action/:actionId/                           controllers.basic.ActionController.getAction(request: Request,actionId:String)
-GET         /v2/s/actions_by_filter/:groupId/                 controllers.basic.ActionController.getGroupActionByGroupId(request: Request,groupId:Int)
+GET        /v2/s/action/:actionId/                            controllers.basic.ActionController.getAction(request: Request,actionId:String)
+GET        /v2/s/actions_by_filter/:groupId/                  controllers.basic.ActionController.getGroupActionByGroupId(request: Request,groupId:Int)
 
 POST        /v2/s/admin_member/:id/                           controllers.basic.ShopAdminController.updateAdminMember(request:Request,id:Long)
-GET         /v2/s/admin_members/                              controllers.basic.ShopAdminController.listShopMembers(request:Request)
-GET         /v2/s/admin_members/:memberId/                    controllers.basic.ShopAdminController.getAdminMember(request:Request,memberId:Long)
+GET        /v2/s/admin_members/                               controllers.basic.ShopAdminController.listShopMembers(request:Request)
+GET        /v2/s/admin_members/:memberId/                     controllers.basic.ShopAdminController.getAdminMember(request:Request,memberId:Long)
 POST        /v2/s/admin_members/new/                          controllers.basic.ShopAdminController.addAdminMember(request:Request)
 POST        /v2/s/admin_member/                               controllers.basic.ShopAdminController.delAdminMember(request:Request)
 POST        /v2/s/admin_members/status/                       controllers.basic.ShopAdminController.setAdminMemberStatus(request:Request)
 POST        /v2/s/bind_member_to_group/                       controllers.basic.ShopAdminController.bindMemberToGroup(request:Request)
-GET         /v2/s/user_groups/                                controllers.basic.ShopAdminController.listUserGroups(request:Request,memberId:Long?=0)
+GET        /v2/s/user_groups/                                 controllers.basic.ShopAdminController.listUserGroups(request:Request,memberId:Long?=0)
 
 
 
 POST        /v2/s/group_action/                               controllers.basic.GroupActionController.updateGroupAction(request: Request)
 POST        /v2/s/group_user/new/                             controllers.basic.GroupUserController.addGroupUser(request: Request)
 POST        /v2/s/group_user/                                 controllers.basic.GroupUserController.delGroupUser(request: Request)
-GET         /v2/s/group_user/:groupId/                        controllers.basic.GroupUserController.listUsersByGroupId(request: Request,groupId:Int)
+GET        /v2/s/group_user/:groupId/                         controllers.basic.GroupUserController.listUsersByGroupId(request: Request,groupId:Int)
 
 POST        /v2/s/members/                                    controllers.member.MemberController.listMembers(request:Request)
-GET         /v2/s/members/:uid/                               controllers.member.MemberController.getMember(request: Request,uid:Long)
+GET        /v2/s/members/:uid/                                controllers.member.MemberController.getMember(request: Request,uid:Long)
 POST        /v2/s/members/status/                             controllers.member.MemberController.setMemberStatus(request:Request)
 POST        /v2/s/members/:uid/                               controllers.member.MemberController.updateMember(request: Request,uid:Long)
 POST        /v2/s/dealer_customers/                           controllers.member.MemberController.listCustomers(request:Request)
 
-GET         /v2/s/param_config/                               controllers.basic.SystemController.listParamConfig(request: Request,key:String?="")
-GET         /v2/s/param_config/:id/                           controllers.basic.SystemController.getParamConfig(request: Request,id:Long)
+GET        /v2/s/param_config/                                controllers.basic.SystemController.listParamConfig(request: Request,key:String?="")
+GET        /v2/s/param_config/:id/                            controllers.basic.SystemController.getParamConfig(request: Request,id:Long)
 POST        /v2/s/param_config/new/                           controllers.basic.SystemController.addParamConfig(request: Request)
 POST        /v2/s/param_config/:id/                           controllers.basic.SystemController.updateParamConfig(request: Request,id:Long)
 
 
-GET         /v2/s/menu/                                       controllers.basic.MenuManager.listMenu(name:String?="",parentId:Int?=0)
-GET         /v2/s/menu/:id/                                   controllers.basic.MenuManager.getMenu(request: Request,id:Int)
+GET        /v2/s/menu/                                        controllers.basic.MenuManager.listMenu(name:String?="",parentId:Int?=0)
+GET        /v2/s/menu/:id/                                    controllers.basic.MenuManager.getMenu(request: Request,id:Int)
 POST        /v2/s/menu/new/                                   controllers.basic.MenuManager.addMenu(request:Request)
 POST        /v2/s/menu/:id/                                   controllers.basic.MenuManager.updateMenu(request:Request,id:Int)
 POST        /v2/s/menu/                                       controllers.basic.MenuManager.deleteMenu(request:Request)
 POST        /v2/s/batch_update_menu_to_group/:groupId/        controllers.basic.MenuManager.batchUpdateGroupMenu(request: Request,groupId:Int)
-GET         /v2/s/group_menu/                                 controllers.basic.MenuManager.listGroupMenu(request: Request,groupId:Int)
-GET         /v2/s/member_menu/                                controllers.basic.MenuManager.getMemberMenu(request: Request)
+GET        /v2/s/group_menu/                                  controllers.basic.MenuManager.listGroupMenu(request: Request,groupId:Int)
+GET        /v2/s/member_menu/                                 controllers.basic.MenuManager.getMemberMenu(request: Request)
 
-GET         /v2/s/operation_logs/                             controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
+GET        /v2/s/operation_logs/                              controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
+
+POST        /v2/p/academic_record/new/                        controllers.business.AcademicRecordController.addAcademicRecord(request: Request)
+GET        /v2/p/academic_record/:id/                         controllers.business.AcademicRecordController.getAcademicRecord(request: Request,id:Long)
+POST        /v2/p/academic_record/:id/                        controllers.business.AcademicRecordController.updateAcademicRecord(request: Request,id:Long)
+POST        /v2/p/academic_record/                            controllers.business.AcademicRecordController.deleteAcademicRecord(request: Request)
+GET        /v2/p/academic_record_list/                        controllers.business.AcademicRecordController.listAcademicRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/badge_record/new/                           controllers.business.BadgeRecordController.addBadgeRecord(request: Request)
+GET        /v2/p/badge_record/:id/                            controllers.business.BadgeRecordController.getBadgeRecord(request: Request,id:Long)
+POST        /v2/p/badge_record/:id/                           controllers.business.BadgeRecordController.updateBadgeRecord(request: Request,id:Long)
+POST        /v2/p/badge_record/                               controllers.business.BadgeRecordController.deleteBadgeRecord(request: Request)
+GET        /v2/p/badge_record_list/                           controllers.business.BadgeRecordController.listBadgeRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/class_routine/new/                          controllers.business.ClassRoutineController.addClassRoutine(request: Request)
+GET        /v2/p/class_routine/:id/                           controllers.business.ClassRoutineController.getClassRoutine(request: Request,id:Long)
+POST        /v2/p/class_routine/:id/                          controllers.business.ClassRoutineController.updateClassRoutine(request: Request,id:Long)
+POST        /v2/p/class_routine/                              controllers.business.ClassRoutineController.deleteClassRoutine(request: Request)
+GET        /v2/p/class_routine_list/                          controllers.business.ClassRoutineController.listClassRoutine(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/evaluation_rule/new/                        controllers.business.EvaluationRuleController.addEvaluationRule(request: Request)
+GET        /v2/p/evaluation_rule/:id/                         controllers.business.EvaluationRuleController.getEvaluationRule(request: Request,id:Long)
+POST        /v2/p/evaluation_rule/:id/                        controllers.business.EvaluationRuleController.updateEvaluationRule(request: Request,id:Long)
+POST        /v2/p/evaluation_rule/                            controllers.business.EvaluationRuleController.deleteEvaluationRule(request: Request)
+GET        /v2/p/evaluation_rule_list/                        controllers.business.EvaluationRuleController.listEvaluationRule(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/habit_record/new/                           controllers.business.HabitRecordController.addHabitRecord(request: Request)
+GET        /v2/p/habit_record/:id/                            controllers.business.HabitRecordController.getHabitRecord(request: Request,id:Long)
+POST        /v2/p/habit_record/:id/                           controllers.business.HabitRecordController.updateHabitRecord(request: Request,id:Long)
+POST        /v2/p/habit_record/                               controllers.business.HabitRecordController.deleteHabitRecord(request: Request)
+GET        /v2/p/habit_record_list/                           controllers.business.HabitRecordController.listHabitRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/home_visit/new/                             controllers.business.HomeVisitController.addHomeVisit(request: Request)
+GET        /v2/p/home_visit/:id/                              controllers.business.HomeVisitController.getHomeVisit(request: Request,id:Long)
+POST        /v2/p/home_visit/:id/                             controllers.business.HomeVisitController.updateHomeVisit(request: Request,id:Long)
+POST        /v2/p/home_visit/                                 controllers.business.HomeVisitController.deleteHomeVisit(request: Request)
+GET        /v2/p/home_visit_list/                             controllers.business.HomeVisitController.listHomeVisit(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/school_class/new/                           controllers.business.SchoolClassController.addSchoolClass(request: Request)
+GET        /v2/p/school_class/:id/                            controllers.business.SchoolClassController.getSchoolClass(request: Request,id:Long)
+POST        /v2/p/school_class/:id/                           controllers.business.SchoolClassController.updateSchoolClass(request: Request,id:Long)
+POST        /v2/p/school_class/                               controllers.business.SchoolClassController.deleteSchoolClass(request: Request)
+GET        /v2/p/school_class_list/                           controllers.business.SchoolClassController.listSchoolClass(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/specialty_award/new/                        controllers.business.SpecialtyAwardController.addSpecialtyAward(request: Request)
+GET        /v2/p/specialty_award/:id/                         controllers.business.SpecialtyAwardController.getSpecialtyAward(request: Request,id:Long)
+POST        /v2/p/specialty_award/:id/                        controllers.business.SpecialtyAwardController.updateSpecialtyAward(request: Request,id:Long)
+POST        /v2/p/specialty_award/                            controllers.business.SpecialtyAwardController.deleteSpecialtyAward(request: Request)
+GET        /v2/p/specialty_award_list/                        controllers.business.SpecialtyAwardController.listSpecialtyAward(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/student/new/                                controllers.business.StudentController.addStudent(request: Request)
+GET        /v2/p/student/:id/                                 controllers.business.StudentController.getStudent(request: Request,id:Long)
+POST        /v2/p/student/:id/                                controllers.business.StudentController.updateStudent(request: Request,id:Long)
+POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
+GET        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
 
 
-
-
-GET         /*file                                            controllers.Assets.versioned(path="/public", file: Asset)
+GET        /*file                                             controllers.Assets.versioned(path="/public", file: Asset)

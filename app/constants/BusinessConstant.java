@@ -481,4 +481,31 @@ public class BusinessConstant {
 
 
     public static final String OPERATION_HANDLE_WITHDRAW = "OPERATION_HANDLE_WITHDRAW";
+
+    //业务常量
+    // 学业评分规则
+    public static final double ACADEMIC_BASE_SCORE = 20.0; // 保底分
+    public static final double ACADEMIC_EXCELLENT_SCORE = 40.0; // 优秀分
+    public static final double ACADEMIC_PROGRESS_SCORE = 30.0; // 进步分
+    public static final int ACADEMIC_TOP_RANK = 50; // 前50名
+
+    // 特长评分矩阵
+    public static final double[][] SPECIALTY_SCORE_MATRIX = {
+            {20.0, 16.0, 12.0, 10.0, 20.0}, // 国家级
+            {10.0, 8.0, 5.0, 4.0, 15.0},    // 省级
+            {8.0, 6.0, 4.0, 2.0, 10.0},     // 市级
+            {4.0, 3.0, 2.0, 1.0, 8.0},      // 县区级
+            {2.0, 1.0, 0.5, 0.0, 3.0}       // 校级
+    };
+
+    // 习惯评分规则
+    public static final double HABIT_BASE_SCORE = 20.0; // 基础分
+    public static final double HABIT_MAX_SCORE = 40.0; // 最高分
+    public static final int HABIT_TOP_RANK = 100; // 每月前100名
+
+    // 班级评价权重
+    public static final double CLASS_ACADEMIC_WEIGHT = 0.3; // 学业30%
+    public static final double CLASS_SPECIALTY_WEIGHT = 0.2; // 特长20%
+    public static final double CLASS_ROUTINE_WEIGHT = 0.3; // 常规30%
+    public static final double CLASS_HOME_VISIT_WEIGHT = 0.2; // 家访20%
 }
