@@ -4,15 +4,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import constants.BusinessConstant;
 import controllers.BaseSecurityController;
+import io.ebean.DB;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import io.ebean.annotation.Transactional;
 import models.business.AcademicRecord;
+import models.excel.AcademicRecordExcel;
+import org.apache.commons.io.FilenameUtils;
+import play.libs.Files;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public class AcademicRecordController extends BaseSecurityController {
@@ -23,6 +35,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiGroup ACADEMIC-RECORD-MANAGER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {int} EXAM_MIDTERM
+     * @apiSuccess (Success 200) {int} EXAM_FINAL
+     * @apiSuccess (Success 200) {double} PASS_SCORE
+     * @apiSuccess (Success 200) {int} TOP_RANKING
+     * @apiSuccess (Success 200) {double} BASE_SCORE
+     * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
+     * @apiSuccess (Success 200) {double} PROGRESS_SCORE
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} examType 考试类型
@@ -32,11 +51,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {double} averageScore 平均分
      * @apiSuccess (Success 200) {int} gradeRanking 年级排名
      * @apiSuccess (Success 200) {int} classRanking 班级排名
+     * @apiSuccess (Success 200) {int} progressAmount 进步名次
      * @apiSuccess (Success 200) {int} progressRanking 进步排名
      * @apiSuccess (Success 200) {double} calculatedScore 计算得分
      * @apiSuccess (Success 200) {String} badgeAwarded 授予徽章
      * @apiSuccess (Success 200) {long} examDate 考试时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> listAcademicRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
@@ -78,6 +99,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiGroup ACADEMIC-RECORD-MANAGER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {int} EXAM_MIDTERM
+     * @apiSuccess (Success 200) {int} EXAM_FINAL
+     * @apiSuccess (Success 200) {double} PASS_SCORE
+     * @apiSuccess (Success 200) {int} TOP_RANKING
+     * @apiSuccess (Success 200) {double} BASE_SCORE
+     * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
+     * @apiSuccess (Success 200) {double} PROGRESS_SCORE
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} examType 考试类型
@@ -87,11 +115,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {double} averageScore 平均分
      * @apiSuccess (Success 200) {int} gradeRanking 年级排名
      * @apiSuccess (Success 200) {int} classRanking 班级排名
+     * @apiSuccess (Success 200) {int} progressAmount 进步名次
      * @apiSuccess (Success 200) {int} progressRanking 进步排名
      * @apiSuccess (Success 200) {double} calculatedScore 计算得分
      * @apiSuccess (Success 200) {String} badgeAwarded 授予徽章
      * @apiSuccess (Success 200) {long} examDate 考试时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> getAcademicRecord(Http.Request request, long id) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
@@ -110,6 +140,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiName addAcademicRecord
      * @apiDescription 描述
      * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiParam {int} EXAM_MIDTERM
+     * @apiParam {int} EXAM_FINAL
+     * @apiParam {double} PASS_SCORE
+     * @apiParam {int} TOP_RANKING
+     * @apiParam {double} BASE_SCORE
+     * @apiParam {double} EXCELLENT_SCORE
+     * @apiParam {double} PROGRESS_SCORE
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} examType 考试类型
@@ -119,11 +156,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiParam {double} averageScore 平均分
      * @apiParam {int} gradeRanking 年级排名
      * @apiParam {int} classRanking 班级排名
+     * @apiParam {int} progressAmount 进步名次
      * @apiParam {int} progressRanking 进步排名
      * @apiParam {double} calculatedScore 计算得分
      * @apiParam {String} badgeAwarded 授予徽章
      * @apiParam {long} examDate 考试时间
      * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
 
@@ -136,6 +175,7 @@ public class AcademicRecordController extends BaseSecurityController {
 
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             academicRecord.setCreateTime(currentTimeBySecond);
+            academicRecord.setUpdateTime(currentTimeBySecond);
             academicRecord.save();
             return okJSON200();
         });
@@ -145,6 +185,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/academic_record/:id/  04更新-AcademicRecord学业成绩记录
      * @apiName updateAcademicRecord
      * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiParam {int} EXAM_MIDTERM
+     * @apiParam {int} EXAM_FINAL
+     * @apiParam {double} PASS_SCORE
+     * @apiParam {int} TOP_RANKING
+     * @apiParam {double} BASE_SCORE
+     * @apiParam {double} EXCELLENT_SCORE
+     * @apiParam {double} PROGRESS_SCORE
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} examType 考试类型
@@ -154,11 +201,13 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiParam {double} averageScore 平均分
      * @apiParam {int} gradeRanking 年级排名
      * @apiParam {int} classRanking 班级排名
+     * @apiParam {int} progressAmount 进步名次
      * @apiParam {int} progressRanking 进步排名
      * @apiParam {double} calculatedScore 计算得分
      * @apiParam {String} badgeAwarded 授予徽章
      * @apiParam {long} examDate 考试时间
      * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
     public CompletionStage<Result> updateAcademicRecord(Http.Request request, long id) {
@@ -181,6 +230,8 @@ public class AcademicRecordController extends BaseSecurityController {
                 originalAcademicRecord.setGradeRanking(newAcademicRecord.gradeRanking);
             if (newAcademicRecord.classRanking > 0)
                 originalAcademicRecord.setClassRanking(newAcademicRecord.classRanking);
+            if (newAcademicRecord.progressAmount > 0)
+                originalAcademicRecord.setProgressAmount(newAcademicRecord.progressAmount);
             if (newAcademicRecord.progressRanking > 0)
                 originalAcademicRecord.setProgressRanking(newAcademicRecord.progressRanking);
             if (newAcademicRecord.calculatedScore > 0)
@@ -188,7 +239,9 @@ public class AcademicRecordController extends BaseSecurityController {
             if (!ValidationUtil.isEmpty(newAcademicRecord.badgeAwarded))
                 originalAcademicRecord.setBadgeAwarded(newAcademicRecord.badgeAwarded);
             if (newAcademicRecord.examDate > 0) originalAcademicRecord.setExamDate(newAcademicRecord.examDate);
-
+            if (newAcademicRecord.updateTime > 0) originalAcademicRecord.setUpdateTime(newAcademicRecord.updateTime);
+            long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+            originalAcademicRecord.setUpdateTime(currentTimeBySecond);
             originalAcademicRecord.save();
             return okJSON200();
         });
@@ -213,6 +266,67 @@ public class AcademicRecordController extends BaseSecurityController {
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
+        });
+    }
+
+    /**
+     * @api {POST} /v2/p/academic_record_excel/   06导入学生成绩文件
+     * @apiName academicRecordImport
+     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiParam {file} file 成绩文件
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    @Transactional
+    public CompletionStage<Result> academicRecordImport(Http.Request request) {
+        Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
+        Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
+        if (filePart == null) {
+            return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
+        }
+
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+
+            Files.TemporaryFile file = filePart.getRef();
+            String fileName = filePart.getFilename();
+            String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+            String destPath = FILE_DIR_LOCATION + targetFileName;
+            file.copyTo(Paths.get(destPath), true);
+            File destFile = new File(destPath);
+
+            try (InputStream inputStream = new FileInputStream(destFile)) {
+                // 读取文件
+                List<AcademicRecord> list = AcademicRecordExcel.importFromExcel(inputStream);
+                // 计算排名和徽章
+                List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadges(list);
+                DB.saveAll(academicRecords);
+                return okJSON200();
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/academic_record_excel_template/ 07导出学业成绩导入模板
+     * @apiName exportAcTemplate
+     * @apiGroup PERSONNEL-MANAGER
+     * @apiSuccess (Success 200){file} Excel文件 导入模板文件
+     */
+    public CompletionStage<Result> exportAcTemplate(Http.Request request) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+            try {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                AcademicRecordExcel.exportToExcel(outputStream, null);
+                byte[] bytes = outputStream.toByteArray();
+
+                return ok(bytes)
+                        .withHeader("Content-Disposition", "attachment; filename=personnel_import_template.xlsx")
+                        .as("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "导出模板失败：" + e.getMessage());
+            }
         });
     }
 }

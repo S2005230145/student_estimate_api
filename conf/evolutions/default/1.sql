@@ -53,6 +53,24 @@ EXECUTE stmt;
 END
 $$
 -- apply changes
+create table v1_academic_record (
+  id                            bigint auto_increment not null,
+  student_id                    bigint not null,
+  exam_type                     integer not null,
+  chinese_score                 double not null,
+  math_score                    double not null,
+  english_score                 double not null,
+  average_score                 double not null,
+  grade_ranking                 integer not null,
+  class_ranking                 integer not null,
+  progress_ranking              integer not null,
+  calculated_score              double not null,
+  badge_awarded                 varchar(255),
+  exam_date                     bigint not null,
+  create_time                   bigint not null,
+  constraint pk_v1_academic_record primary key (id)
+);
+
 create table cp_system_action (
   id                            varchar(255) auto_increment not null,
   action_name                   varchar(255),
@@ -74,6 +92,45 @@ create table v1_admin_config (
   is_encrypt                    tinyint(1) default 0 not null,
   update_time                   bigint not null,
   constraint pk_v1_admin_config primary key (id)
+);
+
+create table v1_badge_record (
+  id                            bigint auto_increment not null,
+  student_id                    bigint not null,
+  badge_type                    varchar(255),
+  award_reason                  varchar(255),
+  award_time                    bigint not null,
+  award_period                  varchar(255),
+  create_time                   bigint not null,
+  constraint pk_v1_badge_record primary key (id)
+);
+
+create table v1_class_routine (
+  id                            bigint auto_increment not null,
+  class_id                      bigint not null,
+  week_number                   integer not null,
+  month                         integer not null,
+  hygiene_score                 double not null,
+  discipline_score              double not null,
+  exercise_score                double not null,
+  manner_score                  double not null,
+  reading_score                 double not null,
+  total_score                   double not null,
+  record_time                   bigint not null,
+  create_time                   bigint not null,
+  constraint pk_v1_class_routine primary key (id)
+);
+
+create table v1_evaluation_rule (
+  id                            bigint auto_increment not null,
+  rule_type                     varchar(255),
+  condition                     varchar(255),
+  score                         double not null,
+  badge_type                    varchar(255),
+  description                   varchar(255),
+  active                        tinyint(1) default 0 not null,
+  create_time                   bigint not null,
+  constraint pk_v1_evaluation_rule primary key (id)
 );
 
 create table cp_group (
@@ -107,6 +164,38 @@ create table cp_group_user (
   realname                      varchar(255),
   create_time                   bigint not null,
   constraint pk_cp_group_user primary key (id)
+);
+
+create table v1_habit_record (
+  id                            bigint auto_increment not null,
+  student_id                    bigint not null,
+  habit_type                    integer not null,
+  evaluator_type                varchar(255),
+  evaluator_id                  bigint not null,
+  score_change                  double not null,
+  description                   varchar(255),
+  evidence_image                varchar(255),
+  record_time                   bigint not null,
+  create_time                   bigint not null,
+  constraint pk_v1_habit_record primary key (id)
+);
+
+create table v1_home_visit (
+  id                            bigint auto_increment not null,
+  teacher_id                    bigint not null,
+  class_id                      bigint not null,
+  student_id                    bigint not null,
+  visit_type                    integer not null,
+  record_content                varchar(255),
+  case_study                    varchar(255),
+  video_evidence                varchar(255),
+  base_score                    integer not null,
+  bonus_score                   integer not null,
+  total_score                   integer not null,
+  status                        integer not null,
+  visit_time                    bigint not null,
+  create_time                   bigint not null,
+  constraint pk_v1_home_visit primary key (id)
 );
 
 create table cp_log (
@@ -224,6 +313,22 @@ create table v1_system_config_template (
   constraint pk_v1_system_config_template primary key (id)
 );
 
+create table v1_school_class (
+  id                            bigint auto_increment not null,
+  class_name                    varchar(255),
+  grade                         integer not null,
+  head_teacher_id               bigint not null,
+  academic_score                double not null,
+  specialty_score               double not null,
+  routine_score                 double not null,
+  home_visit_score              double not null,
+  total_score                   double not null,
+  disqualified                  tinyint(1) default 0 not null,
+  honor_title                   varchar(255),
+  create_time                   bigint not null,
+  constraint pk_v1_school_class primary key (id)
+);
+
 create table v1_shop_admin (
   id                            bigint auto_increment not null,
   username                      varchar(255),
@@ -246,6 +351,39 @@ create table v1_shop_admin (
   constraint pk_v1_shop_admin primary key (id)
 );
 
+create table v1_specialty_award (
+  id                            bigint auto_increment not null,
+  student_id                    bigint not null,
+  award_level                   integer not null,
+  award_grade                   integer not null,
+  competition_name              varchar(255),
+  category                      varchar(255),
+  award_score                   double not null,
+  status                        integer not null,
+  certificate_image             varchar(255),
+  badge_awarded                 varchar(255),
+  create_time                   bigint not null,
+  constraint pk_v1_specialty_award primary key (id)
+);
+
+create table v1_student (
+  id                            bigint auto_increment not null,
+  student_number                varchar(255),
+  name                          varchar(255),
+  class_id                      bigint not null,
+  grade                         integer not null,
+  evaluation_scheme             integer not null,
+  class_average_score           double not null,
+  academic_score                double not null,
+  specialty_score               double not null,
+  habit_score                   double not null,
+  total_score                   double not null,
+  badges                        varchar(255),
+  create_time                   bigint not null,
+  update_time                   bigint not null,
+  constraint pk_v1_student primary key (id)
+);
+
 create table v1_suggestion (
   id                            bigint auto_increment not null,
   name                          varchar(255),
@@ -262,9 +400,17 @@ create table v1_suggestion (
 -- !Downs
 
 -- drop all
+drop table if exists v1_academic_record;
+
 drop table if exists cp_system_action;
 
 drop table if exists v1_admin_config;
+
+drop table if exists v1_badge_record;
+
+drop table if exists v1_class_routine;
+
+drop table if exists v1_evaluation_rule;
 
 drop table if exists cp_group;
 
@@ -273,6 +419,10 @@ drop table if exists cp_group_action;
 drop table if exists cp_group_menu;
 
 drop table if exists cp_group_user;
+
+drop table if exists v1_habit_record;
+
+drop table if exists v1_home_visit;
 
 drop table if exists cp_log;
 
@@ -286,7 +436,13 @@ drop table if exists v1_system_config;
 
 drop table if exists v1_system_config_template;
 
+drop table if exists v1_school_class;
+
 drop table if exists v1_shop_admin;
+
+drop table if exists v1_specialty_award;
+
+drop table if exists v1_student;
 
 drop table if exists v1_suggestion;
 

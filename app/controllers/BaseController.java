@@ -53,6 +53,9 @@ public class BaseController extends Controller {
     public static final int CODE40009 = 40009;
     public static final int CODE40010 = 40010;
 
+//    public static final String FILE_DIR_LOCATION="/home/ubuntu/web/download/";
+    public static final String FILE_DIR_LOCATION="D:/tmp/";
+    public static final String DOWNLOAD_LOCATION = "/download/";
 
     /**
      * 未授权

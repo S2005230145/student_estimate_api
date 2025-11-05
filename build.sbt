@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
   filters,
   caffeine,
   cacheApi,
+  "com.alibaba" % "easyexcel" % "3.3.2",
   "mysql" % "mysql-connector-java" % "8.0.17",
   "commons-io" % "commons-io" % "2.5",
   "org.projectlombok" % "lombok" % "1.18.30" % "provided",

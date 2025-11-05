@@ -173,7 +173,16 @@ public class StudentController extends BaseSecurityController {
             if (!ValidationUtil.isEmpty(newStudent.name)) originalStudent.setName(newStudent.name);
             if (newStudent.classId > 0) originalStudent.setClassId(newStudent.classId);
             if (newStudent.grade > 0) originalStudent.setGrade(newStudent.grade);
-            if (newStudent.evaluationScheme > 0) originalStudent.setEvaluationScheme(newStudent.evaluationScheme);
+
+            if (newStudent.evaluationScheme > 0) {
+                if (newStudent.evaluationScheme==Student.SCHEME_B) {
+                    if (!newStudent.isOverAverage()) {
+                        return okCustomJson(CODE40001, "学业成绩未达到班级平均分，不能选择方案B");
+                    }
+                }
+                originalStudent.setEvaluationScheme(newStudent.evaluationScheme);
+            }
+
             if (newStudent.classAverageScore > 0) originalStudent.setClassAverageScore(newStudent.classAverageScore);
             if (newStudent.academicScore > 0) originalStudent.setAcademicScore(newStudent.academicScore);
             if (newStudent.specialtyScore > 0) originalStudent.setSpecialtyScore(newStudent.specialtyScore);
@@ -209,4 +218,6 @@ public class StudentController extends BaseSecurityController {
             return okJSON200();
         });
     }
+
+
 }

@@ -86,4 +86,12 @@ public class Student extends Model {
 
     public static Finder<Long, Student> find = new Finder<>(Student.class);
 
+
+    public boolean isOverAverage() {
+        return this.academicScore > this.classAverageScore;
+    }
+
+    public boolean isHighGrade() {
+        return this.grade >= 3;
+    }
 }
