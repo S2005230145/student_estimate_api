@@ -1,12 +1,14 @@
 package models.business;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.annotation.DbComment;
 import jakarta.persistence.*;
 import lombok.Data;
 import myannotation.EscapeHtmlAuthoritySerializer;
-import myannotation.Translation;
+import utils.ValidationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,12 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.ebean.config.TenantMode.DB;
 
 @Data
 @Entity
 @Table(name = "v1_academic_record")
-@Translation("学业成绩记录")
+@DbComment("学业成绩记录")
 public class AcademicRecord extends Model {
 
     public static final int EXAM_MIDTERM = 0; // 期中考试
@@ -29,80 +30,112 @@ public class AcademicRecord extends Model {
     public static final double BASE_SCORE = 20.0; // 保底分
     public static final double EXCELLENT_SCORE = 40.0; // 优秀分
     public static final double PROGRESS_SCORE = 30.0; // 进步分
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @Translation("唯一标识")
+    @DbComment("唯一标识")
     public long id;
-    
+
     @Column(name = "student_id")
-    @Translation("学生ID")
+    @DbComment("学生ID")
     public long studentId;
-    
+
     @Column(name = "exam_type")
-    @Translation("考试类型") // 0-期中, 1-期末
+    @DbComment("考试类型") // 0-期中, 1-期末
     public int examType;
-    
+
     @Column(name = "chinese_score")
-    @Translation("语文成绩")
+    @DbComment("语文成绩")
     public double chineseScore;
-    
+
     @Column(name = "math_score")
-    @Translation("数学成绩")
+    @DbComment("数学成绩")
     public double mathScore;
-    
+
     @Column(name = "english_score")
-    @Translation("英语成绩")
+    @DbComment("英语成绩")
     public double englishScore;
-    
+
     @Column(name = "average_score")
-    @Translation("平均分")
+    @DbComment("平均分")
     public double averageScore;
-    
+
     @Column(name = "grade_ranking")
-    @Translation("年级排名")
+    @DbComment("年级排名")
     public int gradeRanking;
-    
+
     @Column(name = "class_ranking")
-    @Translation("班级排名")
+    @DbComment("班级排名")
     public int classRanking;
 
     @Column(name = "progress_amount")
-    @Translation("进步名次") // 本次排名相比上次排名的变化值（正数表示进步）
+    @DbComment("进步名次") // 本次排名相比上次排名的变化值（正数表示进步）
     public int progressAmount;
 
     @Column(name = "progress_ranking")
-    @Translation("进步排名") // 按进步幅度的排名
+    @DbComment("进步排名") // 按进步幅度的排名
     public int progressRanking;
-    
+
     @Column(name = "calculated_score")
-    @Translation("计算得分")
+    @DbComment("计算得分")
     public double calculatedScore;
-    
+
     @Column(name = "badge_awarded")
-    @Translation("授予徽章") // 星辰徽章/星火徽章
+    @DbComment("授予徽章") // 星辰徽章/星火徽章
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String badgeAwarded;
-    
+
     @Column(name = "exam_date")
-    @Translation("考试时间")
+    @DbComment("考试时间")
     public long examDate;
-    
+
     @Column(name = "create_time")
-    @Translation("创建时间")
+    @DbComment("创建时间")
     public long createTime;
 
     @Column(name = "update_time")
-    @Translation("更新时间")
+    @DbComment("更新时间")
     public long updateTime;
 
     public static Finder<Long, AcademicRecord> find = new Finder<>(AcademicRecord.class);
 
     /**
+     * 一键计算所有排名、获得徽章、获得学业分，并同步到学生表
+     */
+    public static List<AcademicRecord> batchCalcAllRankingsAndBadgesAndStudyScore(List<AcademicRecord> currentRecords) {
+        if (currentRecords == null || currentRecords.isEmpty()) {
+            return currentRecords;
+        }
+
+        List<AcademicRecord> lastRecords = getLastExamRecords(currentRecords);
+
+        // 1. 计算年级排名
+        batchCalcGradeRanking(currentRecords);
+
+        // 2. 计算班级排名
+        batchCalcClassRanking(currentRecords);
+
+        // 3. 计算进步排名
+        if (!lastRecords.isEmpty()) {
+            batchCalcProgressData(currentRecords, lastRecords);
+        }
+
+        // 4. 计算徽章
+        batchCalcBadges(currentRecords);
+
+        // 5. 计算学业分
+        batchCalcStudyScore(currentRecords);
+
+        // 6. 同步到学生表
+        batchSyncToStudent(currentRecords);
+        updateClassAverageScores(currentRecords);
+
+        return currentRecords;
+    }
+
+    /**
      * 批量计算班级排名
-     * @param academicRecords 某次考试的全部成绩数据
-     * @return 计算后的成绩记录列表
      */
     public static List<AcademicRecord> batchCalcClassRanking(List<AcademicRecord> academicRecords) {
         if (academicRecords == null || academicRecords.isEmpty()) {
@@ -132,8 +165,6 @@ public class AcademicRecord extends Model {
 
     /**
      * 批量计算年级排名
-     * @param academicRecords 某次考试的全部成绩数据
-     * @return 计算后的成绩记录列表
      */
     public static List<AcademicRecord> batchCalcGradeRanking(List<AcademicRecord> academicRecords) {
         if (academicRecords == null || academicRecords.isEmpty()) {
@@ -154,9 +185,6 @@ public class AcademicRecord extends Model {
 
     /**
      * 批量计算进步排名
-     * @param currentRecords 本次考试成绩
-     * @param lastRecords 上次考试成绩
-     * @return 计算后的成绩记录列表
      */
     public static List<AcademicRecord> batchCalcProgressData(List<AcademicRecord> currentRecords, List<AcademicRecord> lastRecords) {
         if (currentRecords == null || currentRecords.isEmpty() || lastRecords == null || lastRecords.isEmpty()) {
@@ -194,7 +222,7 @@ public class AcademicRecord extends Model {
     /**
      * 批量计算徽章
      */
-    public static  List<AcademicRecord> batchCalcBadges(List<AcademicRecord> academicRecords) {
+    public static List<AcademicRecord> batchCalcBadges(List<AcademicRecord> academicRecords) {
         if (academicRecords == null || academicRecords.isEmpty()) {
             return academicRecords;
         }
@@ -203,19 +231,13 @@ public class AcademicRecord extends Model {
             List<String> badges = new ArrayList<>();
 
             // 学业优秀：年级前50名获得星辰徽章
-            if (record.gradeRanking > 0 && record.gradeRanking <= 50) {
+            if (record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING) {
                 badges.add("星辰徽章");
             }
 
             // 进步显著：进步排名前50名获得星火徽章
-            if (record.progressRanking > 0 && record.progressRanking <= 50) {
+            if (record.progressRanking > 0 && record.progressRanking <= TOP_RANKING) {
                 badges.add("星火徽章");
-            }
-
-            // 同时满足学业优秀和进步显著，授予星河徽章  todo 这部分需求没细说，暂时按这个规则给星河徽章
-            if (badges.contains("星辰徽章") && badges.contains("星火徽章")) {
-                badges.clear();
-                badges.add("星河徽章");
             }
 
             record.badgeAwarded = badges.isEmpty() ? null : String.join(",", badges);
@@ -223,6 +245,58 @@ public class AcademicRecord extends Model {
         }
 
         return academicRecords;
+    }
+
+    /**
+     * 批量计算学业得分
+     */
+    public static List<AcademicRecord> batchCalcStudyScore(List<AcademicRecord> academicRecords) {
+        if (academicRecords == null || academicRecords.isEmpty()) {
+            return academicRecords;
+        }
+
+        for (AcademicRecord record : academicRecords) {
+            record.calculatedScore = calculateStudyScore(record);
+            record.updateTime = System.currentTimeMillis();
+        }
+
+        return academicRecords;
+    }
+
+    /**
+     * 计算单条记录的学业得分
+     */
+    private static double calculateStudyScore(AcademicRecord record) {
+        double score = 0.0;
+
+        // 1. 保底分判断：平均分不低于60分得20分
+        if (record.averageScore >= PASS_SCORE) {
+            score = BASE_SCORE;
+        }
+
+        // 2. 学业优秀：年级前50名得40分
+        if (record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING) {
+            score = Math.max(score, EXCELLENT_SCORE);
+        }
+
+        // 3. 进步显著：进步排名前50名得30分
+        if (record.progressRanking > 0 && record.progressRanking <= TOP_RANKING) {
+            score = Math.max(score, PROGRESS_SCORE);
+        }
+
+        // 4. 根据学生评价方案调整上限
+        Student student = Student.find.byId(record.studentId);
+        if (student != null) {
+            if (student.evaluationScheme == Student.SCHEME_B) {
+                // 方案B：学业得分最高20分
+                score = Math.min(score, Student.ACADEMIC_MAX_SCORE_B);
+            } else {
+                // 方案A：学业得分最高40分
+                score = Math.min(score, Student.ACADEMIC_MAX_SCORE_A);
+            }
+        }
+
+        return score;
     }
 
     /**
@@ -257,33 +331,140 @@ public class AcademicRecord extends Model {
 
 
     /**
-     * 一键计算所有排名和徽章
-     * @param currentRecords 本次考试成绩
-     * @return 计算后的成绩记录列表
+     * 批量同步到学生表
      */
-    public static List<AcademicRecord> batchCalcAllRankingsAndBadges(List<AcademicRecord> currentRecords) {
-        if (currentRecords == null || currentRecords.isEmpty()) {
-            return currentRecords;
+    public static void batchSyncToStudent(List<AcademicRecord> academicRecords) {
+        if (academicRecords == null || academicRecords.isEmpty()) {
+            return;
         }
 
-        List<AcademicRecord> lastRecords = getLastExamRecords(currentRecords);
+        // 1. 批量获取所有学生ID
+        List<Long> studentIds = academicRecords.stream()
+                .map(r -> r.studentId)
+                .distinct()
+                .collect(Collectors.toList());
 
-        // 1. 计算年级排名
-        batchCalcGradeRanking(currentRecords);
+        // 2. 批量查询学生信息（一次查询）
+        Map<Long, Student> studentMap = Student.find.query()
+                .where()
+                .in("id", studentIds)
+                .findList()
+                .stream()
+                .collect(Collectors.toMap(s -> s.id, s -> s));
 
-        // 2. 计算班级排名
-        batchCalcClassRanking(currentRecords);
+        // 3. 按学生ID分组成绩记录
+        Map<Long, List<AcademicRecord>> studentRecordsMap = academicRecords.stream()
+                .collect(Collectors.groupingBy(r -> r.studentId));
 
-        // 3. 计算进步排名
-        if (!lastRecords.isEmpty()) {
-            batchCalcProgressData(currentRecords, lastRecords);
+        // 4. 批量更新学生数据
+        List<Student> studentsToUpdate = new ArrayList<>();
+
+        for (Map.Entry<Long, List<AcademicRecord>> entry : studentRecordsMap.entrySet()) {
+            Long studentId = entry.getKey();
+            List<AcademicRecord> studentRecords = entry.getValue();
+
+            Student student = studentMap.get(studentId);
+            if (student == null) {
+                System.err.println("学生ID " + studentId + " 不存在，跳过同步");
+                continue;
+            }
+
+            // 获取最新的考试成绩
+            AcademicRecord latestRecord = studentRecords.stream()
+                    .max((a, b) -> Long.compare(a.examDate, b.examDate))
+                    .orElse(null);
+
+            if (latestRecord == null) {
+                continue;
+            }
+
+            // 更新学生数据
+            student.setAcademicScore(latestRecord.calculatedScore);
+
+            if (!ValidationUtil.isEmpty(latestRecord.badgeAwarded)) {
+                //写法一
+                student.setBadges(latestRecord.badgeAwarded);
+                // 写法二
+//                 student.badges=latestRecord.badgeAwarded;
+//                student.markAsDirty();
+            } else {
+                student.setBadges("");
+            }
+
+            studentsToUpdate.add(student);
         }
 
-        // 4. 计算徽章
-        batchCalcBadges(currentRecords);
-
-        return currentRecords;
+        // 5. 批量保存更新
+        if (!studentsToUpdate.isEmpty()) {
+            DB.updateAll(studentsToUpdate);
+            System.out.println("成功同步 " + studentsToUpdate.size() + " 名学生数据");
+        }
     }
 
 
+    /**
+     * 更新学生的班级平均分
+     */
+    public static void updateClassAverageScores(List<AcademicRecord> academicRecords) {
+        if (academicRecords == null || academicRecords.isEmpty()) {
+            return;
+        }
+
+        // 1. 批量获取所有学生信息（一次查询）
+        List<Long> studentIds = academicRecords.stream()
+                .map(r -> r.studentId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Student> studentMap = Student.find.query()
+                .where()
+                .in("id", studentIds)
+                .findList()
+                .stream()
+                .collect(Collectors.toMap(s -> s.id, s -> s));
+
+        // 2. 按班级分组计算平均分
+        Map<Long, List<Double>> classScoresMap = new HashMap<>();
+
+        for (AcademicRecord record : academicRecords) {
+            Student student = studentMap.get(record.studentId);
+            if (student != null) {
+                classScoresMap.computeIfAbsent(student.classId, k -> new ArrayList<>())
+                        .add(record.averageScore);
+            }
+        }
+
+        // 3. 计算每个班级的平均分
+        Map<Long, Double> classAverageMap = new HashMap<>();
+        for (Map.Entry<Long, List<Double>> entry : classScoresMap.entrySet()) {
+            double average = entry.getValue().stream()
+                    .mapToDouble(Double::doubleValue)
+                    .average()
+                    .orElse(0.0);
+            classAverageMap.put(entry.getKey(), Math.round(average * 100.0) / 100.0);
+        }
+
+        // 4. 批量查询所有相关班级的学生（一次查询）
+        List<Long> classIds = new ArrayList<>(classAverageMap.keySet());
+        List<Student> allClassStudents = Student.find.query()
+                .where()
+                .in("class_id", classIds)
+                .findList();
+
+        // 5. 批量更新学生数据
+        List<Student> studentsToUpdate = new ArrayList<>();
+        for (Student student : allClassStudents) {
+            Double classAverage = classAverageMap.get(student.classId);
+            if (classAverage != null) {
+                student.setClassAverageScore(classAverage);
+                studentsToUpdate.add(student);
+            }
+        }
+
+        // 6. 批量保存
+        if (!studentsToUpdate.isEmpty()) {
+            DB.saveAll(studentsToUpdate);
+            System.out.println("更新 " + classIds.size() + " 个班级的平均分，涉及 " + studentsToUpdate.size() + " 名学生");
+        }
+    }
 }

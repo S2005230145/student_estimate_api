@@ -1,17 +1,26 @@
 package models.business;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.annotation.DbComment;
 import jakarta.persistence.*;
 import lombok.Data;
 import myannotation.EscapeHtmlAuthoritySerializer;
 import myannotation.Translation;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static constants.BusinessConstant.SPECIALTY_SCORE_MATRIX;
+
 @Data
 @Entity
 @Table(name = "v1_specialty_award")
-@Translation("特长获奖记录")
+@DbComment("特长获奖记录")
 public class SpecialtyAward extends Model {
 
     public static final int LEVEL_NATIONAL = 0; // 国家级
@@ -29,56 +38,219 @@ public class SpecialtyAward extends Model {
     public static final int STATUS_PENDING = 0; // 待审核
     public static final int STATUS_APPROVED = 1; // 通过
     public static final int STATUS_REJECTED = 2; // 拒绝
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @Translation("唯一标识")
+    @DbComment("唯一标识")
     public long id;
-    
+
     @Column(name = "student_id")
-    @Translation("学生ID")
+    @DbComment("学生ID")
     public long studentId;
-    
+
+    @Transient
+    public Student student;
+
     @Column(name = "award_level")
-    @Translation("奖项级别") // 0-国家级,1-省级,2-市级,3-县区级,4-校级
+    @DbComment("奖项级别") // 0-国家级,1-省级,2-市级,3-县区级,4-校级
     public int awardLevel;
-    
+
     @Column(name = "award_grade")
-    @Translation("奖项等级") // 0-一等奖,1-二等奖,2-三等奖,3-优秀奖,4-集体奖
+    @DbComment("奖项等级") // 0-一等奖,1-二等奖,2-三等奖,3-优秀奖,4-集体奖
     public int awardGrade;
-    
+
     @Column(name = "competition_name")
-    @Translation("竞赛名称")
+    @DbComment("竞赛名称")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String competitionName;
-    
+
     @Column(name = "category")
-    @Translation("比赛类别")
+    @DbComment("比赛类别")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String category;
-    
+
     @Column(name = "award_score")
-    @Translation("奖项得分")
+    @DbComment("奖项得分")
     public double awardScore;
-    
+
     @Column(name = "status")
-    @Translation("审核状态") // 0-待审核,1-通过,2-拒绝
+    @DbComment("审核状态") // 0-待审核,1-通过,2-拒绝
     public int status;
-    
+
     @Column(name = "certificate_image")
-    @Translation("证书图片")
+    @DbComment("证书图片")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String certificateImage;
-    
+
     @Column(name = "badge_awarded")
-    @Translation("授予徽章") // 星辰徽章/星河徽章
+    @DbComment("授予徽章") // 星辰徽章/星河徽章
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String badgeAwarded;
-    
+
+    @Column(name = "award_date")
+    @DbComment("获奖时间")
+    public long awardDate;
+
     @Column(name = "create_time")
-    @Translation("创建时间")
+    @DbComment("创建时间")
     public long createTime;
 
+    @Column(name = "update_time")
+    @DbComment("更新时间")
+    public long updateTime;
+
     public static Finder<Long, SpecialtyAward> find = new Finder<>(SpecialtyAward.class);
+
+
+
+    /**
+     * 单个奖项的完整处理：计算得分和徽章
+     */
+    public void processSingleAward() {
+        // 1. 计算得分
+        calculateAwardScore();
+
+        // 2. 计算徽章
+        calculateBadge();
+
+        // 3. 保存记录
+        this.update();
+
+        // 4. 同步到学生表
+        syncStudentSpecialtyScore(this.studentId);
+    }
+
+    /**
+     * 计算单个奖项的得分
+     */
+    public double calculateAwardScore() {
+        // 只有审核通过的记录才计算得分
+        if (this.status != STATUS_APPROVED) {
+            return 0.0;
+        }
+
+        // 检查级别和等级是否在有效范围内
+        if (this.awardLevel < 0 || this.awardLevel >= SPECIALTY_SCORE_MATRIX.length ||
+                this.awardGrade < 0 || this.awardGrade >= SPECIALTY_SCORE_MATRIX[0].length) {
+            return 0.0;
+        }
+
+        // 根据矩阵计算得分
+        double score = SPECIALTY_SCORE_MATRIX[this.awardLevel][this.awardGrade];
+
+        // 根据学生评价方案调整上限
+        if (this.student != null) {
+            if (this.student.evaluationScheme == Student.SCHEME_A) {
+                // 方案A：特长得分最高20分
+                score = Math.min(score, Student.SPECIALTY_MAX_SCORE_A);
+            } else {
+                // 方案B：特长得分最高40分
+                score = Math.min(score, Student.SPECIALTY_MAX_SCORE_B);
+            }
+        }
+        this.setAwardScore(score);
+        return score;
+    }
+
+
+
+    /**
+     * 计算学生的特长总分（所有审核通过的奖项得分总和）
+     */
+    public static double calculateStudentTotalSpecialtyScore(Long studentId) {
+        List<SpecialtyAward> awards = find.query()
+                .where()
+                .eq("student_id", studentId)
+                .eq("status", STATUS_APPROVED)
+                .findList();
+
+        double totalScore = 0.0;
+        for (SpecialtyAward award : awards) {
+            totalScore += award.calculateAwardScore();
+        }
+
+        // 根据学生评价方案调整上限
+        Student student = Student.find.byId(studentId);
+        if (student != null) {
+            if (student.evaluationScheme == Student.SCHEME_A) {
+                totalScore = Math.min(totalScore, Student.SPECIALTY_MAX_SCORE_A);
+            } else {
+                totalScore = Math.min(totalScore, Student.SPECIALTY_MAX_SCORE_B);
+            }
+        }
+
+        return totalScore;
+    }
+
+
+    /**
+     * 同步学生的特长得分到学生表
+     */
+    public static void syncStudentSpecialtyScore(Long studentId) {
+        double totalScore = calculateStudentTotalSpecialtyScore(studentId);
+        Student student = Student.find.byId(studentId);
+
+        if (student != null) {
+            student.setSpecialtyScore(totalScore);
+            student.update();
+        }
+    }
+
+
+
+    /**
+     * 计算徽章授予
+     */
+    public void calculateBadge() {
+        if (this.status != STATUS_APPROVED) {
+            this.badgeAwarded = null;
+            return;
+        }
+
+        // 获取学生信息
+        Student student = Student.find.byId(this.studentId);
+        if (student == null) {
+            this.badgeAwarded = null;
+            return;
+        }
+
+        // 检查学业评定是否合格（学业得分不低于60分）
+        boolean isAcademicQualified = student.academicScore >= 60.0;
+
+        // 检查习惯评定是否良好（习惯得分不低于30分）
+        boolean isHabitGood = student.habitScore >= 30.0;
+
+        // 只有学业合格且习惯良好才能获得徽章
+        if (isAcademicQualified && isHabitGood) {
+            if (this.awardLevel <= LEVEL_CITY) {
+                // 市级以上获得星河徽章
+                this.badgeAwarded = "星河徽章";
+            } else if (this.awardLevel <= LEVEL_SCHOOL) {
+                // 校级获得星辰徽章
+                this.badgeAwarded = "星辰徽章";
+            } else {
+                this.badgeAwarded = null;
+            }
+        } else {
+            this.badgeAwarded = null;
+        }
+    }
+
+
+    /**
+     * 验证奖项数据有效性
+     */
+    public boolean validate() {
+        if (this.awardLevel < LEVEL_NATIONAL || this.awardLevel > LEVEL_SCHOOL) {
+            return false;
+        }
+        if (this.awardGrade < GRADE_FIRST || this.awardGrade > GRADE_COLLECTIVE) {
+            return false;
+        }
+        if (this.status < STATUS_PENDING || this.status > STATUS_REJECTED) {
+            return false;
+        }
+        return true;
+    }
 }

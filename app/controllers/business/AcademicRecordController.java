@@ -9,6 +9,7 @@ import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
 import models.business.AcademicRecord;
+import models.business.Student;
 import models.excel.AcademicRecordExcel;
 import org.apache.commons.io.FilenameUtils;
 import play.libs.Files;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -297,8 +299,9 @@ public class AcademicRecordController extends BaseSecurityController {
             try (InputStream inputStream = new FileInputStream(destFile)) {
                 // 读取文件
                 List<AcademicRecord> list = AcademicRecordExcel.importFromExcel(inputStream);
-                // 计算排名和徽章
-                List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadges(list);
+                // 计算排名和徽章和学业分
+                List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadgesAndStudyScore(list);
+
                 DB.saveAll(academicRecords);
                 return okJSON200();
             } catch (Exception e) {
@@ -318,7 +321,7 @@ public class AcademicRecordController extends BaseSecurityController {
             if (adminMember == null) return unauth403();
             try {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                AcademicRecordExcel.exportToExcel(outputStream, null);
+                AcademicRecordExcel.exportToExcel(outputStream, new ArrayList<>());
                 byte[] bytes = outputStream.toByteArray();
 
                 return ok(bytes)
@@ -327,6 +330,22 @@ public class AcademicRecordController extends BaseSecurityController {
             } catch (Exception e) {
                 return okCustomJson(CODE40001, "导出模板失败：" + e.getMessage());
             }
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/test/ 07导出学业成绩导入模板
+     * @apiName exportAcTemplate
+     * @apiGroup PERSONNEL-MANAGER
+     * @apiSuccess (Success 200){file} Excel文件 导入模板文件
+     */
+    public CompletionStage<Result> test(Http.Request request) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+            Student student = Student.find.all().get(0);
+            student.setBadges("星辰徽章,星火徽章");
+            student.save();
+            return okJSON200();
         });
     }
 }

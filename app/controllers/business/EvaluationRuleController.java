@@ -146,8 +146,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == originalEvaluationRule) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newEvaluationRule.ruleType))
                 originalEvaluationRule.setRuleType(newEvaluationRule.ruleType);
-            if (!ValidationUtil.isEmpty(newEvaluationRule.condition))
-                originalEvaluationRule.setCondition(newEvaluationRule.condition);
+            if (!ValidationUtil.isEmpty(newEvaluationRule.conditions))
+                originalEvaluationRule.setConditions(newEvaluationRule.conditions);
             if (newEvaluationRule.score > 0) originalEvaluationRule.setScore(newEvaluationRule.score);
             if (!ValidationUtil.isEmpty(newEvaluationRule.badgeType))
                 originalEvaluationRule.setBadgeType(newEvaluationRule.badgeType);

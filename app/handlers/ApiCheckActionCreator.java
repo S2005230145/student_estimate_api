@@ -45,7 +45,7 @@ public class ApiCheckActionCreator implements play.http.ActionCreator {
                 if (uri.contains("noauth") || uri.contains("/v2/ocpp/")) {
                     return delegate.call(req);
                 } else {
-                    if (!isValidRequest(req)) return CompletableFuture.supplyAsync(() -> onUnauthorized(req));
+//                    if (!isValidRequest(req)) return CompletableFuture.supplyAsync(() -> onUnauthorized(req));
                 }
                 return delegate.call(req);
             }

@@ -254,7 +254,7 @@ public class DateUtils {
      * @return
      */
     public long convertStringToUnixStamp(String date) {
-        String[] split = date.split("-");
+        String[] split = date.split("/");
         LocalDateTime time = LocalDateTime.of(Integer.parseInt(split[0]),
                 Integer.parseInt(split[1]),
                 Integer.parseInt(split[2]),

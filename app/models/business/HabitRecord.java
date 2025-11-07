@@ -3,6 +3,7 @@ package models.business;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.annotation.DbComment;
 import jakarta.persistence.*;
 import lombok.Data;
 import myannotation.EscapeHtmlAuthoritySerializer;
@@ -11,7 +12,7 @@ import myannotation.Translation;
 @Data
 @Entity
 @Table(name = "v1_habit_record")
-@Translation("习惯评价记录")
+@DbComment("习惯评价记录")
 public class HabitRecord  extends Model {
     public static final int HABIT_STUDY = 0; // 学习习惯
     public static final int HABIT_LIFE = 1; // 生活习惯
@@ -29,46 +30,46 @@ public class HabitRecord  extends Model {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @Translation("唯一标识")
+    @DbComment("唯一标识")
     public long id;
     
     @Column(name = "student_id")
-    @Translation("学生ID")
+    @DbComment("学生ID")
     public long studentId;
     
     @Column(name = "habit_type")
-    @Translation("习惯类型") // 0-学习习惯,1-生活习惯,2-劳动习惯,3-行为习惯
+    @DbComment("习惯类型") // 0-学习习惯,1-生活习惯,2-劳动习惯,3-行为习惯
     public int habitType;
     
     @Column(name = "evaluator_type")
-    @Translation("评价者类型") // teacher,head_teacher,parent
+    @DbComment("评价者类型") // teacher,head_teacher,parent
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String evaluatorType;
     
     @Column(name = "evaluator_id")
-    @Translation("评价者ID")
+    @DbComment("评价者ID")
     public long evaluatorId;
     
     @Column(name = "score_change")
-    @Translation("分数变化")
+    @DbComment("分数变化")
     public double scoreChange;
     
     @Column(name = "description")
-    @Translation("行为描述")
+    @DbComment("行为描述")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String description;
     
     @Column(name = "evidence_image")
-    @Translation("证据图片")
+    @DbComment("证据图片")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String evidenceImage;
     
     @Column(name = "record_time")
-    @Translation("记录时间")
+    @DbComment("记录时间")
     public long recordTime;
     
     @Column(name = "create_time")
-    @Translation("创建时间")
+    @DbComment("创建时间")
     public long createTime;
 
     public static Finder<Long, HabitRecord> find = new Finder<>(HabitRecord.class);

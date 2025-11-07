@@ -156,7 +156,6 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward originalSpecialtyAward = SpecialtyAward.find.byId(id);
             SpecialtyAward newSpecialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
             if (null == originalSpecialtyAward) return okCustomJson(CODE40001, "数据不存在");
-            if (newSpecialtyAward.studentId > 0) originalSpecialtyAward.setStudentId(newSpecialtyAward.studentId);
             if (newSpecialtyAward.awardLevel > 0) originalSpecialtyAward.setAwardLevel(newSpecialtyAward.awardLevel);
             if (newSpecialtyAward.awardGrade > 0) originalSpecialtyAward.setAwardGrade(newSpecialtyAward.awardGrade);
             if (!ValidationUtil.isEmpty(newSpecialtyAward.competitionName))
@@ -193,6 +192,32 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward deleteModel = SpecialtyAward.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
+            return okJSON200();
+        });
+    }
+
+
+    /**
+     * @api {POST} /v2/p/specialty_award_judge/  06审核特长获奖记录
+     * @apiName specialtyAwardJudge
+     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiParam {long} id 唯一标识
+     * @apiParam {long} opinion 审核意见（1：通过，2：不通过）
+     * @apiSuccess (Success 200){int} code 200
+     */
+    public CompletionStage<Result> judgeSpecialtyAward(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            long id = jsonNode.findPath("id").asLong();
+            SpecialtyAward specialtyAward = SpecialtyAward.find.byId(id);
+            if (null == specialtyAward) return okCustomJson(CODE40001, "数据不存在");
+            int opinion = jsonNode.findPath("opinion").asInt();
+            if (jsonNode.has("opinion")){
+                specialtyAward.setStatus(opinion);
+                specialtyAward.processSingleAward();
+            }
+            specialtyAward.save();
             return okJSON200();
         });
     }

@@ -81,7 +81,9 @@ GET        /v2/p/academic_record/:id/                         controllers.busine
 POST        /v2/p/academic_record/:id/                        controllers.business.AcademicRecordController.updateAcademicRecord(request: Request,id:Long)
 POST        /v2/p/academic_record/                            controllers.business.AcademicRecordController.deleteAcademicRecord(request: Request)
 GET        /v2/p/academic_record_list/                        controllers.business.AcademicRecordController.listAcademicRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-POST       /v2/p/academic_record_excel/                        controllers.business.AcademicRecordController.academicRecordImport(request: Request,id:Long)
+POST        /v2/p/academic_record_excel/                      controllers.business.AcademicRecordController.academicRecordImport(request: Request)
+GET        /v2/p/academic_record_excel_template/              controllers.business.AcademicRecordController.exportAcTemplate(request: Request)
+
 
 POST        /v2/p/badge_record/new/                           controllers.business.BadgeRecordController.addBadgeRecord(request: Request)
 GET        /v2/p/badge_record/:id/                            controllers.business.BadgeRecordController.getBadgeRecord(request: Request,id:Long)
@@ -124,6 +126,7 @@ GET        /v2/p/specialty_award/:id/                         controllers.busine
 POST        /v2/p/specialty_award/:id/                        controllers.business.SpecialtyAwardController.updateSpecialtyAward(request: Request,id:Long)
 POST        /v2/p/specialty_award/                            controllers.business.SpecialtyAwardController.deleteSpecialtyAward(request: Request)
 GET        /v2/p/specialty_award_list/                        controllers.business.SpecialtyAwardController.listSpecialtyAward(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST       /v2/p/specialty_award_judge/                       controllers.business.SpecialtyAwardController.judgeSpecialtyAward(request: Request)
 
 POST        /v2/p/student/new/                                controllers.business.StudentController.addStudent(request: Request)
 GET        /v2/p/student/:id/                                 controllers.business.StudentController.getStudent(request: Request,id:Long)
@@ -131,6 +134,6 @@ POST        /v2/p/student/:id/                                controllers.busine
 POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
 GET        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
-GET      /v2/p/academic_record_excel_template/                 controllers.business.AcademicRecordController.exportAcTemplate(request: Request)
+GET        /v2/p/test/                                        controllers.business.AcademicRecordController.test(request: Request)
 
 GET        /*file                                             controllers.Assets.versioned(path="/public", file: Asset)

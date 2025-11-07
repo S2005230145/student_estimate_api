@@ -54,22 +54,24 @@ END
 $$
 -- apply changes
 create table v1_academic_record (
-  id                            bigint auto_increment not null,
-  student_id                    bigint not null,
-  exam_type                     integer not null,
-  chinese_score                 double not null,
-  math_score                    double not null,
-  english_score                 double not null,
-  average_score                 double not null,
-  grade_ranking                 integer not null,
-  class_ranking                 integer not null,
-  progress_ranking              integer not null,
-  calculated_score              double not null,
-  badge_awarded                 varchar(255),
-  exam_date                     bigint not null,
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  student_id                    bigint not null comment '学生ID',
+  exam_type                     integer not null comment '考试类型',
+  chinese_score                 double not null comment '语文成绩',
+  math_score                    double not null comment '数学成绩',
+  english_score                 double not null comment '英语成绩',
+  average_score                 double not null comment '平均分',
+  grade_ranking                 integer not null comment '年级排名',
+  class_ranking                 integer not null comment '班级排名',
+  progress_amount               integer not null comment '进步名次',
+  progress_ranking              integer not null comment '进步排名',
+  calculated_score              double not null comment '计算得分',
+  badge_awarded                 varchar(255) comment '授予徽章',
+  exam_date                     bigint not null comment '考试时间',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
   constraint pk_v1_academic_record primary key (id)
-);
+) comment='学业成绩记录';
 
 create table cp_system_action (
   id                            varchar(255) auto_increment not null,
@@ -95,43 +97,43 @@ create table v1_admin_config (
 );
 
 create table v1_badge_record (
-  id                            bigint auto_increment not null,
-  student_id                    bigint not null,
-  badge_type                    varchar(255),
-  award_reason                  varchar(255),
-  award_time                    bigint not null,
-  award_period                  varchar(255),
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  student_id                    bigint not null comment '学生ID',
+  badge_type                    varchar(255) comment '徽章类型',
+  award_reason                  varchar(255) comment '授予原因',
+  award_time                    bigint not null comment '授予时间',
+  award_period                  varchar(255) comment '授予周期',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_badge_record primary key (id)
-);
+) comment='徽章授予记录';
 
 create table v1_class_routine (
-  id                            bigint auto_increment not null,
-  class_id                      bigint not null,
-  week_number                   integer not null,
-  month                         integer not null,
-  hygiene_score                 double not null,
-  discipline_score              double not null,
-  exercise_score                double not null,
-  manner_score                  double not null,
-  reading_score                 double not null,
-  total_score                   double not null,
-  record_time                   bigint not null,
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  class_id                      bigint not null comment '班级ID',
+  week_number                   integer not null comment '周次',
+  month                         integer not null comment '月份',
+  hygiene_score                 double not null comment '卫生得分',
+  discipline_score              double not null comment '纪律得分',
+  exercise_score                double not null comment '两操得分',
+  manner_score                  double not null comment '文明礼仪得分',
+  reading_score                 double not null comment '晨诵午读得分',
+  total_score                   double not null comment '周总分',
+  record_time                   bigint not null comment '记录时间',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_class_routine primary key (id)
-);
+) comment='班级常规评比';
 
 create table v1_evaluation_rule (
-  id                            bigint auto_increment not null,
-  rule_type                     varchar(255),
-  condition                     varchar(255),
-  score                         double not null,
-  badge_type                    varchar(255),
-  description                   varchar(255),
-  active                        tinyint(1) default 0 not null,
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  rule_type                     varchar(255) comment '规则类型',
+  conditions                    varchar(255) comment '条件',
+  score                         double not null comment '得分',
+  badge_type                    varchar(255) comment '徽章类型',
+  description                   varchar(255) comment '描述',
+  active                        tinyint(1) default 0 not null comment '是否启用',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_evaluation_rule primary key (id)
-);
+) comment='评价规则配置';
 
 create table cp_group (
   id                            integer auto_increment not null,
@@ -167,36 +169,36 @@ create table cp_group_user (
 );
 
 create table v1_habit_record (
-  id                            bigint auto_increment not null,
-  student_id                    bigint not null,
-  habit_type                    integer not null,
-  evaluator_type                varchar(255),
-  evaluator_id                  bigint not null,
-  score_change                  double not null,
-  description                   varchar(255),
-  evidence_image                varchar(255),
-  record_time                   bigint not null,
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  student_id                    bigint not null comment '学生ID',
+  habit_type                    integer not null comment '习惯类型',
+  evaluator_type                varchar(255) comment '评价者类型',
+  evaluator_id                  bigint not null comment '评价者ID',
+  score_change                  double not null comment '分数变化',
+  description                   varchar(255) comment '行为描述',
+  evidence_image                varchar(255) comment '证据图片',
+  record_time                   bigint not null comment '记录时间',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_habit_record primary key (id)
-);
+) comment='习惯评价记录';
 
 create table v1_home_visit (
-  id                            bigint auto_increment not null,
-  teacher_id                    bigint not null,
-  class_id                      bigint not null,
-  student_id                    bigint not null,
-  visit_type                    integer not null,
-  record_content                varchar(255),
-  case_study                    varchar(255),
-  video_evidence                varchar(255),
-  base_score                    integer not null,
-  bonus_score                   integer not null,
-  total_score                   integer not null,
-  status                        integer not null,
-  visit_time                    bigint not null,
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  teacher_id                    bigint not null comment '教师ID',
+  class_id                      bigint not null comment '班级ID',
+  student_id                    bigint not null comment '学生ID',
+  visit_type                    integer not null comment '家访类型',
+  record_content                varchar(255) comment '记录内容',
+  case_study                    varchar(255) comment '优秀案例',
+  video_evidence                varchar(255) comment '视频证据',
+  base_score                    integer not null comment '基础分',
+  bonus_score                   integer not null comment '加分',
+  total_score                   integer not null comment '总分',
+  status                        integer not null comment '审核状态',
+  visit_time                    bigint not null comment '家访时间',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_home_visit primary key (id)
-);
+) comment='家访工作记录';
 
 create table cp_log (
   log_id                        bigint auto_increment not null,
@@ -314,20 +316,20 @@ create table v1_system_config_template (
 );
 
 create table v1_school_class (
-  id                            bigint auto_increment not null,
-  class_name                    varchar(255),
-  grade                         integer not null,
-  head_teacher_id               bigint not null,
-  academic_score                double not null,
-  specialty_score               double not null,
-  routine_score                 double not null,
-  home_visit_score              double not null,
-  total_score                   double not null,
-  disqualified                  tinyint(1) default 0 not null,
-  honor_title                   varchar(255),
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  class_name                    varchar(255) comment '班级名称',
+  grade                         integer not null comment '年级',
+  head_teacher_id               bigint not null comment '班主任ID',
+  academic_score                double not null comment '学业得分',
+  specialty_score               double not null comment '特长得分',
+  routine_score                 double not null comment '常规得分',
+  home_visit_score              double not null comment '家访得分',
+  total_score                   double not null comment '总分',
+  disqualified                  tinyint(1) default 0 not null comment '一票否决',
+  honor_title                   varchar(255) comment '荣誉称号',
+  create_time                   bigint not null comment '创建时间',
   constraint pk_v1_school_class primary key (id)
-);
+) comment='班级信息';
 
 create table v1_shop_admin (
   id                            bigint auto_increment not null,
@@ -352,37 +354,39 @@ create table v1_shop_admin (
 );
 
 create table v1_specialty_award (
-  id                            bigint auto_increment not null,
-  student_id                    bigint not null,
-  award_level                   integer not null,
-  award_grade                   integer not null,
-  competition_name              varchar(255),
-  category                      varchar(255),
-  award_score                   double not null,
-  status                        integer not null,
-  certificate_image             varchar(255),
-  badge_awarded                 varchar(255),
-  create_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  student_id                    bigint not null comment '学生ID',
+  award_level                   integer not null comment '奖项级别',
+  award_grade                   integer not null comment '奖项等级',
+  competition_name              varchar(255) comment '竞赛名称',
+  category                      varchar(255) comment '比赛类别',
+  award_score                   double not null comment '奖项得分',
+  status                        integer not null comment '审核状态',
+  certificate_image             varchar(255) comment '证书图片',
+  badge_awarded                 varchar(255) comment '授予徽章',
+  award_date                    bigint not null comment '获奖时间',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
   constraint pk_v1_specialty_award primary key (id)
-);
+) comment='特长获奖记录';
 
 create table v1_student (
-  id                            bigint auto_increment not null,
-  student_number                varchar(255),
-  name                          varchar(255),
-  class_id                      bigint not null,
-  grade                         integer not null,
-  evaluation_scheme             integer not null,
-  class_average_score           double not null,
-  academic_score                double not null,
-  specialty_score               double not null,
-  habit_score                   double not null,
-  total_score                   double not null,
-  badges                        varchar(255),
-  create_time                   bigint not null,
-  update_time                   bigint not null,
+  id                            bigint auto_increment not null comment '唯一标识',
+  student_number                varchar(255) comment '学号',
+  name                          varchar(255) comment '学生姓名',
+  class_id                      bigint not null comment '班级ID',
+  grade                         integer not null comment '年级',
+  evaluation_scheme             integer not null comment '评价方案',
+  class_average_score           double not null comment '班级平均分',
+  academic_score                double not null comment '学业得分',
+  specialty_score               double not null comment '特长得分',
+  habit_score                   double not null comment '习惯得分',
+  total_score                   double not null comment '总分',
+  badges                        varchar(255) comment '获得徽章',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
   constraint pk_v1_student primary key (id)
-);
+) comment='学生';
 
 create table v1_suggestion (
   id                            bigint auto_increment not null,
