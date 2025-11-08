@@ -1,6 +1,8 @@
 package controllers.basic;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import controllers.BaseSecurityController;
@@ -162,6 +164,7 @@ public class ShopAdminController extends BaseSecurityController {
             member.setOrgName(admin.orgName);
             member.setLastLoginTime(currentTime);
             member.setPinyinAbbr(pinyin4j.toPinYinUppercase(member.realName));
+
             member.save();
             businessUtils.addOperationLog(request, admin, "添加成员：" + member.toString());
             return okJSON200();

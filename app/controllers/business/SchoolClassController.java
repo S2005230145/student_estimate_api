@@ -150,6 +150,7 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiParam {double} totalScore 总分
      * @apiParam {boolean} disqualified 一票否决
      * @apiParam {String} honorTitle 荣誉称号
+     * @apiParam {String} teachersJson 科任教师
      * @apiParam {long} createTime 创建时间
      * @apiSuccess (Success 200){int} code 200
      */
@@ -173,6 +174,8 @@ public class SchoolClassController extends BaseSecurityController {
                 originalSchoolClass.setDisqualified(newSchoolClass.disqualified);
             if (!ValidationUtil.isEmpty(newSchoolClass.honorTitle))
                 originalSchoolClass.setHonorTitle(newSchoolClass.honorTitle);
+            if (!ValidationUtil.isEmpty(newSchoolClass.teacherIds))
+                originalSchoolClass.setTeacherIds(newSchoolClass.teacherIds);
 
             originalSchoolClass.save();
             return okJSON200();

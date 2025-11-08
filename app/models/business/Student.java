@@ -3,6 +3,7 @@ package models.business;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.annotation.DbArray;
 import io.ebean.annotation.DbComment;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhenModified;
@@ -11,6 +12,8 @@ import lombok.Data;
 import models.excel.AcademicRecordExcel;
 import myannotation.EscapeHtmlAuthoritySerializer;
 import myannotation.Translation;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -89,6 +92,11 @@ public class Student extends Model {
     @DbComment("更新时间")
     @WhenModified
     public long updateTime;
+
+    @Column(name = "parents")
+    @DbComment("家长")
+    @DbArray
+    public List<Long> parents;
 
     public static Finder<Long, Student> find = new Finder<>(Student.class);
 

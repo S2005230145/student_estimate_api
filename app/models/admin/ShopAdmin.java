@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.annotation.DbArray;
 import jakarta.persistence.*;
 import myannotation.EscapeHtmlSerializer;
 
@@ -85,6 +86,7 @@ public class ShopAdmin extends Model {
     @Column(name = "bg_img_url")
     @JsonDeserialize(using = EscapeHtmlSerializer.class)
     public String bgImgUrl;
+
 
     @Transient
     public List<Integer> groupIdList = new ArrayList<>();
@@ -240,4 +242,5 @@ public class ShopAdmin extends Model {
     public void setRules(String rules) {
         this.rules = rules;
     }
+
 }

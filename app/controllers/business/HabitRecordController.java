@@ -6,7 +6,8 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
-import models.business.HabitRecord;
+import models.admin.ShopAdmin;
+import models.business.*;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -121,10 +122,31 @@ public class HabitRecordController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HabitRecord habitRecord = Json.fromJson(jsonNode, HabitRecord.class);
+            Student student = Student.find.byId(habitRecord.studentId);
+            if (null == student) return okCustomJson(CODE40001, "学生不存在");
+            long classId = student.getClassId();
+            SchoolClass schoolClass = SchoolClass.find.byId(classId);
+            if (null == schoolClass) return okCustomJson(CODE40001, "班级不存在");
+
+            boolean isTeacher = ClassTeacherRelation.isTeacherInClass(admin.id, schoolClass.id);
+            boolean isHeadTeacher = ClassTeacherRelation.isHeadTeacherInClass(admin.id, schoolClass.id);
+            boolean isParent = ParentStudentRelation.isParentOfStudent(admin.id, student.id);
+
+            if (isTeacher){
+                habitRecord.validate("科任教师");
+            }
+            if (isHeadTeacher){
+                habitRecord.validate("班主任");
+            }
+            if (isParent){
+                habitRecord.validate("家长");
+            };
 
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             habitRecord.setCreateTime(currentTimeBySecond);
             habitRecord.save();
+
+            HabitRecord.recalculateStudentHabitScore(habitRecord.studentId);
             return okJSON200();
         });
     }
@@ -190,4 +212,6 @@ public class HabitRecordController extends BaseSecurityController {
             return okJSON200();
         });
     }
+
+
 }

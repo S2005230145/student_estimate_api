@@ -328,6 +328,7 @@ create table v1_school_class (
   disqualified                  tinyint(1) default 0 not null comment '一票否决',
   honor_title                   varchar(255) comment '荣誉称号',
   create_time                   bigint not null comment '创建时间',
+  teacher_ids                   varchar(255) comment '科任教师',
   constraint pk_v1_school_class primary key (id)
 ) comment='班级信息';
 
@@ -383,6 +384,7 @@ create table v1_student (
   habit_score                   double not null comment '习惯得分',
   total_score                   double not null comment '总分',
   badges                        varchar(255) comment '获得徽章',
+  parents                       varchar(1000) comment '家长',
   create_time                   bigint not null comment '创建时间',
   update_time                   bigint not null comment '更新时间',
   constraint pk_v1_student primary key (id)
