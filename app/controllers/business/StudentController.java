@@ -6,16 +6,34 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import io.ebean.annotation.Transactional;
 import models.business.Student;
+import models.excel.StudentImportExcel;
+import org.apache.commons.io.FilenameUtils;
+import play.data.DynamicForm;
+import play.data.FormFactory;
+import play.libs.Files;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import javax.inject.Inject;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public class StudentController extends BaseSecurityController {
+
+    @Inject
+    FormFactory formFactory;
 
     /**
      * @api {GET} /v2/p/student_list/   01列表-学生信息
@@ -216,6 +234,83 @@ public class StudentController extends BaseSecurityController {
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
+        });
+    }
+    /**
+     * @api {POST} /v2/p/student_excel/   06导入学生文件
+     * @apiName studentImport
+     * @apiGroup STUDENT-MANAGER
+     * @apiParam {file} file 学生文件
+     * @apiParam {long} classId 班级ID
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    @Transactional
+    public CompletionStage<Result> studentImport(Http.Request request) {
+        Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
+        Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
+
+        // 获取班级ID参数
+        DynamicForm form = formFactory.form().bindFromRequest(request);
+        long classId = Long.parseLong(form.get("classId"));
+
+        if (filePart == null) {
+            return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
+        }
+
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+
+            Files.TemporaryFile file = filePart.getRef();
+            String fileName = filePart.getFilename();
+            String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+            String destPath = FILE_DIR_LOCATION + targetFileName;
+
+            // 确保目录存在
+            new File(FILE_DIR_LOCATION).mkdirs();
+
+            file.copyTo(Paths.get(destPath), true);
+            File destFile = new File(destPath);
+;
+            try (InputStream inputStream = new FileInputStream(destFile)) {
+                // 读取Excel文件
+                List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
+
+                // 数据验证
+                StudentImportExcel.validateData(list);
+
+                // 转换为实体并保存
+                StudentImportExcel.toEntity(list,classId );
+
+                return okJSON200();
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/student_excel_template/ 07导出学生导入模板
+     * @apiName exportStudentTemplate
+     * @apiGroup STUDENT-MANAGER
+     * @apiSuccess (Success 200){file} Excel文件 导入模板文件
+     */
+    public CompletionStage<Result> exportStudentTemplate(Http.Request request) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+
+            try {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+                // 导出空模板
+                StudentImportExcel.exportToExcel(outputStream, new ArrayList<>());
+                byte[] bytes = outputStream.toByteArray();
+
+                return ok(bytes)
+                        .withHeader("Content-Disposition", "attachment; filename=student_import_template.xlsx")
+                        .as("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "导出模板失败：" + e.getMessage());
+            }
         });
     }
 

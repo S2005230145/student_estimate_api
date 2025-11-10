@@ -154,8 +154,9 @@ public class AcademicRecordExcel {
                 .findOne();
 
         if (student == null) {
-            student = createStudent(excel);
-            student.save();
+            throw new RuntimeException("学生不存在");
+//            student = createStudent(excel);
+//            student.save();
         }
         return student;
     }

@@ -81,21 +81,9 @@ public class SchoolClass  extends Model {
     @DbComment("创建时间")
     public long createTime;
 
-    @Column(name = "teacher_ids")
-    @DbComment("科任教师")
-    public String teacherIds ;
-
     @Transient
     private List<ShopAdmin> teachers;
 
-    public ShopAdmin getHeadTeacher() {
-        return ShopAdmin.find.byId(this.headTeacherId);
-    }
-
-    public List<ShopAdmin> getTeachers() {
-        teacherIds = teacherIds.replace("[", "").replace("]", "");
-        return ShopAdmin.find.query().where().in("id", teacherIds).findList();
-    }
 
     public static Finder<Long, SchoolClass> find = new Finder<>(SchoolClass.class);
 }

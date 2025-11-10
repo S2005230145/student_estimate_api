@@ -174,8 +174,6 @@ public class SchoolClassController extends BaseSecurityController {
                 originalSchoolClass.setDisqualified(newSchoolClass.disqualified);
             if (!ValidationUtil.isEmpty(newSchoolClass.honorTitle))
                 originalSchoolClass.setHonorTitle(newSchoolClass.honorTitle);
-            if (!ValidationUtil.isEmpty(newSchoolClass.teacherIds))
-                originalSchoolClass.setTeacherIds(newSchoolClass.teacherIds);
 
             originalSchoolClass.save();
             return okJSON200();

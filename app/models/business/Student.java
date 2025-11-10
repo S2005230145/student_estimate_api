@@ -93,13 +93,7 @@ public class Student extends Model {
     @WhenModified
     public long updateTime;
 
-    @Column(name = "parents")
-    @DbComment("家长")
-    @DbArray
-    public List<Long> parents;
-
     public static Finder<Long, Student> find = new Finder<>(Student.class);
-
 
     public boolean isOverAverage() {
         return this.academicScore > this.classAverageScore;

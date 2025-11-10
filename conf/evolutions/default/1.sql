@@ -123,6 +123,17 @@ create table v1_class_routine (
   constraint pk_v1_class_routine primary key (id)
 ) comment='班级常规评比';
 
+create table v1_class_teacher_relation (
+  id                            bigint auto_increment not null comment '唯一标识',
+  class_id                      bigint not null comment '班级ID',
+  teacher_id                    bigint not null comment '教师ID',
+  subject                       varchar(255) comment '任教科目',
+  is_head_teacher               tinyint(1) default 0 not null comment '是否班主任',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
+  constraint pk_v1_class_teacher_relation primary key (id)
+) comment='班级教师关系表';
+
 create table v1_evaluation_rule (
   id                            bigint auto_increment not null comment '唯一标识',
   rule_type                     varchar(255) comment '规则类型',
@@ -315,6 +326,16 @@ create table v1_system_config_template (
   constraint pk_v1_system_config_template primary key (id)
 );
 
+create table v1_parent_student_relation (
+  id                            bigint auto_increment not null comment '唯一标识',
+  parent_id                     bigint not null comment '家长ID',
+  student_id                    bigint not null comment '学生ID',
+  relationship                  varchar(255) comment '关系类型',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
+  constraint pk_v1_parent_student_relation primary key (id)
+) comment='家长学生关系表';
+
 create table v1_school_class (
   id                            bigint auto_increment not null comment '唯一标识',
   class_name                    varchar(255) comment '班级名称',
@@ -328,7 +349,6 @@ create table v1_school_class (
   disqualified                  tinyint(1) default 0 not null comment '一票否决',
   honor_title                   varchar(255) comment '荣誉称号',
   create_time                   bigint not null comment '创建时间',
-  teacher_ids                   varchar(255) comment '科任教师',
   constraint pk_v1_school_class primary key (id)
 ) comment='班级信息';
 
@@ -384,7 +404,6 @@ create table v1_student (
   habit_score                   double not null comment '习惯得分',
   total_score                   double not null comment '总分',
   badges                        varchar(255) comment '获得徽章',
-  parents                       varchar(1000) comment '家长',
   create_time                   bigint not null comment '创建时间',
   update_time                   bigint not null comment '更新时间',
   constraint pk_v1_student primary key (id)
@@ -416,6 +435,8 @@ drop table if exists v1_badge_record;
 
 drop table if exists v1_class_routine;
 
+drop table if exists v1_class_teacher_relation;
+
 drop table if exists v1_evaluation_rule;
 
 drop table if exists cp_group;
@@ -441,6 +462,8 @@ drop table if exists v1_operation_log;
 drop table if exists v1_system_config;
 
 drop table if exists v1_system_config_template;
+
+drop table if exists v1_parent_student_relation;
 
 drop table if exists v1_school_class;
 
