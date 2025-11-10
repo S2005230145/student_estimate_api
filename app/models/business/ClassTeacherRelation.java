@@ -91,4 +91,21 @@ public class ClassTeacherRelation extends Model {
                 .eq("is_head_teacher", teacherId)
                 .findCount() > 0;
     }
+
+    /**
+     * 根据班级ID查找班主任关系
+     */
+    public static ClassTeacherRelation findHeadTeacherByClassId(Long classId) {
+        if (classId == null || classId <= 0) {
+            return null;
+        }
+
+        return find.query()
+                .where()
+                .eq("class_id", classId)
+                .eq("is_head_teacher", true)
+                .setMaxRows(1)
+                .findOne();
+    }
+
 }

@@ -34,7 +34,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record_list/   01列表-学业成绩记录
      * @apiName listAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {int} EXAM_MIDTERM
@@ -98,7 +98,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record/:id/  02详情-AcademicRecord学业成绩记录
      * @apiName getAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {int} EXAM_MIDTERM
@@ -141,7 +141,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/academic_record/new/   01添加-AcademicRecord学业成绩记录
      * @apiName addAcademicRecord
      * @apiDescription 描述
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {int} EXAM_MIDTERM
      * @apiParam {int} EXAM_FINAL
      * @apiParam {double} PASS_SCORE
@@ -186,7 +186,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record/:id/  04更新-AcademicRecord学业成绩记录
      * @apiName updateAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {int} EXAM_MIDTERM
      * @apiParam {int} EXAM_FINAL
      * @apiParam {double} PASS_SCORE
@@ -252,7 +252,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record/   05删除-学业成绩记录
      * @apiName deleteAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -274,7 +274,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record_excel/   06导入学生成绩文件
      * @apiName academicRecordImport
-     * @apiGroup ACADEMIC-RECORD-MANAGER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {file} file 成绩文件
      * @apiSuccess (Success 200){int} 200 成功
      */
@@ -313,7 +313,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record_excel_template/ 07导出学业成绩导入模板
      * @apiName exportAcTemplate
-     * @apiGroup PERSONNEL-MANAGER
+     * @apiGroup PERSONNEL-CONTROLLER
      * @apiSuccess (Success 200){file} Excel文件 导入模板文件
      */
     public CompletionStage<Result> exportAcTemplate(Http.Request request) {
@@ -336,7 +336,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/test/ 07导出学业成绩导入模板
      * @apiName exportAcTemplate
-     * @apiGroup PERSONNEL-MANAGER
+     * @apiGroup PERSONNEL-CONTROLLER
      * @apiSuccess (Success 200){file} Excel文件 导入模板文件
      */
     public CompletionStage<Result> test(Http.Request request) {

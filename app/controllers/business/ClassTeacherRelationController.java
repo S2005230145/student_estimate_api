@@ -20,7 +20,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/class_teacher_relation_list/   01列表-班级教师关系
      * @apiName listClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-MANAGER
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id
@@ -68,7 +68,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/class_teacher_relation/:id/  02详情-ClassTeacherRelation班级教师关系
      * @apiName getClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-MANAGER
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id
@@ -95,7 +95,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
      * @api {POST} /v2/p/class_teacher_relation/new/   01添加-ClassTeacherRelation班级教师关系
      * @apiName addClassTeacherRelation
      * @apiDescription 描述
-     * @apiGroup CLASS-TEACHER-RELATION-MANAGER
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {long} id
      * @apiParam {long} classId
      * @apiParam {long} teacherId
@@ -124,7 +124,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation/:id/  04更新-ClassTeacherRelation班级教师关系
      * @apiName updateClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-MANAGER
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {long} id
      * @apiParam {long} classId
      * @apiParam {long} teacherId
@@ -161,7 +161,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation/   05删除-班级教师关系
      * @apiName deleteClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-MANAGER
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

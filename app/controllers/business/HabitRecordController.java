@@ -21,7 +21,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record_list/   01列表-习惯评价记录
      * @apiName listHabitRecord
-     * @apiGroup HABIT-RECORD-MANAGER
+     * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -72,7 +72,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record/:id/  02详情-HabitRecord习惯评价记录
      * @apiName getHabitRecord
-     * @apiGroup HABIT-RECORD-MANAGER
+     * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -102,7 +102,7 @@ public class HabitRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/habit_record/new/   01添加-HabitRecord习惯评价记录
      * @apiName addHabitRecord
      * @apiDescription 描述
-     * @apiGroup HABIT-RECORD-MANAGER
+     * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} habitType 习惯类型
@@ -131,18 +131,21 @@ public class HabitRecordController extends BaseSecurityController {
             boolean isTeacher = ClassTeacherRelation.isTeacherInClass(admin.id, schoolClass.id);
             boolean isHeadTeacher = ClassTeacherRelation.isHeadTeacherInClass(admin.id, schoolClass.id);
             boolean isParent = ParentStudentRelation.isParentOfStudent(admin.id, student.id);
-
-            if (isTeacher){
-                habitRecord.validate("科任教师");
+            try {
+                if (isTeacher) {
+                    habitRecord.validate("科任教师");
+                } else if (isHeadTeacher) {
+                    habitRecord.validate("班主任");
+                } else if (isParent) {
+                    habitRecord.validate("家长");
+                } else {
+                    return okCustomJson(CODE40001, "账号角色不属于可评分角色");
+                }
+            }catch (Exception e){
+                return okCustomJson(CODE40001, e.getMessage());
             }
-            if (isHeadTeacher){
-                habitRecord.validate("班主任");
-            }
-            if (isParent){
-                habitRecord.validate("家长");
-            };
-
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+            habitRecord.setEvaluatorId(admin.id);
             habitRecord.setCreateTime(currentTimeBySecond);
             habitRecord.save();
 
@@ -154,7 +157,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/habit_record/:id/  04更新-HabitRecord习惯评价记录
      * @apiName updateHabitRecord
-     * @apiGroup HABIT-RECORD-MANAGER
+     * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} habitType 习惯类型
@@ -194,7 +197,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/habit_record/   05删除-习惯评价记录
      * @apiName deleteHabitRecord
-     * @apiGroup HABIT-RECORD-MANAGER
+     * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

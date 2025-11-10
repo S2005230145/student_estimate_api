@@ -171,7 +171,7 @@ public class StudentImportExcel {
         parent.setPhoneNumber(phone);
         parent.setUserName(phone); // 用户名设为手机号
         parent.setRealName(generateParentRealName(studentName, relationship)); // 真实姓名设为"学生名_关系"
-//        parent.setRole("家长");
+        parent.setRules("家长");
         parent.setPassword(generateDefaultPassword());
         parent.save();
 

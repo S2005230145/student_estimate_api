@@ -20,7 +20,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/evaluation_rule_list/   01列表-评价规则配置
      * @apiName listEvaluationRule
-     * @apiGroup EVALUATION-RULE-MANAGER
+     * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -69,7 +69,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/evaluation_rule/:id/  02详情-EvaluationRule评价规则配置
      * @apiName getEvaluationRule
-     * @apiGroup EVALUATION-RULE-MANAGER
+     * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -97,7 +97,7 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @api {POST} /v2/p/evaluation_rule/new/   01添加-EvaluationRule评价规则配置
      * @apiName addEvaluationRule
      * @apiDescription 描述
-     * @apiGroup EVALUATION-RULE-MANAGER
+     * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {String} ruleType 规则类型
      * @apiParam {String} condition 条件
@@ -126,7 +126,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/evaluation_rule/:id/  04更新-EvaluationRule评价规则配置
      * @apiName updateEvaluationRule
-     * @apiGroup EVALUATION-RULE-MANAGER
+     * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {String} ruleType 规则类型
      * @apiParam {String} condition 条件
@@ -164,7 +164,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/evaluation_rule/   05删除-评价规则配置
      * @apiName deleteEvaluationRule
-     * @apiGroup EVALUATION-RULE-MANAGER
+     * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

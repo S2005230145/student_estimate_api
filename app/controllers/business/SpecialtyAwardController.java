@@ -20,7 +20,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/specialty_award_list/   01列表-特长获奖记录
      * @apiName listSpecialtyAward
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -72,7 +72,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/specialty_award/:id/  02详情-SpecialtyAward特长获奖记录
      * @apiName getSpecialtyAward
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -103,7 +103,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @api {POST} /v2/p/specialty_award/new/   01添加-SpecialtyAward特长获奖记录
      * @apiName addSpecialtyAward
      * @apiDescription 描述
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} awardLevel 奖项级别
@@ -135,7 +135,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/specialty_award/:id/  04更新-SpecialtyAward特长获奖记录
      * @apiName updateSpecialtyAward
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} awardLevel 奖项级别
@@ -177,7 +177,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/specialty_award/   05删除-特长获奖记录
      * @apiName deleteSpecialtyAward
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -200,7 +200,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/specialty_award_judge/  06审核特长获奖记录
      * @apiName specialtyAwardJudge
-     * @apiGroup SPECIALTY-AWARD-MANAGER
+     * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} opinion 审核意见（1：通过，2：不通过）
      * @apiSuccess (Success 200){int} code 200

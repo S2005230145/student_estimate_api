@@ -121,6 +121,12 @@ POST        /v2/p/school_class/:id/                           controllers.busine
 POST        /v2/p/school_class/                               controllers.business.SchoolClassController.deleteSchoolClass(request: Request)
 GET        /v2/p/school_class_list/                           controllers.business.SchoolClassController.listSchoolClass(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
+POST        /v2/p/school_class/:id/set_head_teacher/          controllers.business.SchoolClassController.setHeadTeacher(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/school_class/:id/add_teacher/               controllers.business.SchoolClassController.addClassTeacher(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/school_class/:id/remove_teacher/            controllers.business.SchoolClassController.removeClassTeacher(request: play.mvc.Http.Request, id: Long)
+GET        /v2/p/school_class/:id/teachers/                   controllers.business.SchoolClassController.getClassTeachers(request: play.mvc.Http.Request, id: Long)
+GET        /v2/p/school_class/:id/head_teacher/               controllers.business.SchoolClassController.getHeadTeacher(request: play.mvc.Http.Request, id: Long)
+
 POST        /v2/p/specialty_award/new/                        controllers.business.SpecialtyAwardController.addSpecialtyAward(request: Request)
 GET        /v2/p/specialty_award/:id/                         controllers.business.SpecialtyAwardController.getSpecialtyAward(request: Request,id:Long)
 POST        /v2/p/specialty_award/:id/                        controllers.business.SpecialtyAwardController.updateSpecialtyAward(request: Request,id:Long)
@@ -133,6 +139,11 @@ GET        /v2/p/student/:id/                                 controllers.busine
 POST        /v2/p/student/:id/                                controllers.business.StudentController.updateStudent(request: Request,id:Long)
 POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
 GET        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+
+POST        /v2/p/student_parent/                             controllers.business.StudentController.createStudentParent(request: play.mvc.Http.Request)
+GET        /v2/p/student/:id/parents/                         controllers.business.StudentController.getStudentParents(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/student_parent/:id/                         controllers.business.StudentController.deleteStudentParent(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/student_batch_assign/                       controllers.business.StudentController.batchAssignStudents(request: play.mvc.Http.Request)
 
 POST        /v2/p/parent_student_relation/new/                controllers.business.ParentStudentRelationController.addParentStudentRelation(request: Request)
 GET        /v2/p/parent_student_relation/:id/                 controllers.business.ParentStudentRelationController.getParentStudentRelation(request: Request,id:Long)
@@ -147,7 +158,7 @@ POST        /v2/p/class_teacher_relation/                     controllers.busine
 GET        /v2/p/class_teacher_relation_list/                 controllers.business.ClassTeacherRelationController.listClassTeacherRelation(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
 POST        /v2/p/student_excel/                              controllers.business.StudentController.studentImport(request: Request)
-GET        /v2/p/student_excel_template/                     controllers.business.StudentController.exportStudentTemplate(request: Request)
+GET        /v2/p/student_excel_template/                      controllers.business.StudentController.exportStudentTemplate(request: Request)
 
 GET        /v2/p/test/                                        controllers.business.AcademicRecordController.test(request: Request)
 

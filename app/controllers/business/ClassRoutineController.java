@@ -20,7 +20,7 @@ public class ClassRoutineController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/class_routine_list/   01列表-班级常规评比
      * @apiName listClassRoutine
-     * @apiGroup CLASS-ROUTINE-MANAGER
+     * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -73,7 +73,7 @@ public class ClassRoutineController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/class_routine/:id/  02详情-ClassRoutine班级常规评比
      * @apiName getClassRoutine
-     * @apiGroup CLASS-ROUTINE-MANAGER
+     * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -105,7 +105,7 @@ public class ClassRoutineController extends BaseSecurityController {
      * @api {POST} /v2/p/class_routine/new/   01添加-ClassRoutine班级常规评比
      * @apiName addClassRoutine
      * @apiDescription 描述
-     * @apiGroup CLASS-ROUTINE-MANAGER
+     * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} classId 班级ID
      * @apiParam {int} weekNumber 周次
@@ -138,7 +138,7 @@ public class ClassRoutineController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_routine/:id/  04更新-ClassRoutine班级常规评比
      * @apiName updateClassRoutine
-     * @apiGroup CLASS-ROUTINE-MANAGER
+     * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} classId 班级ID
      * @apiParam {int} weekNumber 周次
@@ -180,7 +180,7 @@ public class ClassRoutineController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_routine/   05删除-班级常规评比
      * @apiName deleteClassRoutine
-     * @apiGroup CLASS-ROUTINE-MANAGER
+     * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

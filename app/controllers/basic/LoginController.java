@@ -111,14 +111,6 @@ public class LoginController extends BaseController {
      * @param authToken
      */
     public void handleCacheToken(ShopAdmin member, String authToken) {
-        //authtoken -> platformtoken
-        //uid:token:1 -> TOKEN_FOR_PLATFORM:UID
-        //platformtoken -> Member
-
-        //idToken => authToken
-        // userToken(uid:token:1) => authToken
-        //authToken => platformKey
-        //platformKey => user
         //缓存新的token数据
         String tokenKey = cacheUtils.getMemberTokenKey(member.orgId, member.id);
         Optional<String> optional = redis.sync().get(tokenKey);

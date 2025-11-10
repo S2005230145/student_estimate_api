@@ -224,7 +224,6 @@ public class ShopAdminController extends BaseSecurityController {
             }
             if (updateMember.shopId > 0 && updateMember.shopId != existMember.shopId) {
                 existMember.setShopId(updateMember.shopId);
-                existMember.setShopId(updateMember.shopId);
             }
             if (admin.isAdmin) {
                 System.out.println("是管理员");

@@ -20,7 +20,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit_list/   01列表-家访工作记录
      * @apiName listHomeVisit
-     * @apiGroup HOME-VISIT-MANAGER
+     * @apiGroup HOME-VISIT-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -75,7 +75,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit/:id/  02详情-HomeVisit家访工作记录
      * @apiName getHomeVisit
-     * @apiGroup HOME-VISIT-MANAGER
+     * @apiGroup HOME-VISIT-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -109,7 +109,7 @@ public class HomeVisitController extends BaseSecurityController {
      * @api {POST} /v2/p/home_visit/new/   01添加-HomeVisit家访工作记录
      * @apiName addHomeVisit
      * @apiDescription 描述
-     * @apiGroup HOME-VISIT-MANAGER
+     * @apiGroup HOME-VISIT-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
      * @apiParam {long} classId 班级ID
@@ -144,7 +144,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/:id/  04更新-HomeVisit家访工作记录
      * @apiName updateHomeVisit
-     * @apiGroup HOME-VISIT-MANAGER
+     * @apiGroup HOME-VISIT-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
      * @apiParam {long} classId 班级ID
@@ -191,7 +191,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/   05删除-家访工作记录
      * @apiName deleteHomeVisit
-     * @apiGroup HOME-VISIT-MANAGER
+     * @apiGroup HOME-VISIT-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

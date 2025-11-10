@@ -20,7 +20,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/parent_student_relation_list/   01列表-家长学生关系
      * @apiName listParentStudentRelation
-     * @apiGroup PARENT-STUDENT-RELATION-MANAGER
+     * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id
@@ -67,7 +67,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/parent_student_relation/:id/  02详情-ParentStudentRelation家长学生关系
      * @apiName getParentStudentRelation
-     * @apiGroup PARENT-STUDENT-RELATION-MANAGER
+     * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id
@@ -93,7 +93,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
      * @api {POST} /v2/p/parent_student_relation/new/   01添加-ParentStudentRelation家长学生关系
      * @apiName addParentStudentRelation
      * @apiDescription 描述
-     * @apiGroup PARENT-STUDENT-RELATION-MANAGER
+     * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id
      * @apiParam {long} parentId
      * @apiParam {long} studentId
@@ -121,7 +121,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/parent_student_relation/:id/  04更新-ParentStudentRelation家长学生关系
      * @apiName updateParentStudentRelation
-     * @apiGroup PARENT-STUDENT-RELATION-MANAGER
+     * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id
      * @apiParam {long} parentId
      * @apiParam {long} studentId
@@ -155,7 +155,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/parent_student_relation/   05删除-家长学生关系
      * @apiName deleteParentStudentRelation
-     * @apiGroup PARENT-STUDENT-RELATION-MANAGER
+     * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

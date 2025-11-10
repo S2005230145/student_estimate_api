@@ -20,7 +20,7 @@ public class BadgeRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/badge_record_list/   01列表-徽章授予记录
      * @apiName listBadgeRecord
-     * @apiGroup BADGE-RECORD-MANAGER
+     * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -68,7 +68,7 @@ public class BadgeRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/badge_record/:id/  02详情-BadgeRecord徽章授予记录
      * @apiName getBadgeRecord
-     * @apiGroup BADGE-RECORD-MANAGER
+     * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -95,7 +95,7 @@ public class BadgeRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/badge_record/new/   01添加-BadgeRecord徽章授予记录
      * @apiName addBadgeRecord
      * @apiDescription 描述
-     * @apiGroup BADGE-RECORD-MANAGER
+     * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {String} badgeType 徽章类型
@@ -123,7 +123,7 @@ public class BadgeRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/badge_record/:id/  04更新-BadgeRecord徽章授予记录
      * @apiName updateBadgeRecord
-     * @apiGroup BADGE-RECORD-MANAGER
+     * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {String} badgeType 徽章类型
@@ -157,7 +157,7 @@ public class BadgeRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/badge_record/   05删除-徽章授予记录
      * @apiName deleteBadgeRecord
-     * @apiGroup BADGE-RECORD-MANAGER
+     * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

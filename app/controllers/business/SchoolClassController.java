@@ -6,12 +6,15 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import models.admin.ShopAdmin;
+import models.business.ClassTeacherRelation;
 import models.business.SchoolClass;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -20,7 +23,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/school_class_list/   01列表-班级信息
      * @apiName listSchoolClass
-     * @apiGroup SCHOOL-CLASS-MANAGER
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -73,7 +76,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/school_class/:id/  02详情-SchoolClass班级信息
      * @apiName getSchoolClass
-     * @apiGroup SCHOOL-CLASS-MANAGER
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -105,7 +108,7 @@ public class SchoolClassController extends BaseSecurityController {
      * @api {POST} /v2/p/school_class/new/   01添加-SchoolClass班级信息
      * @apiName addSchoolClass
      * @apiDescription 描述
-     * @apiGroup SCHOOL-CLASS-MANAGER
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
      * @apiParam {int} grade 年级
@@ -138,7 +141,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/:id/  04更新-SchoolClass班级信息
      * @apiName updateSchoolClass
-     * @apiGroup SCHOOL-CLASS-MANAGER
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
      * @apiParam {int} grade 年级
@@ -183,7 +186,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/   05删除-班级信息
      * @apiName deleteSchoolClass
-     * @apiGroup SCHOOL-CLASS-MANAGER
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -200,5 +203,359 @@ public class SchoolClassController extends BaseSecurityController {
             deleteModel.delete();
             return okJSON200();
         });
+    }
+
+    /**
+     * @api {POST} /v2/p/school_class/:id/set_head_teacher/   06设置班主任
+     * @apiName setHeadTeacher
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {long} id 班级ID
+     * @apiParam {String} subject 任教科目（可选）
+     * @apiParam {long} teacherId 教师ID
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    public CompletionStage<Result> setHeadTeacher(Http.Request request, long id) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
+
+            try {
+                long teacherId = jsonNode.findPath("teacherId").asLong();
+                String subject = jsonNode.findPath("subject").asText();
+
+                // 参数验证
+                if (teacherId <= 0) return okCustomJson(CODE40001, "教师ID不能为空");
+
+                // 验证班级是否存在
+                SchoolClass schoolClass = SchoolClass.find.byId(id);
+                if (schoolClass == null) return okCustomJson(CODE40001, "班级不存在");
+
+                // 验证教师是否存在
+                ShopAdmin teacher = ShopAdmin.find.byId(teacherId);
+                if (teacher == null) return okCustomJson(CODE40001, "教师不存在");
+
+                // 设置班主任
+                boolean success = setClassHeadTeacher(id, teacherId, subject);
+                if (!success) return okCustomJson(CODE40001, "设置班主任失败");
+
+                return okJSON200();
+
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "设置班主任失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {POST} /v2/p/school_class/:id/add_teacher/   07添加科任教师
+     * @apiName addClassTeacher
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {long} id 班级ID
+     * @apiParam {long} teacherId 教师ID
+     * @apiParam {String} subject 任教科目
+     * @apiParam {int} teachingHours 周课时数（可选）
+     * @apiParam {String} responsibility 职责描述（可选）
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    public CompletionStage<Result> addClassTeacher(Http.Request request, long id) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
+
+            try {
+                long teacherId = jsonNode.findPath("teacherId").asLong();
+                String subject = jsonNode.findPath("subject").asText();
+                int teachingHours = jsonNode.findPath("teachingHours").asInt();
+                String responsibility = jsonNode.findPath("responsibility").asText();
+
+                // 参数验证
+                if (teacherId <= 0) return okCustomJson(CODE40001, "教师ID不能为空");
+                if (ValidationUtil.isEmpty(subject)) return okCustomJson(CODE40001, "任教科目不能为空");
+
+                // 验证班级是否存在
+                SchoolClass schoolClass = SchoolClass.find.byId(id);
+                if (schoolClass == null) return okCustomJson(CODE40001, "班级不存在");
+                if (ValidationUtil.isEmpty(subject)) return okCustomJson(CODE40001, "任教科目不能为空");
+
+                // 验证教师是否存在
+                ShopAdmin teacher = ShopAdmin.find.byId(teacherId);
+                if (teacher == null) return okCustomJson(CODE40001, "教师不存在");
+
+                // 检查是否已经是该班级的教师
+                boolean isAlreadyTeacher = ClassTeacherRelation.isTeacherInClass(teacherId, id);
+                if (isAlreadyTeacher) return okCustomJson(CODE40001, "该教师已经是本班教师");
+
+                // 添加科任教师
+                addTeacherToClass(id, teacherId, subject, teachingHours, responsibility, false);
+
+                return okJSON200();
+
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "添加教师失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {POST} /v2/p/school_class/:id/remove_teacher/   08移除班级教师
+     * @apiName removeClassTeacher
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {long} id 班级ID
+     * @apiParam {long} teacherId 教师ID
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    public CompletionStage<Result> removeClassTeacher(Http.Request request, long id) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
+
+            try {
+                long teacherId = jsonNode.findPath("teacherId").asLong();
+
+                // 参数验证
+                if (teacherId <= 0) return okCustomJson(CODE40001, "教师ID不能为空");
+
+                // 验证班级是否存在
+                SchoolClass schoolClass = SchoolClass.find.byId(id);
+                if (schoolClass == null) return okCustomJson(CODE40001, "班级不存在");
+
+                // 移除教师
+                removeTeacherFromClass(id, teacherId);
+                return okJSON200();
+
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "移除教师失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/school_class/:id/teachers/   09获取班级教师列表
+     * @apiName getClassTeachers
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {long} id 班级ID
+     * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {Array} teachers 教师列表
+     * @apiSuccess (Success 200) {Object} headTeacher 班主任信息
+     */
+    public CompletionStage<Result> getClassTeachers(Http.Request request, long id) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+
+            try {
+                // 验证班级是否存在
+                SchoolClass schoolClass = SchoolClass.find.byId(id);
+                if (schoolClass == null) return okCustomJson(CODE40001, "班级不存在");
+
+                // 获取班级所有教师关系
+                List<ClassTeacherRelation> teacherRelations = ClassTeacherRelation.findByClassId(id);
+                List<ObjectNode> teacherList = new ArrayList<>();
+                ObjectNode headTeacher = null;
+
+                for (ClassTeacherRelation relation : teacherRelations) {
+                    ShopAdmin teacher = ShopAdmin.find.byId(relation.getTeacherId());
+                    if (teacher != null) {
+                        ObjectNode teacherNode = Json.newObject();
+                        teacherNode.put("relationId", relation.getId());
+                        teacherNode.put("teacherId", teacher.getId());
+                        teacherNode.put("teacherName", teacher.getRealName());
+                        teacherNode.put("phone", teacher.getPhoneNumber());
+                        teacherNode.put("subject", relation.getSubject());
+                        teacherNode.put("isHeadTeacher", relation.isHeadTeacher());
+                        teacherNode.put("createTime", relation.getCreateTime());
+
+                        if (relation.isHeadTeacher()) {
+                            headTeacher = teacherNode;
+                        } else {
+                            teacherList.add(teacherNode);
+                        }
+                    }
+                }
+
+                ObjectNode result = Json.newObject();
+                result.put(CODE, CODE200);
+                if (headTeacher != null) {
+                    result.set("headTeacher", headTeacher);
+                }
+                result.set("subjectTeachers", Json.toJson(teacherList));
+                return ok(result);
+
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "获取教师列表失败：" + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/school_class/:id/head_teacher/   10获取班主任信息
+     * @apiName getHeadTeacher
+     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {long} id 班级ID
+     * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {Object} headTeacher 班主任信息
+     */
+    public CompletionStage<Result> getHeadTeacher(Http.Request request, long id) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+
+            try {
+                // 验证班级是否存在
+                SchoolClass schoolClass = SchoolClass.find.byId(id);
+                if (schoolClass == null) return okCustomJson(CODE40001, "班级不存在");
+
+                // 获取班主任关系
+                ClassTeacherRelation headTeacherRelation = ClassTeacherRelation.findHeadTeacherByClassId(id);
+                if (headTeacherRelation == null) {
+                    return okCustomJson(CODE40001, "该班级暂无班主任");
+                }
+
+                ShopAdmin headTeacher = ShopAdmin.find.byId(headTeacherRelation.getTeacherId());
+                if (headTeacher == null) {
+                    return okCustomJson(CODE40001, "班主任信息不存在");
+                }
+
+                ObjectNode result = Json.newObject();
+                result.put(CODE, CODE200);
+                result.put("teacherId", headTeacher.getId());
+                result.put("teacherName", headTeacher.getRealName());
+                result.put("phone", headTeacher.getPhoneNumber());
+                result.put("subject", headTeacherRelation.getSubject());
+                result.put("createTime", headTeacherRelation.getCreateTime());
+
+                return ok(result);
+
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "获取班主任信息失败：" + e.getMessage());
+            }
+        });
+    }
+    /**
+     * 设置班主任
+     */
+    private boolean setClassHeadTeacher(long classId, long teacherId, String subject) {
+        try {
+            // 先取消现有的班主任
+            ClassTeacherRelation existingHeadTeacher = ClassTeacherRelation.findHeadTeacherByClassId(classId);
+            if (existingHeadTeacher != null) {
+                existingHeadTeacher.setHeadTeacher(false);
+                existingHeadTeacher.setUpdateTime(dateUtils.getCurrentTimeByMilliSecond());
+                existingHeadTeacher.update();
+            }
+
+            // 检查该教师是否已经是科任教师
+            ClassTeacherRelation existingRelation = ClassTeacherRelation.find.query()
+                    .where()
+                    .eq("class_id", classId)
+                    .eq("teacher_id", teacherId)
+                    .findOne();
+
+            if (existingRelation != null) {
+                // 如果是科任教师，升级为班主任
+                existingRelation.setHeadTeacher(true);
+                if (!ValidationUtil.isEmpty(subject)) {
+                    existingRelation.setSubject(subject);
+                }
+                existingRelation.setUpdateTime(dateUtils.getCurrentTimeByMilliSecond());
+                existingRelation.update();
+            } else {
+                // 创建新的班主任关系
+                addTeacherToClass(classId, teacherId,
+                        ValidationUtil.isEmpty(subject) ? "班主任" : subject,
+                        0, "班主任", true);
+            }
+
+            // 更新班级的班主任ID
+            SchoolClass schoolClass = SchoolClass.find.byId(classId);
+            if (schoolClass != null) {
+                schoolClass.setHeadTeacherId(teacherId);
+                schoolClass.update();
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 添加教师到班级
+     */
+    private void addTeacherToClass(long classId, long teacherId, String subject,
+                                   int teachingHours, String responsibility, boolean isHeadTeacher) {
+        ClassTeacherRelation relation = new ClassTeacherRelation();
+        relation.setClassId(classId);
+        relation.setTeacherId(teacherId);
+        relation.setSubject(subject);
+        relation.setHeadTeacher(isHeadTeacher);
+        relation.setCreateTime(dateUtils.getCurrentTimeByMilliSecond());
+        relation.setUpdateTime(dateUtils.getCurrentTimeByMilliSecond());
+        relation.save();
+
+    }
+
+    /**
+     * 移除班级教师
+     */
+    private void removeTeacherFromClass(long classId, long teacherId) {
+        ClassTeacherRelation relation = ClassTeacherRelation.find.query()
+                .where()
+                .eq("class_id", classId)
+                .eq("teacher_id", teacherId)
+                .findOne();
+
+        if (relation != null) {
+            // 如果是班主任，需要清除班级的班主任ID
+            if (relation.isHeadTeacher()) {
+                SchoolClass schoolClass = SchoolClass.find.byId(classId);
+                if (schoolClass != null) {
+                    schoolClass.setHeadTeacherId(0L);
+                    schoolClass.update();
+                }
+            }
+
+
+            relation.delete();
+
+
+        }
+    }
+
+    /**
+     * 更新教师信息
+     */
+    private void updateTeacherInfo(long classId, long teacherId, String subject) {
+        ClassTeacherRelation relation = ClassTeacherRelation.find.query()
+                .where()
+                .eq("class_id", classId)
+                .eq("teacher_id", teacherId)
+                .findOne();
+
+        if (relation != null) {
+            if (!ValidationUtil.isEmpty(subject)) {
+                relation.setSubject(subject);
+            }
+            relation.setUpdateTime(dateUtils.getCurrentTimeByMilliSecond());
+            relation.update();
+        }
+    }
+
+
+    /**
+     * 获取当前学年
+     */
+    private String getCurrentAcademicYear() {
+        // 根据业务逻辑实现，这里返回示例
+        return "2024-2025";
+    }
+
+    /**
+     * 获取当前学期
+     */
+    private int getCurrentSemester() {
+        // 根据业务逻辑实现，这里返回示例
+        return 1; // 1-上学期, 2-下学期
     }
 }
