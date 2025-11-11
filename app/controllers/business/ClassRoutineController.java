@@ -127,9 +127,10 @@ public class ClassRoutineController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassRoutine classRoutine = Json.fromJson(jsonNode, ClassRoutine.class);
-
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             classRoutine.setCreateTime(currentTimeBySecond);
+            double totalScore = classRoutine.calcTotalScore();
+            classRoutine.setTotalScore(totalScore);
             classRoutine.save();
             return okJSON200();
         });
@@ -169,9 +170,11 @@ public class ClassRoutineController extends BaseSecurityController {
             if (newClassRoutine.exerciseScore > 0) originalClassRoutine.setExerciseScore(newClassRoutine.exerciseScore);
             if (newClassRoutine.mannerScore > 0) originalClassRoutine.setMannerScore(newClassRoutine.mannerScore);
             if (newClassRoutine.readingScore > 0) originalClassRoutine.setReadingScore(newClassRoutine.readingScore);
-            if (newClassRoutine.totalScore > 0) originalClassRoutine.setTotalScore(newClassRoutine.totalScore);
+//            if (newClassRoutine.totalScore > 0) originalClassRoutine.setTotalScore(newClassRoutine.totalScore);
             if (newClassRoutine.recordTime > 0) originalClassRoutine.setRecordTime(newClassRoutine.recordTime);
 
+            double totalScore = originalClassRoutine.calcTotalScore();
+            originalClassRoutine.setTotalScore(totalScore);
             originalClassRoutine.save();
             return okJSON200();
         });

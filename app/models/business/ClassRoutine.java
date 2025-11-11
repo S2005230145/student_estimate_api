@@ -65,4 +65,8 @@ public class ClassRoutine  extends Model {
 
     public static Finder<Long, ClassRoutine> find = new Finder<>(ClassRoutine.class);
 
+    public double calcTotalScore() {
+        return this.hygieneScore + this.disciplineScore + this.exerciseScore + this.mannerScore + this.readingScore;
+    }
+
 }

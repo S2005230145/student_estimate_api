@@ -19,7 +19,9 @@ public class HomeVisit  extends Model {
     public static final int BASE_SCORE_VALUE = 10; // 基础分10分
     public static final int CASE_BONUS_MAX = 5; // 案例加分上限5分
     public static final int VIDEO_BONUS_MAX = 5; // 视频加分上限5分
-    
+    public static final int STATUS_NEED_REVIEW = 0; // 待评价
+    public static final int STATUS_APPROVED = 10; // 已评价
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -51,12 +53,20 @@ public class HomeVisit  extends Model {
     @DbComment("优秀案例")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String caseStudy;
+
+    @Column(name = "case_level")
+    @DbComment("案例评价等级")
+    public String caseLevel;
     
     @Column(name = "video_evidence")
     @DbComment("视频证据")
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String videoEvidence;
-    
+
+    @Column(name = "video_level")
+    @DbComment("视频评价等级")
+    public String videoLevel;
+
     @Column(name = "base_score")
     @DbComment("基础分")
     public int baseScore;
@@ -70,9 +80,9 @@ public class HomeVisit  extends Model {
     public int totalScore;
     
     @Column(name = "status")
-    @DbComment("审核状态")
+    @DbComment("状态")
     public int status;
-    
+
     @Column(name = "visit_time")
     @DbComment("家访时间")
     public long visitTime;
@@ -82,4 +92,40 @@ public class HomeVisit  extends Model {
     public long createTime;
 
     public static Finder<Long, HomeVisit> find = new Finder<>(HomeVisit.class);
+
+    public void calcBonusScore() {
+        int caseScore = 0;
+        int videoScore = 0;
+        switch (this.caseLevel) {
+            case "优秀":
+                caseScore = 5;
+                break;
+            case "良好":
+                caseScore = 3;
+                break;
+            case "合格":
+                caseScore = 2;
+                break;
+            case "不合格":
+                break;
+        }
+        switch (this.videoLevel) {
+            case "优秀":
+                videoScore = 5;
+                break;
+            case "良好":
+                videoScore = 3;
+                break;
+            case "合格":
+                videoScore = 2;
+                break;
+            case "不合格":
+                break;
+        }
+        this.setBonusScore(caseScore + videoScore);
+    }
+
+    public void calcTotalScore() {
+        this.setTotalScore(this.baseScore + this.bonusScore);
+    }
 }

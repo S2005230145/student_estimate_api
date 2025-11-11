@@ -131,6 +131,7 @@ public class HomeVisitController extends BaseSecurityController {
         JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
             if (null == admin) return unauth403();
+            if (!admin.rules.contains("班主任")) return okCustomJson(CODE40001, "权限不足");
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HomeVisit homeVisit = Json.fromJson(jsonNode, HomeVisit.class);
 
@@ -165,6 +166,7 @@ public class HomeVisitController extends BaseSecurityController {
         JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
+            if (!adminMember.rules.contains("班主任")) return okCustomJson(CODE40001, "权限不足");
             HomeVisit originalHomeVisit = HomeVisit.find.byId(id);
             HomeVisit newHomeVisit = Json.fromJson(jsonNode, HomeVisit.class);
             if (null == originalHomeVisit) return okCustomJson(CODE40001, "数据不存在");
@@ -177,10 +179,6 @@ public class HomeVisitController extends BaseSecurityController {
             if (!ValidationUtil.isEmpty(newHomeVisit.caseStudy)) originalHomeVisit.setCaseStudy(newHomeVisit.caseStudy);
             if (!ValidationUtil.isEmpty(newHomeVisit.videoEvidence))
                 originalHomeVisit.setVideoEvidence(newHomeVisit.videoEvidence);
-            if (newHomeVisit.baseScore > 0) originalHomeVisit.setBaseScore(newHomeVisit.baseScore);
-            if (newHomeVisit.bonusScore > 0) originalHomeVisit.setBonusScore(newHomeVisit.bonusScore);
-            if (newHomeVisit.totalScore > 0) originalHomeVisit.setTotalScore(newHomeVisit.totalScore);
-            if (newHomeVisit.status > 0) originalHomeVisit.setStatus(newHomeVisit.status);
             if (newHomeVisit.visitTime > 0) originalHomeVisit.setVisitTime(newHomeVisit.visitTime);
 
             originalHomeVisit.save();
@@ -209,4 +207,37 @@ public class HomeVisitController extends BaseSecurityController {
             return okJSON200();
         });
     }
+
+    /**
+     * @api {POST} /v2/p/home_visit/:id/review/   06评审打分
+     * @apiName reviewHomeVisit
+     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiParam {long} id id
+     * @apiParam {String} caseLevel  优秀 优秀、良好、一般、不合格
+     * @apiParam {String} videoLevel 优秀、良好、一般、不合格
+     * @apiParam {double} baseScore 基础分
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    public CompletionStage<Result> reviewHomeVisit(Http.Request request,long id ) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            if (!adminMember.rules.contains("德育处")) return okCustomJson(CODE40001, "权限不足");
+            String caseLevel = jsonNode.findPath("caseLevel").asText();
+            String videoLevel = jsonNode.findPath("videoLevel").asText();
+            int baseScore = jsonNode.findPath("baseScore").asInt();
+            HomeVisit homeVisit = HomeVisit.find.byId(id);
+            if (null == homeVisit) return okCustomJson(CODE40001, "数据不存在");
+            homeVisit.setVideoLevel(videoLevel);
+            homeVisit.setCaseLevel(caseLevel);
+            if (baseScore<0 || baseScore >HomeVisit.BASE_SCORE_VALUE) return okCustomJson(CODE40001, "基础分应在0~10之间");
+            homeVisit.setBaseScore(baseScore);
+            homeVisit.calcBonusScore();
+            homeVisit.calcTotalScore();
+            homeVisit.setStatus(HomeVisit.STATUS_APPROVED);
+            homeVisit.save();
+            return okJSON200();
+        });
+    }
+
 }
