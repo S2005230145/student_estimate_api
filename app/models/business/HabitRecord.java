@@ -177,6 +177,7 @@ public class HabitRecord  extends Model {
 
         // 重新计算习惯得分
         calculateStudentTotalHabitScore(studentId, records);
+
     }
 
 
@@ -202,6 +203,7 @@ public class HabitRecord  extends Model {
 
         // 更新学生习惯得分
         student.setHabitScore(newHabitScore);
+        SchoolClass.recalcSpecialtyTotalScoreById(student.classId);
         student.update();
     }
 }

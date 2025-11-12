@@ -129,9 +129,9 @@ public class ClassRoutineController extends BaseSecurityController {
             ClassRoutine classRoutine = Json.fromJson(jsonNode, ClassRoutine.class);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             classRoutine.setCreateTime(currentTimeBySecond);
-            double totalScore = classRoutine.calcTotalScore();
-            classRoutine.setTotalScore(totalScore);
+            classRoutine.calcTotalScore();
             classRoutine.save();
+            classRoutine.syncToClass();
             return okJSON200();
         });
     }
@@ -173,8 +173,7 @@ public class ClassRoutineController extends BaseSecurityController {
 //            if (newClassRoutine.totalScore > 0) originalClassRoutine.setTotalScore(newClassRoutine.totalScore);
             if (newClassRoutine.recordTime > 0) originalClassRoutine.setRecordTime(newClassRoutine.recordTime);
 
-            double totalScore = originalClassRoutine.calcTotalScore();
-            originalClassRoutine.setTotalScore(totalScore);
+            originalClassRoutine.calcTotalScore();
             originalClassRoutine.save();
             return okJSON200();
         });

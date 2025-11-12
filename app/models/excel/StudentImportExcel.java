@@ -80,6 +80,9 @@ public class StudentImportExcel {
 
             // 创建家长关系和账号
             createParentRelations(studentExcel, student.getId());
+
+            // 更新班级学生数
+            schoolClass.calcStudentNum();
         }
     }
 
@@ -352,7 +355,11 @@ public class StudentImportExcel {
 
         // 转换为实体并保存
         toEntity(excelData, classId);
+
+
     }
+
+
 
 
 }

@@ -129,7 +129,11 @@ public class AcademicRecord extends Model {
 
         // 6. 同步到学生表
         batchSyncToStudent(currentRecords);
+
+        //7. 同步到班级表
         updateClassAverageScores(currentRecords);
+
+
 
         return currentRecords;
     }
@@ -410,18 +414,21 @@ public class AcademicRecord extends Model {
             return;
         }
 
+
+
         // 1. 批量获取所有学生信息（一次查询）
         List<Long> studentIds = academicRecords.stream()
                 .map(r -> r.studentId)
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<Long, Student> studentMap = Student.find.query()
-                .where()
+
+        Map<Long, Student> studentMap = Student.find.query().where()
                 .in("id", studentIds)
                 .findList()
                 .stream()
                 .collect(Collectors.toMap(s -> s.id, s -> s));
+
 
         // 2. 按班级分组计算平均分
         Map<Long, List<Double>> classScoresMap = new HashMap<>();
@@ -442,6 +449,7 @@ public class AcademicRecord extends Model {
                     .average()
                     .orElse(0.0);
             classAverageMap.put(entry.getKey(), Math.round(average * 100.0) / 100.0);
+
         }
 
         // 4. 批量查询所有相关班级的学生（一次查询）
@@ -461,10 +469,13 @@ public class AcademicRecord extends Model {
             }
         }
 
+
         // 6. 批量保存
         if (!studentsToUpdate.isEmpty()) {
             DB.saveAll(studentsToUpdate);
             System.out.println("更新 " + classIds.size() + " 个班级的平均分，涉及 " + studentsToUpdate.size() + " 名学生");
         }
+
+        SchoolClass.batchRecalcAcademicScores(classIds);
     }
 }

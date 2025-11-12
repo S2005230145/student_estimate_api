@@ -7,12 +7,16 @@ import jakarta.persistence.*;
 import lombok.Data;
 import myannotation.Translation;
 
+import java.util.List;
+
 @Data
 @Entity
 @Table(name = "v1_class_routine")
 @DbComment("班级常规评比")
 public class ClassRoutine  extends Model {
-    
+    public static final int TYPE_MONTHLY = 1; //  周评
+    public static final int TYPE_WEEKLY = 2; //  月评
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -30,6 +34,10 @@ public class ClassRoutine  extends Model {
     @Column(name = "month")
     @DbComment("月份")
     public int month;
+
+    @Column(name = "year")
+    @DbComment("年份")
+    public int year;
     
     @Column(name = "hygiene_score")
     @DbComment("卫生得分")
@@ -54,19 +62,97 @@ public class ClassRoutine  extends Model {
     @Column(name = "total_score")
     @DbComment("周总分")
     public double totalScore;
-    
+
+    @Column(name = "evaluator_id")
+    @DbComment("评分人ID")
+    public long evaluatorId;
+
+    @Column(name = "evaluator_name")
+    @DbComment("评分人姓名")
+    public String evaluatorName;
+
+    @Column(name = "evaluate_type")
+    @DbComment("评分类型") // 1-周评 2-月评
+    public int evaluateType;
+
+    @Column(name = "comments")
+    @DbComment("评语")
+    public String comments;
+
     @Column(name = "record_time")
     @DbComment("记录时间")
     public long recordTime;
-    
+
     @Column(name = "create_time")
     @DbComment("创建时间")
     public long createTime;
 
+    @Column(name = "update_time")
+    @DbComment("更新时间")
+    public long updateTime;
+
     public static Finder<Long, ClassRoutine> find = new Finder<>(ClassRoutine.class);
 
-    public double calcTotalScore() {
-        return this.hygieneScore + this.disciplineScore + this.exerciseScore + this.mannerScore + this.readingScore;
+    /**
+     * 计算周总分
+     * 规则：各项得分相加
+     */
+    public void calcTotalScore() {
+        this.setTotalScore( this.hygieneScore + this.disciplineScore + this.exerciseScore +
+                this.mannerScore + this.readingScore);
     }
+
+    /**
+     * 同步到班级总评分
+     * 规则：根据周评/月评数据更新班级的常规评比得分
+     */
+    public void syncToClass() {
+        try {
+            SchoolClass schoolClass = SchoolClass.find.byId(this.classId);
+            if (schoolClass == null) {
+                return;
+            }
+
+            // 计算班级的月平均常规得分
+            double monthlyAverage = calculateMonthlyAverage(this.classId, this.year, this.month);
+
+            // 更新班级的常规评比得分
+            schoolClass.setRoutineScore(monthlyAverage);
+
+            // 重新计算班级总分
+            schoolClass.calculateTotalScore();
+            schoolClass.update();
+
+        } catch (Exception e) {
+            throw new RuntimeException("同步到班级失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 计算指定班级某月的常规评比平均分
+     */
+    private double calculateMonthlyAverage(long classId, int year, int month) {
+        // 获取该月所有周评记录
+        List<ClassRoutine> monthlyRecords = find.query()
+                .where()
+                .eq("class_id", classId)
+                .eq("year", year)
+                .eq("month", month)
+                .eq("evaluate_type", 1) // 周评
+                .findList();
+
+        if (monthlyRecords.isEmpty()) {
+            return 0;
+        }
+
+        // 计算月平均分
+        double total = 0;
+        for (ClassRoutine record : monthlyRecords) {
+            total += record.getTotalScore();
+        }
+
+        return total / monthlyRecords.size();
+    }
+
 
 }

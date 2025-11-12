@@ -53,13 +53,17 @@ public class SchoolClass  extends Model {
 
     @Transient
     private ShopAdmin headTeacher;
+
+    @Column(name = "student_num")
+    @DbComment("人数")
+    public int studentNum;
     
     @Column(name = "academic_score")
-    @DbComment("学业得分")
+    @DbComment("学业得分总分")
     public double academicScore;
     
     @Column(name = "specialty_score")
-    @DbComment("特长得分")
+    @DbComment("特长得分总分")
     public double specialtyScore;
     
     @Column(name = "routine_score")
@@ -77,7 +81,11 @@ public class SchoolClass  extends Model {
     @Column(name = "disqualified")
     @DbComment("一票否决")
     public boolean disqualified;
-    
+
+    @Column(name = "deduction_score")
+    @DbComment("扣分")
+    public double deductionScore;
+
     @Column(name = "honor_title")
     @DbComment("荣誉称号") // 星河班级/星辰班级
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
@@ -97,314 +105,224 @@ public class SchoolClass  extends Model {
         return this.grade >= 3;
     }
 
-    /**
-     * 检查其他一票否决条件
-     */
-    private boolean checkOtherDisqualificationConditions() {
-        // 这里可以添加平台测试、体育达标率等检查逻辑
-        return false;
-    }
-
-    // ========== 学业得分计算方法 ==========
 
     /**
-     * 计算学业得分（严格按照图片规则）
+     * 计算班级总分
      */
-    public double calculateAcademicScore( double chineseScore, double mathScore, Double englishScore) {
+    public double calculateTotalScore() {
+        // 按照公式计算总分
+        double calculatedTotal = getAcademicScore()/getStudentNum()* ACADEMIC_WEIGHT + getSpecialtyScore()/getStudentNum() * SPECIALTY_WEIGHT +
+                getRoutineScore() * ROUTINE_WEIGHT + getHomeVisitScore() * HOME_VISIT_WEIGHT - getDeductionScore();
 
-        // 计算学科平均分
-        double subjectAverage;
-        if (!this.isHighGrade()) {
-            // 低年级（1-2年级）：只计算语文数学
-            subjectAverage = (chineseScore + mathScore) / 2;
-        } else {
-            // 高年级（3年级以上）：计算语数英
-            if (englishScore == null) {
-                throw new IllegalArgumentException("高年级必须提供英语成绩");
-            }
-            subjectAverage = (chineseScore + mathScore + englishScore) / 3;
-        }
+        this.setTotalScore(calculatedTotal);
 
-        // 最终学业得分 = 基础分 × 学科平均分比例 × 30%
-        double calculatedScore = baseScore * (subjectAverage / 100) * ACADEMIC_WEIGHT;
-        setAcademicScore(calculatedScore);
-        return getAcademicScore();
+        return this.getTotalScore();
     }
 
 
-
     /**
-     * 简化学业得分计算（如果已经有综合评分）
+     * 计算学生数
      */
-    public double calculateAcademicScore(String academicLevel) {
-        setAcademicScore(baseScore * ACADEMIC_WEIGHT);
-        return getAcademicScore();
+    public void calcStudentNum() {
+        int count = Student.find.query().where().eq("class_id", this.getId()).findCount();
+        this.setStudentNum(count);
+        this.update();
     }
 
-    // ========== 特长得分计算方法 ==========
+
+//    ----------学业分计算----------------
 
     /**
-     * 计算特长得分（严格按照图片规则）
+     * 重新计算班级学业总分（基于所有学生学业成绩）
+     * @return 计算后的学业总分
      */
-    public double calculateSpecialtyScore(List<Student> students) {
+    public double recalcAcademicTotalScore() {
+        List<Student> students = Student.find.query()
+                .where()
+                .eq("class_id", this.getId())
+                .findList();
+
         if (students == null || students.isEmpty()) {
-            setSpecialtyScore(0);
+            this.setAcademicScore(0);
             return 0;
         }
 
-        // 计算所有学生特长平均分
-        double totalSpecialty = 0;
+        double totalAcademicScore = 0;
         int validCount = 0;
 
         for (Student student : students) {
-            if (student.getSpecialtyScore() >= 0) {
-                totalSpecialty += student.getSpecialtyScore();
+            if (student.getAcademicScore() >= 0) {
+                totalAcademicScore += student.getAcademicScore();
                 validCount++;
             }
         }
 
         if (validCount == 0) {
-            setSpecialtyScore(0);
+            this.setAcademicScore(0);
             return 0;
         }
 
-        double averageSpecialty = totalSpecialty / validCount;
-
-        // 按20%折算，并封顶20分
-        double calculatedScore = Math.min(averageSpecialty * SPECIALTY_WEIGHT, 20.0);
-        setSpecialtyScore(calculatedScore);
-        return getSpecialtyScore();
+        this.setAcademicScore(totalAcademicScore);
+        return this.getAcademicScore();
     }
 
-    // ========== 班级常规评比得分设置方法 ==========
-
     /**
-     * 设置班级常规评比得分（由德育处评定）
+     * 重新计算班级学业总分并保存
+     * @return 更新后的学业总分
      */
-    public double setRoutineScore(double routineScore) {
-        // 常规评比得分直接由德育处输入，按30%折算
-        setRoutineScore(routineScore * ROUTINE_WEIGHT);
-        return getRoutineScore();
+    public double recalcAndSaveAcademicTotalScore() {
+        recalcAcademicTotalScore();
+        this.update();
+        return this.getAcademicScore();
     }
 
-    // ========== 家访工作评价得分设置方法 ==========
-
     /**
-     * 设置家访工作评价得分
+     * 重新计算指定班级的学业总分
+     * @param classId 班级ID
+     * @return 计算后的学业总分
      */
-    public double setHomeVisitScore(double homeVisitScore) {
-        setHomeVisitScore(homeVisitScore * HOME_VISIT_WEIGHT);
-        return getHomeVisitScore();
-    }
-
-    // ========== 扣分设置方法 ==========
-
-    /**
-     * 设置扣分
-     */
-    public void setDeductionScore(double deductionScore) {
-        setDeductionScore(Math.max(0, deductionScore)); // 扣分不能为负数
-    }
-
-    // ========== 总分计算方法 ==========
-
-    /**
-     * 计算班级总分（严格按照图片公式）
-     */
-    public double calculateTotalScore() {
-        // 先检查一票否决
-        if (checkDisqualification()) {
-            setTotalScore(0);
-            setHonorTitle("不合格班级");
+    public static double recalcAcademicTotalScoreById(long classId) {
+        SchoolClass schoolClass = find.byId(classId);
+        if (schoolClass == null) {
             return 0;
         }
-
-        // 按照图片公式计算总分
-        double calculatedTotal = getAcademicScore() + getSpecialtyScore() +
-                getRoutineScore() + getHomeVisitScore() - getDeductionScore();
-
-        // 确保总分不为负数
-        setTotalScore(Math.max(0, calculatedTotal));
-
-        // 更新荣誉称号
-        updateHonorTitle();
-
-        return getTotalScore();
+        return schoolClass.recalcAndSaveAcademicTotalScore();
     }
 
     /**
-     * 综合计算所有得分
+     * 批量重新计算多个班级的学业总分
+     * @param classIds 班级ID列表
+     * @return 成功计算的班级数量
      */
-    public SchoolClass calculateAllScores(String academicLevel, double chineseScore, double mathScore,
-                                          Double englishScore, List<Student> students,
-                                          double routineScore, double homeVisitScore, double deductionScore) {
-        // 设置各项得分
-        calculateAcademicScore(academicLevel, chineseScore, mathScore, englishScore);
-        calculateSpecialtyScore(students);
-        setRoutineScore(routineScore);
-        setHomeVisitScore(homeVisitScore);
-        setDeductionScore(deductionScore);
-
-        // 计算总分
-        calculateTotalScore();
-
-        return this;
-    }
-
-    // ========== 荣誉称号计算方法 ==========
-
-    /**
-     * 更新荣誉称号
-     */
-    public String updateHonorTitle() {
-        if (isDisqualified()) {
-            setHonorTitle("不合格班级");
-            return getHonorTitle();
-        }
-
-        double total = getTotalScore();
-        if (total >= 90) {
-            setHonorTitle("星河班级");
-        } else if (total >= 80) {
-            setHonorTitle("星辰班级");
-        } else if (total >= 70) {
-            setHonorTitle("优秀班级");
-        } else if (total >= 60) {
-            setHonorTitle("合格班级");
-        } else {
-            setHonorTitle("待改进班级");
-        }
-
-        return getHonorTitle();
-    }
-
-    // ========== 批量操作方法 ==========
-
-    /**
-     * 批量计算班级得分
-     */
-    public static void batchCalculateClassScores() {
-        List<SchoolClass> classes = find.all();
-        for (SchoolClass schoolClass : classes) {
+    public static int batchRecalcAcademicScores(List<Long> classIds) {
+        int successCount = 0;
+        for (Long classId : classIds) {
             try {
-                // 获取班级学生
-                List<Student> students = Student.find.query()
-                        .where()
-                        .eq("class_id", schoolClass.getId())
-                        .findList();
-
-                // 这里需要根据实际情况获取其他评分数据
-                // 暂时使用默认值，实际使用时需要从相关表获取
-                schoolClass.calculateAcademicScore("良", 85, 80, 75.0);
-                schoolClass.calculateSpecialtyScore(students);
-                schoolClass.setRoutineScore(85);
-                schoolClass.setHomeVisitScore(80);
-                schoolClass.setDeductionScore(0);
-
-                schoolClass.calculateTotalScore();
-                schoolClass.setUpdateTime(System.currentTimeMillis());
-                schoolClass.update();
-
+                recalcAcademicTotalScoreById(classId);
+                successCount++;
             } catch (Exception e) {
-                System.err.println("计算班级 " + schoolClass.getId() + " 得分失败: " + e.getMessage());
+                System.err.println("计算班级 " + classId + " 学业总分失败: " + e.getMessage());
             }
         }
+        return successCount;
     }
 
-    // ========== 工具方法 ==========
 
     /**
-     * 获取得分详情
+     * 获取学业得分排名（在年级中的排名）
      */
-    public String getScoreDetails() {
-        if (isDisqualified()) {
-            return String.format("一票否决：%s，总分为0", getDisqualifyReason());
+    public int getAcademicRankInGrade() {
+        List<SchoolClass> sameGradeClasses = find.query()
+                .where()
+                .eq("grade", this.getGrade())
+                .orderBy("academic_score desc")
+                .findList();
+
+        for (int i = 0; i < sameGradeClasses.size(); i++) {
+            if (sameGradeClasses.get(i).getId() == this.getId()) {
+                return i + 1;
+            }
+        }
+        return -1;
+    }
+
+//    -------------特长分计算----------------
+
+    /**
+     * 重新计算班级特长总分（基于所有学生特长成绩）
+     * @return 计算后的特长总分
+     */
+    public double recalcSpecialtyTotalScore() {
+        List<Student> students = Student.find.query()
+                .where()
+                .eq("class_id", this.getId())
+                .findList();
+
+        if (students == null || students.isEmpty()) {
+            this.setSpecialtyScore(0);
+            return 0;
         }
 
-        return String.format("学业:%.1f(等级:%s) 特长:%.1f 常规:%.1f 家访:%.1f 扣分:%.1f 总分:%.1f",
-                getAcademicScore(), getAcademicLevel(), getSpecialtyScore(), getRoutineScore(),
-                getHomeVisitScore(), getDeductionScore(), getTotalScore());
+        double totalSpecialtyScore = 0;
+        int validCount = 0;
+
+        for (Student student : students) {
+            if (student.getSpecialtyScore() >= 0) {
+                totalSpecialtyScore += student.getSpecialtyScore();
+                validCount++;
+            }
+        }
+
+        if (validCount == 0) {
+            this.setSpecialtyScore(0);
+            return 0;
+        }
+
+        this.setSpecialtyScore(totalSpecialtyScore);
+        return this.getSpecialtyScore();
     }
 
     /**
-     * 获取计算公式
+     * 重新计算班级特长总分并保存
+     * @return 更新后的特长总分
      */
-    public String getCalculationFormula() {
-        return String.format("总分 = %.1f×30%% + %.1f×20%% + %.1f×30%% + %.1f×20%% - %.1f = %.1f",
-                getAcademicScore() / ACADEMIC_WEIGHT, getSpecialtyScore() / SPECIALTY_WEIGHT,
-                getRoutineScore() / ROUTINE_WEIGHT, getHomeVisitScore() / HOME_VISIT_WEIGHT,
-                getDeductionScore(), getTotalScore());
+    public double recalcAndSaveSpecialtyTotalScore() {
+        recalcSpecialtyTotalScore();
+        this.update();
+        return this.getSpecialtyScore();
     }
 
     /**
-     * 重置所有得分
+     * 重新计算指定班级的特长总分
+     * @param classId 班级ID
+     * @return 计算后的特长总分
      */
-    public void resetScores() {
-        setAcademicLevel("未评分");
-        setAcademicScore(0);
-        setSpecialtyScore(0);
-        setRoutineScore(0);
-        setHomeVisitScore(0);
-        setDeductionScore(0);
-        setTotalScore(0);
-        setDisqualified(false);
-        setDisqualifyReason(null);
-        setHonorTitle("未评分");
-        setUpdateTime(System.currentTimeMillis());
+    public static double recalcSpecialtyTotalScoreById(long classId) {
+        SchoolClass schoolClass = find.byId(classId);
+        if (schoolClass == null) {
+            return 0;
+        }
+        return schoolClass.recalcAndSaveSpecialtyTotalScore();
     }
+
 
     /**
-     * 设置一票否决条件
+     * 批量重新计算多个班级的特长总分
+     * @param classIds 班级ID列表
+     * @return 成功计算的班级数量
      */
-    public void setDisqualificationConditions(boolean teacherViolation, boolean safetyAccident,
-                                              boolean disobeyAssignment, double satisfactionRate,
-                                              boolean parentComplaint) {
-        setTeacherViolation(teacherViolation);
-        setSafetyAccident(safetyAccident);
-        setDisobeyAssignment(disobeyAssignment);
-        setSatisfactionRate(satisfactionRate);
-        setParentComplaint(parentComplaint);
-
-        // 自动检查是否触发一票否决
-        checkDisqualification();
+    public static int batchRecalcSpecialtyScores(List<Long> classIds) {
+        int successCount = 0;
+        for (Long classId : classIds) {
+            try {
+                recalcSpecialtyTotalScoreById(classId);
+                successCount++;
+            } catch (Exception e) {
+                System.err.println("计算班级 " + classId + " 特长总分失败: " + e.getMessage());
+            }
+        }
+        return successCount;
     }
 
-    // ========== 业务逻辑方法 ==========
+
 
     /**
-     * 检查是否可以选择方案B（学业成绩达到班级平均分）
+     * 获取特长得分排名（在年级中的排名）
      */
-    public boolean canChooseSchemeB() {
-        return getAcademicScore() >= 18 && !isDisqualified(); // 合格以上且未被一票否决
-    }
+    public int getSpecialtyRankInGrade() {
+        List<SchoolClass> sameGradeClasses = find.query()
+                .where()
+                .eq("grade", this.getGrade())
+                .orderBy("specialty_score desc")
+                .findList();
 
-    /**
-     * 检查是否达到满意率
-     */
-    public boolean isSatisfactionAchieved() {
-        return getSatisfactionRate() >= SATISFACTION_THRESHOLD && !isDisqualified();
+        for (int i = 0; i < sameGradeClasses.size(); i++) {
+            if (sameGradeClasses.get(i).getId() == this.getId()) {
+                return i + 1;
+            }
+        }
+        return -1;
     }
-
-    /**
-     * 获取评分等级
-     */
-    public String getScoreGrade() {
-        if (isDisqualified()) return "E";
-        double total = getTotalScore();
-        if (total >= 90) return "A";
-        if (total >= 80) return "B";
-        if (total >= 70) return "C";
-        if (total >= 60) return "D";
-        return "E";
-    }
-
-    /**
-     * 检查是否需要改进
-     */
-    public boolean needsImprovement() {
-        return getTotalScore() < 60 && !isDisqualified();
-    }
-}
 
 
 }
