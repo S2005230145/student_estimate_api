@@ -36,6 +36,10 @@ public class HabitRecord  extends Model {
     public static final double PARENT_SCORE_MAX = 1.0; // 家长评分范围0.5-1分
     public static final double PARENT_SCORE_MIN = 0.5; // 家长评分范围0.5-1分
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

@@ -23,6 +23,7 @@ public class BadgeRecordController extends BaseSecurityController {
      * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
@@ -34,12 +35,12 @@ public class BadgeRecordController extends BaseSecurityController {
     public CompletionStage<Result> listBadgeRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<BadgeRecord> expressionList = BadgeRecord.find.query().where();
+            ExpressionList<BadgeRecord> expressionList = BadgeRecord.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
                     .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
+                    .endOr();               //编写其他条件
             //编写其他条件
             //编写其他条件
             //编写其他条件
@@ -71,6 +72,7 @@ public class BadgeRecordController extends BaseSecurityController {
      * @apiGroup BADGE-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
@@ -84,6 +86,8 @@ public class BadgeRecordController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             BadgeRecord badgeRecord = BadgeRecord.find.byId(id);
             if (null == badgeRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (badgeRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(badgeRecord);
             result.put(CODE, CODE200);
             return ok(result);
@@ -96,6 +100,7 @@ public class BadgeRecordController extends BaseSecurityController {
      * @apiName addBadgeRecord
      * @apiDescription 描述
      * @apiGroup BADGE-RECORD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {String} badgeType 徽章类型
@@ -112,7 +117,8 @@ public class BadgeRecordController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             BadgeRecord badgeRecord = Json.fromJson(jsonNode, BadgeRecord.class);
-
+// 数据sass化
+            badgeRecord.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             badgeRecord.setCreateTime(currentTimeBySecond);
             badgeRecord.save();
@@ -124,6 +130,7 @@ public class BadgeRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/badge_record/:id/  04更新-BadgeRecord徽章授予记录
      * @apiName updateBadgeRecord
      * @apiGroup BADGE-RECORD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {String} badgeType 徽章类型
@@ -140,6 +147,8 @@ public class BadgeRecordController extends BaseSecurityController {
             BadgeRecord originalBadgeRecord = BadgeRecord.find.byId(id);
             BadgeRecord newBadgeRecord = Json.fromJson(jsonNode, BadgeRecord.class);
             if (null == originalBadgeRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalBadgeRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newBadgeRecord.studentId > 0) originalBadgeRecord.setStudentId(newBadgeRecord.studentId);
             if (!ValidationUtil.isEmpty(newBadgeRecord.badgeType))
                 originalBadgeRecord.setBadgeType(newBadgeRecord.badgeType);
@@ -171,6 +180,8 @@ public class BadgeRecordController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             BadgeRecord deleteModel = BadgeRecord.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });

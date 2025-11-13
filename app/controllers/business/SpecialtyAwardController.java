@@ -23,8 +23,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {Student} student
      * @apiSuccess (Success 200) {int} awardLevel 奖项级别
      * @apiSuccess (Success 200) {int} awardGrade 奖项等级
      * @apiSuccess (Success 200) {String} competitionName 竞赛名称
@@ -33,17 +35,19 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiSuccess (Success 200) {int} status 审核状态
      * @apiSuccess (Success 200) {String} certificateImage 证书图片
      * @apiSuccess (Success 200) {String} badgeAwarded 授予徽章
+     * @apiSuccess (Success 200) {long} awardDate 获奖时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> listSpecialtyAward(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where();
+            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
                     .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
+                    .endOr();               //编写其他条件
             //编写其他条件
             //编写其他条件
             //编写其他条件
@@ -75,8 +79,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiGroup SPECIALTY-AWARD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {Student} student
      * @apiSuccess (Success 200) {int} awardLevel 奖项级别
      * @apiSuccess (Success 200) {int} awardGrade 奖项等级
      * @apiSuccess (Success 200) {String} competitionName 竞赛名称
@@ -85,13 +91,17 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiSuccess (Success 200) {int} status 审核状态
      * @apiSuccess (Success 200) {String} certificateImage 证书图片
      * @apiSuccess (Success 200) {String} badgeAwarded 授予徽章
+     * @apiSuccess (Success 200) {long} awardDate 获奖时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> getSpecialtyAward(Http.Request request, long id) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             SpecialtyAward specialtyAward = SpecialtyAward.find.byId(id);
             if (null == specialtyAward) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (specialtyAward.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(specialtyAward);
             result.put(CODE, CODE200);
             return ok(result);
@@ -104,8 +114,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiName addSpecialtyAward
      * @apiDescription 描述
      * @apiGroup SPECIALTY-AWARD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
+     * @apiParam {Student} student
      * @apiParam {int} awardLevel 奖项级别
      * @apiParam {int} awardGrade 奖项等级
      * @apiParam {String} competitionName 竞赛名称
@@ -114,7 +126,9 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiParam {int} status 审核状态
      * @apiParam {String} certificateImage 证书图片
      * @apiParam {String} badgeAwarded 授予徽章
+     * @apiParam {long} awardDate 获奖时间
      * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
 
@@ -124,9 +138,11 @@ public class SpecialtyAwardController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             SpecialtyAward specialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
-
+// 数据sass化
+            specialtyAward.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             specialtyAward.setCreateTime(currentTimeBySecond);
+            specialtyAward.setUpdateTime(currentTimeBySecond);
             specialtyAward.save();
             return okJSON200();
         });
@@ -136,8 +152,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @api {POST} /v2/p/specialty_award/:id/  04更新-SpecialtyAward特长获奖记录
      * @apiName updateSpecialtyAward
      * @apiGroup SPECIALTY-AWARD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
+     * @apiParam {Student} student
      * @apiParam {int} awardLevel 奖项级别
      * @apiParam {int} awardGrade 奖项等级
      * @apiParam {String} competitionName 竞赛名称
@@ -146,7 +164,9 @@ public class SpecialtyAwardController extends BaseSecurityController {
      * @apiParam {int} status 审核状态
      * @apiParam {String} certificateImage 证书图片
      * @apiParam {String} badgeAwarded 授予徽章
+     * @apiParam {long} awardDate 获奖时间
      * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
     public CompletionStage<Result> updateSpecialtyAward(Http.Request request, long id) {
@@ -156,6 +176,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward originalSpecialtyAward = SpecialtyAward.find.byId(id);
             SpecialtyAward newSpecialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
             if (null == originalSpecialtyAward) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (originalSpecialtyAward.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (newSpecialtyAward.studentId > 0) originalSpecialtyAward.setStudentId(newSpecialtyAward.studentId);
+            //字段<< student >>非基础类型,请自行编写更新语句
             if (newSpecialtyAward.awardLevel > 0) originalSpecialtyAward.setAwardLevel(newSpecialtyAward.awardLevel);
             if (newSpecialtyAward.awardGrade > 0) originalSpecialtyAward.setAwardGrade(newSpecialtyAward.awardGrade);
             if (!ValidationUtil.isEmpty(newSpecialtyAward.competitionName))
@@ -168,7 +192,10 @@ public class SpecialtyAwardController extends BaseSecurityController {
                 originalSpecialtyAward.setCertificateImage(newSpecialtyAward.certificateImage);
             if (!ValidationUtil.isEmpty(newSpecialtyAward.badgeAwarded))
                 originalSpecialtyAward.setBadgeAwarded(newSpecialtyAward.badgeAwarded);
-
+            if (newSpecialtyAward.awardDate > 0) originalSpecialtyAward.setAwardDate(newSpecialtyAward.awardDate);
+            if (newSpecialtyAward.updateTime > 0) originalSpecialtyAward.setUpdateTime(newSpecialtyAward.updateTime);
+            long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+            originalSpecialtyAward.setUpdateTime(currentTimeBySecond);
             originalSpecialtyAward.save();
             return okJSON200();
         });
@@ -191,11 +218,12 @@ public class SpecialtyAwardController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             SpecialtyAward deleteModel = SpecialtyAward.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
     }
-
 
     /**
      * @api {POST} /v2/p/specialty_award_judge/  06审核特长获奖记录

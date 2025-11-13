@@ -19,6 +19,10 @@ public class BadgeRecord extends Model {
     public static final String BADGE_SPARK = "星火徽章"; // 学业进步
     public static final String BADGE_TRUTH = "求真徽章"; // 习惯优秀
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

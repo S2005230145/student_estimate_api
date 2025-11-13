@@ -18,22 +18,23 @@ import java.util.concurrent.CompletionStage;
 public class ParentStudentRelationController extends BaseSecurityController {
 
     /**
-     * @api {GET} /v2/p/parent_student_relation_list/   01列表-家长学生关系
+     * @api {GET} /v2/p/parent_student_relation_list/   01列表-家长学生关系表
      * @apiName listParentStudentRelation
      * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
-     * @apiSuccess (Success 200) {long} id
-     * @apiSuccess (Success 200) {long} parentId
-     * @apiSuccess (Success 200) {long} studentId
-     * @apiSuccess (Success 200) {String} relationship
-     * @apiSuccess (Success 200) {long} createTime
-     * @apiSuccess (Success 200) {long} updateTime
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {long} parentId 家长ID
+     * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {String} relationship 关系类型
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> listParentStudentRelation(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ParentStudentRelation> expressionList = ParentStudentRelation.find.query().where();
+            ExpressionList<ParentStudentRelation> expressionList = ParentStudentRelation.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -65,23 +66,26 @@ public class ParentStudentRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/parent_student_relation/:id/  02详情-ParentStudentRelation家长学生关系
+     * @api {GET} /v2/p/parent_student_relation/:id/  02详情-ParentStudentRelation家长学生关系表
      * @apiName getParentStudentRelation
      * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
-     * @apiSuccess (Success 200) {long} id
-     * @apiSuccess (Success 200) {long} parentId
-     * @apiSuccess (Success 200) {long} studentId
-     * @apiSuccess (Success 200) {String} relationship
-     * @apiSuccess (Success 200) {long} createTime
-     * @apiSuccess (Success 200) {long} updateTime
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {long} parentId 家长ID
+     * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {String} relationship 关系类型
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
     public CompletionStage<Result> getParentStudentRelation(Http.Request request, long id) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ParentStudentRelation parentStudentRelation = ParentStudentRelation.find.byId(id);
             if (null == parentStudentRelation) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (parentStudentRelation.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(parentStudentRelation);
             result.put(CODE, CODE200);
             return ok(result);
@@ -90,16 +94,17 @@ public class ParentStudentRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/parent_student_relation/new/   01添加-ParentStudentRelation家长学生关系
+     * @api {POST} /v2/p/parent_student_relation/new/   01添加-ParentStudentRelation家长学生关系表
      * @apiName addParentStudentRelation
      * @apiDescription 描述
      * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
-     * @apiParam {long} id
-     * @apiParam {long} parentId
-     * @apiParam {long} studentId
-     * @apiParam {String} relationship
-     * @apiParam {long} createTime
-     * @apiParam {long} updateTime
+     * @apiParam {long} orgId 机构ID
+     * @apiParam {long} id 唯一标识
+     * @apiParam {long} parentId 家长ID
+     * @apiParam {long} studentId 学生ID
+     * @apiParam {String} relationship 关系类型
+     * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
 
@@ -109,7 +114,8 @@ public class ParentStudentRelationController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ParentStudentRelation parentStudentRelation = Json.fromJson(jsonNode, ParentStudentRelation.class);
-
+// 数据sass化
+            parentStudentRelation.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             parentStudentRelation.setCreateTime(currentTimeBySecond);
             parentStudentRelation.setUpdateTime(currentTimeBySecond);
@@ -119,15 +125,16 @@ public class ParentStudentRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/parent_student_relation/:id/  04更新-ParentStudentRelation家长学生关系
+     * @api {POST} /v2/p/parent_student_relation/:id/  04更新-ParentStudentRelation家长学生关系表
      * @apiName updateParentStudentRelation
      * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
-     * @apiParam {long} id
-     * @apiParam {long} parentId
-     * @apiParam {long} studentId
-     * @apiParam {String} relationship
-     * @apiParam {long} createTime
-     * @apiParam {long} updateTime
+     * @apiParam {long} orgId 机构ID
+     * @apiParam {long} id 唯一标识
+     * @apiParam {long} parentId 家长ID
+     * @apiParam {long} studentId 学生ID
+     * @apiParam {String} relationship 关系类型
+     * @apiParam {long} createTime 创建时间
+     * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
     public CompletionStage<Result> updateParentStudentRelation(Http.Request request, long id) {
@@ -137,6 +144,9 @@ public class ParentStudentRelationController extends BaseSecurityController {
             ParentStudentRelation originalParentStudentRelation = ParentStudentRelation.find.byId(id);
             ParentStudentRelation newParentStudentRelation = Json.fromJson(jsonNode, ParentStudentRelation.class);
             if (null == originalParentStudentRelation) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalParentStudentRelation.orgId != adminMember.getOrgId())
+                return okCustomJson(CODE40001, "数据不存在");
             if (newParentStudentRelation.parentId > 0)
                 originalParentStudentRelation.setParentId(newParentStudentRelation.parentId);
             if (newParentStudentRelation.studentId > 0)
@@ -153,7 +163,7 @@ public class ParentStudentRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/parent_student_relation/   05删除-家长学生关系
+     * @api {POST} /v2/p/parent_student_relation/   05删除-家长学生关系表
      * @apiName deleteParentStudentRelation
      * @apiGroup PARENT-STUDENT-RELATION-CONTROLLER
      * @apiParam {long} id id
@@ -169,6 +179,8 @@ public class ParentStudentRelationController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             ParentStudentRelation deleteModel = ParentStudentRelation.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });

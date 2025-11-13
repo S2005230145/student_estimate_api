@@ -114,7 +114,7 @@ GET        /v2/p/home_visit/:id/                              controllers.busine
 POST        /v2/p/home_visit/:id/                             controllers.business.HomeVisitController.updateHomeVisit(request: Request,id:Long)
 POST        /v2/p/home_visit/                                 controllers.business.HomeVisitController.deleteHomeVisit(request: Request)
 GET        /v2/p/home_visit_list/                             controllers.business.HomeVisitController.listHomeVisit(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-POST       /v2/p/home_visit/:id/review/                       controllers.business.HomeVisitController.reviewHomeVisit(request: Request)
+POST       /v2/p/home_visit/:id/review/                       controllers.business.HomeVisitController.reviewHomeVisit(request: Request,id:Long)
 
 POST        /v2/p/school_class/new/                           controllers.business.SchoolClassController.addSchoolClass(request: Request)
 GET        /v2/p/school_class/:id/                            controllers.business.SchoolClassController.getSchoolClass(request: Request,id:Long)

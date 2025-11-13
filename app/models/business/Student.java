@@ -30,6 +30,10 @@ public class Student extends Model {
     public static final double HABIT_MAX_SCORE = 40.0; // 习惯满分
     public static final double TOTAL_MAX_SCORE = 100.0; // 总分满分
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

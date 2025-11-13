@@ -23,9 +23,10 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} ruleType 规则类型
-     * @apiSuccess (Success 200) {String} condition 条件
+     * @apiSuccess (Success 200) {String} conditions 条件
      * @apiSuccess (Success 200) {double} score 得分
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
      * @apiSuccess (Success 200) {String} description 描述
@@ -35,7 +36,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     public CompletionStage<Result> listEvaluationRule(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<EvaluationRule> expressionList = EvaluationRule.find.query().where();
+            ExpressionList<EvaluationRule> expressionList = EvaluationRule.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -72,9 +73,10 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} ruleType 规则类型
-     * @apiSuccess (Success 200) {String} condition 条件
+     * @apiSuccess (Success 200) {String} conditions 条件
      * @apiSuccess (Success 200) {double} score 得分
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
      * @apiSuccess (Success 200) {String} description 描述
@@ -86,6 +88,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             EvaluationRule evaluationRule = EvaluationRule.find.byId(id);
             if (null == evaluationRule) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (evaluationRule.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(evaluationRule);
             result.put(CODE, CODE200);
             return ok(result);
@@ -98,9 +102,10 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiName addEvaluationRule
      * @apiDescription 描述
      * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} ruleType 规则类型
-     * @apiParam {String} condition 条件
+     * @apiParam {String} conditions 条件
      * @apiParam {double} score 得分
      * @apiParam {String} badgeType 徽章类型
      * @apiParam {String} description 描述
@@ -115,7 +120,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             EvaluationRule evaluationRule = Json.fromJson(jsonNode, EvaluationRule.class);
-
+// 数据sass化
+            evaluationRule.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             evaluationRule.setCreateTime(currentTimeBySecond);
             evaluationRule.save();
@@ -127,9 +133,10 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @api {POST} /v2/p/evaluation_rule/:id/  04更新-EvaluationRule评价规则配置
      * @apiName updateEvaluationRule
      * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} ruleType 规则类型
-     * @apiParam {String} condition 条件
+     * @apiParam {String} conditions 条件
      * @apiParam {double} score 得分
      * @apiParam {String} badgeType 徽章类型
      * @apiParam {String} description 描述
@@ -144,6 +151,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             EvaluationRule originalEvaluationRule = EvaluationRule.find.byId(id);
             EvaluationRule newEvaluationRule = Json.fromJson(jsonNode, EvaluationRule.class);
             if (null == originalEvaluationRule) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalEvaluationRule.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newEvaluationRule.ruleType))
                 originalEvaluationRule.setRuleType(newEvaluationRule.ruleType);
             if (!ValidationUtil.isEmpty(newEvaluationRule.conditions))
@@ -178,6 +187,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             EvaluationRule deleteModel = EvaluationRule.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });

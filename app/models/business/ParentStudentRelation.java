@@ -13,8 +13,11 @@ import java.util.List;
 @Entity
 @Table(name = "v1_parent_student_relation")
 @DbComment("家长学生关系表")
-@Translation("家长学生关系")
 public class ParentStudentRelation extends Model {
+
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

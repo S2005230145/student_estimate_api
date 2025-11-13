@@ -152,6 +152,7 @@ public class ShopAdminController extends BaseSecurityController {
             if (existMembers.size() > 0) return okCustomJson(request,CODE40002, "shopAdmin.phoneNumber.exist");
             long currentTime = dateUtils.getCurrentTimeByMilliSecond();
             String avatar = node.findPath("avatar").asText();
+            if (ValidationUtil.isEmpty(member.rules)) return okCustomJson(CODE40001, "角色不能为空");
             if (!ValidationUtil.isEmpty(avatar)) member.setAvatar(avatar);
             member.setPhoneNumber(member.phoneNumber);
             member.setStatus(ShopAdmin.STATUS_NORMAL);
@@ -221,6 +222,8 @@ public class ShopAdminController extends BaseSecurityController {
             String rules = node.findPath("rules").asText();
             if (!ValidationUtil.isEmpty(rules)) {
                 existMember.setRules(rules);
+            }else {
+                return okCustomJson(CODE40001, "角色不能为空");
             }
             if (updateMember.shopId > 0 && updateMember.shopId != existMember.shopId) {
                 existMember.setShopId(updateMember.shopId);

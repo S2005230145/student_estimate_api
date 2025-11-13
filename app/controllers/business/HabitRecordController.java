@@ -6,7 +6,6 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
-import models.admin.ShopAdmin;
 import models.business.*;
 import play.libs.Json;
 import play.mvc.Http;
@@ -17,13 +16,13 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 public class HabitRecordController extends BaseSecurityController {
-
     /**
      * @api {GET} /v2/p/habit_record_list/   01列表-习惯评价记录
      * @apiName listHabitRecord
      * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} habitType 习惯类型
@@ -38,12 +37,12 @@ public class HabitRecordController extends BaseSecurityController {
     public CompletionStage<Result> listHabitRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where();
+            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
                     .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
+                    .endOr();               //编写其他条件
             //编写其他条件
             //编写其他条件
             //编写其他条件
@@ -75,6 +74,7 @@ public class HabitRecordController extends BaseSecurityController {
      * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} habitType 习惯类型
@@ -91,6 +91,8 @@ public class HabitRecordController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             HabitRecord habitRecord = HabitRecord.find.byId(id);
             if (null == habitRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (habitRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(habitRecord);
             result.put(CODE, CODE200);
             return ok(result);
@@ -103,6 +105,7 @@ public class HabitRecordController extends BaseSecurityController {
      * @apiName addHabitRecord
      * @apiDescription 描述
      * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} habitType 习惯类型
@@ -122,6 +125,8 @@ public class HabitRecordController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HabitRecord habitRecord = Json.fromJson(jsonNode, HabitRecord.class);
+// 数据sass化
+            habitRecord.setOrgId(admin.getOrgId());
             Student student = Student.find.byId(habitRecord.studentId);
             if (null == student) return okCustomJson(CODE40001, "学生不存在");
             long classId = student.getClassId();
@@ -158,6 +163,7 @@ public class HabitRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/habit_record/:id/  04更新-HabitRecord习惯评价记录
      * @apiName updateHabitRecord
      * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} habitType 习惯类型
@@ -177,6 +183,8 @@ public class HabitRecordController extends BaseSecurityController {
             HabitRecord originalHabitRecord = HabitRecord.find.byId(id);
             HabitRecord newHabitRecord = Json.fromJson(jsonNode, HabitRecord.class);
             if (null == originalHabitRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalHabitRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newHabitRecord.studentId > 0) originalHabitRecord.setStudentId(newHabitRecord.studentId);
             if (newHabitRecord.habitType > 0) originalHabitRecord.setHabitType(newHabitRecord.habitType);
             if (!ValidationUtil.isEmpty(newHabitRecord.evaluatorType))
@@ -211,10 +219,10 @@ public class HabitRecordController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             HabitRecord deleteModel = HabitRecord.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
     }
-
-
 }

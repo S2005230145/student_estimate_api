@@ -44,6 +44,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {double} BASE_SCORE
      * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
      * @apiSuccess (Success 200) {double} PROGRESS_SCORE
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} examType 考试类型
@@ -64,7 +65,7 @@ public class AcademicRecordController extends BaseSecurityController {
     public CompletionStage<Result> listAcademicRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where();
+            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -108,6 +109,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {double} BASE_SCORE
      * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
      * @apiSuccess (Success 200) {double} PROGRESS_SCORE
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
      * @apiSuccess (Success 200) {int} examType 考试类型
@@ -130,6 +132,8 @@ public class AcademicRecordController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             AcademicRecord academicRecord = AcademicRecord.find.byId(id);
             if (null == academicRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (academicRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(academicRecord);
             result.put(CODE, CODE200);
             return ok(result);
@@ -149,6 +153,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiParam {double} BASE_SCORE
      * @apiParam {double} EXCELLENT_SCORE
      * @apiParam {double} PROGRESS_SCORE
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} examType 考试类型
@@ -174,7 +179,8 @@ public class AcademicRecordController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             AcademicRecord academicRecord = Json.fromJson(jsonNode, AcademicRecord.class);
-
+// 数据sass化
+            academicRecord.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             academicRecord.setCreateTime(currentTimeBySecond);
             academicRecord.setUpdateTime(currentTimeBySecond);
@@ -194,6 +200,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiParam {double} BASE_SCORE
      * @apiParam {double} EXCELLENT_SCORE
      * @apiParam {double} PROGRESS_SCORE
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
      * @apiParam {int} examType 考试类型
@@ -219,6 +226,8 @@ public class AcademicRecordController extends BaseSecurityController {
             AcademicRecord originalAcademicRecord = AcademicRecord.find.byId(id);
             AcademicRecord newAcademicRecord = Json.fromJson(jsonNode, AcademicRecord.class);
             if (null == originalAcademicRecord) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalAcademicRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newAcademicRecord.studentId > 0) originalAcademicRecord.setStudentId(newAcademicRecord.studentId);
             if (newAcademicRecord.examType > 0) originalAcademicRecord.setExamType(newAcademicRecord.examType);
             if (newAcademicRecord.chineseScore > 0)
@@ -266,11 +275,12 @@ public class AcademicRecordController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             AcademicRecord deleteModel = AcademicRecord.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
     }
-
     /**
      * @api {POST} /v2/p/academic_record_excel/   06导入学生成绩文件
      * @apiName academicRecordImport

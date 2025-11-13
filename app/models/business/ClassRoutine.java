@@ -17,6 +17,10 @@ public class ClassRoutine  extends Model {
     public static final int TYPE_MONTHLY = 1; //  周评
     public static final int TYPE_WEEKLY = 2; //  月评
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

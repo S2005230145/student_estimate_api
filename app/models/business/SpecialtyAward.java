@@ -39,6 +39,10 @@ public class SpecialtyAward extends Model {
     public static final int STATUS_APPROVED = 1; // 通过
     public static final int STATUS_REJECTED = 2; // 拒绝
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

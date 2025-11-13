@@ -31,6 +31,10 @@ public class SchoolClass  extends Model {
     public static final double ACADEMIC_FAIL = 0.0;       // 不合格
 
     public static final double TOTAL_MAX_SCORE = 100.0; // 班级总分满分
+
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

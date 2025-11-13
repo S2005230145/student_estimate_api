@@ -22,6 +22,10 @@ public class HomeVisit  extends Model {
     public static final int STATUS_NEED_REVIEW = 0; // 待评价
     public static final int STATUS_APPROVED = 10; // 已评价
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

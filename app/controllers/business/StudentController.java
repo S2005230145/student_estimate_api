@@ -38,18 +38,17 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 public class StudentController extends BaseSecurityController {
-
     @Inject
     FormFactory formFactory;
     @Inject
     EncodeUtils encodeUtils;
-
     /**
-     * @api {GET} /v2/p/student_list/   01列表-学生信息
+     * @api {GET} /v2/p/student_list/   01列表-学生
      * @apiName listStudent
      * @apiGroup STUDENT-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} studentNumber 学号
      * @apiSuccess (Success 200) {String} name 学生姓名
@@ -68,13 +67,15 @@ public class StudentController extends BaseSecurityController {
     public CompletionStage<Result> listStudent(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<Student> expressionList = Student.find.query().where();
+            ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
                     .icontains("filter", filter)
-                    .endOr();
-
+                    .endOr();               //编写其他条件
+            //编写其他条件
+            //编写其他条件
+            //编写其他条件
             if (!adminMember.getRules().contains("教导处")){
                 if (adminMember.getRules().contains("科任教师")||adminMember.getRules().contains("班主任")) {
                     List<ClassTeacherRelation> classTeacherRelations = ClassTeacherRelation.findByTeacherId(adminMember.getId());
@@ -87,7 +88,6 @@ public class StudentController extends BaseSecurityController {
                 List<Long> studentIds = parentStudentRelations.stream().map(ParentStudentRelation::getStudentId).toList();
                 expressionList.in("id",studentIds);
             }
-
 
             ObjectNode result = Json.newObject();
             List<Student> list;
@@ -111,11 +111,12 @@ public class StudentController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/student/:id/  02详情-Student学生信息
+     * @api {GET} /v2/p/student/:id/  02详情-Student学生
      * @apiName getStudent
      * @apiGroup STUDENT-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} studentNumber 学号
      * @apiSuccess (Success 200) {String} name 学生姓名
@@ -136,6 +137,8 @@ public class StudentController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             Student student = Student.find.byId(id);
             if (null == student) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (student.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(student);
             result.put(CODE, CODE200);
             return ok(result);
@@ -144,10 +147,11 @@ public class StudentController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/student/new/   01添加-Student学生信息
+     * @api {POST} /v2/p/student/new/   01添加-Student学生
      * @apiName addStudent
      * @apiDescription 描述
      * @apiGroup STUDENT-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} studentNumber 学号
      * @apiParam {String} name 学生姓名
@@ -171,18 +175,21 @@ public class StudentController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             Student student = Json.fromJson(jsonNode, Student.class);
-
+// 数据sass化
+            student.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             student.setCreateTime(currentTimeBySecond);
+            student.setUpdateTime(currentTimeBySecond);
             student.save();
             return okJSON200();
         });
     }
 
     /**
-     * @api {POST} /v2/p/student/:id/  04更新-Student学生信息
+     * @api {POST} /v2/p/student/:id/  04更新-Student学生
      * @apiName updateStudent
      * @apiGroup STUDENT-CONTROLLER
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} studentNumber 学号
      * @apiParam {String} name 学生姓名
@@ -206,12 +213,13 @@ public class StudentController extends BaseSecurityController {
             Student originalStudent = Student.find.byId(id);
             Student newStudent = Json.fromJson(jsonNode, Student.class);
             if (null == originalStudent) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (originalStudent.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newStudent.studentNumber))
                 originalStudent.setStudentNumber(newStudent.studentNumber);
             if (!ValidationUtil.isEmpty(newStudent.name)) originalStudent.setName(newStudent.name);
             if (newStudent.classId > 0) originalStudent.setClassId(newStudent.classId);
             if (newStudent.grade > 0) originalStudent.setGrade(newStudent.grade);
-
             if (newStudent.evaluationScheme > 0) {
                 if (newStudent.evaluationScheme==Student.SCHEME_B) {
                     if (!newStudent.isOverAverage()) {
@@ -236,7 +244,7 @@ public class StudentController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/student/   05删除-学生信息
+     * @api {POST} /v2/p/student/   05删除-学生
      * @apiName deleteStudent
      * @apiGroup STUDENT-CONTROLLER
      * @apiParam {long} id id
@@ -252,6 +260,8 @@ public class StudentController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             Student deleteModel = Student.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
@@ -290,7 +300,7 @@ public class StudentController extends BaseSecurityController {
 
             file.copyTo(Paths.get(destPath), true);
             File destFile = new File(destPath);
-;
+            ;
             try (InputStream inputStream = new FileInputStream(destFile)) {
                 // 读取Excel文件
                 List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);

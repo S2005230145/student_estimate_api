@@ -31,6 +31,10 @@ public class AcademicRecord extends Model {
     public static final double EXCELLENT_SCORE = 40.0; // 优秀分
     public static final double PROGRESS_SCORE = 30.0; // 进步分
 
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

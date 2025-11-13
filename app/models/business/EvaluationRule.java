@@ -14,6 +14,10 @@ import myannotation.Translation;
 @Table(name = "v1_evaluation_rule")
 @DbComment("评价规则配置")
 public class EvaluationRule  extends Model {
+
+    @Column(name = "org_id")
+    @DbComment("机构ID")
+    public long orgId;
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

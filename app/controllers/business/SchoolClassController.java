@@ -26,23 +26,37 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {double} ACADEMIC_WEIGHT
+     * @apiSuccess (Success 200) {double} SPECIALTY_WEIGHT
+     * @apiSuccess (Success 200) {double} ROUTINE_WEIGHT
+     * @apiSuccess (Success 200) {double} HOME_VISIT_WEIGHT
+     * @apiSuccess (Success 200) {double} ACADEMIC_EXCELLENT
+     * @apiSuccess (Success 200) {double} ACADEMIC_GOOD
+     * @apiSuccess (Success 200) {double} ACADEMIC_PASS
+     * @apiSuccess (Success 200) {double} ACADEMIC_FAIL
+     * @apiSuccess (Success 200) {double} TOTAL_MAX_SCORE
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} className 班级名称
      * @apiSuccess (Success 200) {int} grade 年级
      * @apiSuccess (Success 200) {long} headTeacherId 班主任ID
-     * @apiSuccess (Success 200) {double} academicScore 学业得分
-     * @apiSuccess (Success 200) {double} specialtyScore 特长得分
+     * @apiSuccess (Success 200) {ShopAdmin} headTeacher
+     * @apiSuccess (Success 200) {int} studentNum 人数
+     * @apiSuccess (Success 200) {double} academicScore 学业得分总分
+     * @apiSuccess (Success 200) {double} specialtyScore 特长得分总分
      * @apiSuccess (Success 200) {double} routineScore 常规得分
      * @apiSuccess (Success 200) {double} homeVisitScore 家访得分
      * @apiSuccess (Success 200) {double} totalScore 总分
      * @apiSuccess (Success 200) {boolean} disqualified 一票否决
+     * @apiSuccess (Success 200) {double} deductionScore 扣分
      * @apiSuccess (Success 200) {String} honorTitle 荣誉称号
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {ShopAdmin} teachers
      */
     public CompletionStage<Result> listSchoolClass(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where();
+            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -79,24 +93,40 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
+     * @apiSuccess (Success 200) {double} ACADEMIC_WEIGHT
+     * @apiSuccess (Success 200) {double} SPECIALTY_WEIGHT
+     * @apiSuccess (Success 200) {double} ROUTINE_WEIGHT
+     * @apiSuccess (Success 200) {double} HOME_VISIT_WEIGHT
+     * @apiSuccess (Success 200) {double} ACADEMIC_EXCELLENT
+     * @apiSuccess (Success 200) {double} ACADEMIC_GOOD
+     * @apiSuccess (Success 200) {double} ACADEMIC_PASS
+     * @apiSuccess (Success 200) {double} ACADEMIC_FAIL
+     * @apiSuccess (Success 200) {double} TOTAL_MAX_SCORE
+     * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} className 班级名称
      * @apiSuccess (Success 200) {int} grade 年级
      * @apiSuccess (Success 200) {long} headTeacherId 班主任ID
-     * @apiSuccess (Success 200) {double} academicScore 学业得分
-     * @apiSuccess (Success 200) {double} specialtyScore 特长得分
+     * @apiSuccess (Success 200) {ShopAdmin} headTeacher
+     * @apiSuccess (Success 200) {int} studentNum 人数
+     * @apiSuccess (Success 200) {double} academicScore 学业得分总分
+     * @apiSuccess (Success 200) {double} specialtyScore 特长得分总分
      * @apiSuccess (Success 200) {double} routineScore 常规得分
      * @apiSuccess (Success 200) {double} homeVisitScore 家访得分
      * @apiSuccess (Success 200) {double} totalScore 总分
      * @apiSuccess (Success 200) {boolean} disqualified 一票否决
+     * @apiSuccess (Success 200) {double} deductionScore 扣分
      * @apiSuccess (Success 200) {String} honorTitle 荣誉称号
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {ShopAdmin} teachers
      */
     public CompletionStage<Result> getSchoolClass(Http.Request request, long id) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             SchoolClass schoolClass = SchoolClass.find.byId(id);
             if (null == schoolClass) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (schoolClass.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(schoolClass);
             result.put(CODE, CODE200);
             return ok(result);
@@ -109,18 +139,32 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiName addSchoolClass
      * @apiDescription 描述
      * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {double} ACADEMIC_WEIGHT
+     * @apiParam {double} SPECIALTY_WEIGHT
+     * @apiParam {double} ROUTINE_WEIGHT
+     * @apiParam {double} HOME_VISIT_WEIGHT
+     * @apiParam {double} ACADEMIC_EXCELLENT
+     * @apiParam {double} ACADEMIC_GOOD
+     * @apiParam {double} ACADEMIC_PASS
+     * @apiParam {double} ACADEMIC_FAIL
+     * @apiParam {double} TOTAL_MAX_SCORE
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
      * @apiParam {int} grade 年级
      * @apiParam {long} headTeacherId 班主任ID
-     * @apiParam {double} academicScore 学业得分
-     * @apiParam {double} specialtyScore 特长得分
+     * @apiParam {ShopAdmin} headTeacher
+     * @apiParam {int} studentNum 人数
+     * @apiParam {double} academicScore 学业得分总分
+     * @apiParam {double} specialtyScore 特长得分总分
      * @apiParam {double} routineScore 常规得分
      * @apiParam {double} homeVisitScore 家访得分
      * @apiParam {double} totalScore 总分
      * @apiParam {boolean} disqualified 一票否决
+     * @apiParam {double} deductionScore 扣分
      * @apiParam {String} honorTitle 荣誉称号
      * @apiParam {long} createTime 创建时间
+     * @apiParam {ShopAdmin} teachers
      * @apiSuccess (Success 200){int} code 200
      */
 
@@ -130,7 +174,8 @@ public class SchoolClassController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             SchoolClass schoolClass = Json.fromJson(jsonNode, SchoolClass.class);
-
+// 数据sass化
+            schoolClass.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             schoolClass.setCreateTime(currentTimeBySecond);
             schoolClass.save();
@@ -142,19 +187,32 @@ public class SchoolClassController extends BaseSecurityController {
      * @api {POST} /v2/p/school_class/:id/  04更新-SchoolClass班级信息
      * @apiName updateSchoolClass
      * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiParam {double} ACADEMIC_WEIGHT
+     * @apiParam {double} SPECIALTY_WEIGHT
+     * @apiParam {double} ROUTINE_WEIGHT
+     * @apiParam {double} HOME_VISIT_WEIGHT
+     * @apiParam {double} ACADEMIC_EXCELLENT
+     * @apiParam {double} ACADEMIC_GOOD
+     * @apiParam {double} ACADEMIC_PASS
+     * @apiParam {double} ACADEMIC_FAIL
+     * @apiParam {double} TOTAL_MAX_SCORE
+     * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
      * @apiParam {int} grade 年级
      * @apiParam {long} headTeacherId 班主任ID
-     * @apiParam {double} academicScore 学业得分
-     * @apiParam {double} specialtyScore 特长得分
+     * @apiParam {ShopAdmin} headTeacher
+     * @apiParam {int} studentNum 人数
+     * @apiParam {double} academicScore 学业得分总分
+     * @apiParam {double} specialtyScore 特长得分总分
      * @apiParam {double} routineScore 常规得分
      * @apiParam {double} homeVisitScore 家访得分
      * @apiParam {double} totalScore 总分
      * @apiParam {boolean} disqualified 一票否决
+     * @apiParam {double} deductionScore 扣分
      * @apiParam {String} honorTitle 荣誉称号
-     * @apiParam {String} teachersJson 科任教师
      * @apiParam {long} createTime 创建时间
+     * @apiParam {ShopAdmin} teachers
      * @apiSuccess (Success 200){int} code 200
      */
     public CompletionStage<Result> updateSchoolClass(Http.Request request, long id) {
@@ -164,10 +222,14 @@ public class SchoolClassController extends BaseSecurityController {
             SchoolClass originalSchoolClass = SchoolClass.find.byId(id);
             SchoolClass newSchoolClass = Json.fromJson(jsonNode, SchoolClass.class);
             if (null == originalSchoolClass) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (originalSchoolClass.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newSchoolClass.className))
                 originalSchoolClass.setClassName(newSchoolClass.className);
             if (newSchoolClass.grade > 0) originalSchoolClass.setGrade(newSchoolClass.grade);
             if (newSchoolClass.headTeacherId > 0) originalSchoolClass.setHeadTeacherId(newSchoolClass.headTeacherId);
+            //字段<< headTeacher >>非基础类型,请自行编写更新语句
+            if (newSchoolClass.studentNum > 0) originalSchoolClass.setStudentNum(newSchoolClass.studentNum);
             if (newSchoolClass.academicScore > 0) originalSchoolClass.setAcademicScore(newSchoolClass.academicScore);
             if (newSchoolClass.specialtyScore > 0) originalSchoolClass.setSpecialtyScore(newSchoolClass.specialtyScore);
             if (newSchoolClass.routineScore > 0) originalSchoolClass.setRoutineScore(newSchoolClass.routineScore);
@@ -175,8 +237,10 @@ public class SchoolClassController extends BaseSecurityController {
             if (newSchoolClass.totalScore > 0) originalSchoolClass.setTotalScore(newSchoolClass.totalScore);
             if (newSchoolClass.disqualified != originalSchoolClass.disqualified)
                 originalSchoolClass.setDisqualified(newSchoolClass.disqualified);
+            if (newSchoolClass.deductionScore > 0) originalSchoolClass.setDeductionScore(newSchoolClass.deductionScore);
             if (!ValidationUtil.isEmpty(newSchoolClass.honorTitle))
                 originalSchoolClass.setHonorTitle(newSchoolClass.honorTitle);
+            //字段<< teachers >>非基础类型,请自行编写更新语句
 
             originalSchoolClass.save();
             return okJSON200();
@@ -200,10 +264,13 @@ public class SchoolClassController extends BaseSecurityController {
             if (!"del".equals(operation)) return okCustomJson(CODE40001, "操作错误");
             SchoolClass deleteModel = SchoolClass.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
+            //sass数据校验  
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
     }
+
 
     /**
      * @api {POST} /v2/p/school_class/:id/set_head_teacher/   06设置班主任
@@ -559,3 +626,4 @@ public class SchoolClassController extends BaseSecurityController {
         return 1; // 1-上学期, 2-下学期
     }
 }
+
