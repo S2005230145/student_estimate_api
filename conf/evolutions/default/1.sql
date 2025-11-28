@@ -55,6 +55,7 @@ $$
 -- apply changes
 create table v1_academic_record (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   student_id                    bigint not null comment '学生ID',
   exam_type                     integer not null comment '考试类型',
   chinese_score                 double not null comment '语文成绩',
@@ -98,6 +99,7 @@ create table v1_admin_config (
 
 create table v1_badge_record (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   student_id                    bigint not null comment '学生ID',
   badge_type                    varchar(255) comment '徽章类型',
   award_reason                  varchar(255) comment '授予原因',
@@ -109,6 +111,7 @@ create table v1_badge_record (
 
 create table v1_class_routine (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   class_id                      bigint not null comment '班级ID',
   week_number                   integer not null comment '周次',
   month                         integer not null comment '月份',
@@ -131,6 +134,7 @@ create table v1_class_routine (
 
 create table v1_class_teacher_relation (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   class_id                      bigint not null comment '班级ID',
   teacher_id                    bigint not null comment '教师ID',
   subject                       varchar(255) comment '任教科目',
@@ -142,6 +146,7 @@ create table v1_class_teacher_relation (
 
 create table v1_evaluation_rule (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   rule_type                     varchar(255) comment '规则类型',
   conditions                    varchar(255) comment '条件',
   score                         double not null comment '得分',
@@ -187,6 +192,7 @@ create table cp_group_user (
 
 create table v1_habit_record (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   student_id                    bigint not null comment '学生ID',
   habit_type                    integer not null comment '习惯类型',
   evaluator_type                varchar(255) comment '评价者类型',
@@ -201,6 +207,7 @@ create table v1_habit_record (
 
 create table v1_home_visit (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   teacher_id                    bigint not null comment '教师ID',
   class_id                      bigint not null comment '班级ID',
   student_id                    bigint not null comment '学生ID',
@@ -336,6 +343,7 @@ create table v1_system_config_template (
 
 create table v1_parent_student_relation (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   parent_id                     bigint not null comment '家长ID',
   student_id                    bigint not null comment '学生ID',
   relationship                  varchar(255) comment '关系类型',
@@ -346,6 +354,7 @@ create table v1_parent_student_relation (
 
 create table v1_school_class (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   class_name                    varchar(255) comment '班级名称',
   grade                         integer not null comment '年级',
   head_teacher_id               bigint not null comment '班主任ID',
@@ -386,6 +395,7 @@ create table v1_shop_admin (
 
 create table v1_specialty_award (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   student_id                    bigint not null comment '学生ID',
   award_level                   integer not null comment '奖项级别',
   award_grade                   integer not null comment '奖项等级',
@@ -403,6 +413,7 @@ create table v1_specialty_award (
 
 create table v1_student (
   id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
   student_number                varchar(255) comment '学号',
   name                          varchar(255) comment '学生姓名',
   class_id                      bigint not null comment '班级ID',

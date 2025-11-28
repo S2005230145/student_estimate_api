@@ -37,13 +37,6 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
-     * @apiSuccess (Success 200) {int} EXAM_MIDTERM
-     * @apiSuccess (Success 200) {int} EXAM_FINAL
-     * @apiSuccess (Success 200) {double} PASS_SCORE
-     * @apiSuccess (Success 200) {int} TOP_RANKING
-     * @apiSuccess (Success 200) {double} BASE_SCORE
-     * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
-     * @apiSuccess (Success 200) {double} PROGRESS_SCORE
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
@@ -102,13 +95,6 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
-     * @apiSuccess (Success 200) {int} EXAM_MIDTERM
-     * @apiSuccess (Success 200) {int} EXAM_FINAL
-     * @apiSuccess (Success 200) {double} PASS_SCORE
-     * @apiSuccess (Success 200) {int} TOP_RANKING
-     * @apiSuccess (Success 200) {double} BASE_SCORE
-     * @apiSuccess (Success 200) {double} EXCELLENT_SCORE
-     * @apiSuccess (Success 200) {double} PROGRESS_SCORE
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
@@ -146,13 +132,6 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiName addAcademicRecord
      * @apiDescription 描述
      * @apiGroup ACADEMIC-RECORD-CONTROLLER
-     * @apiParam {int} EXAM_MIDTERM
-     * @apiParam {int} EXAM_FINAL
-     * @apiParam {double} PASS_SCORE
-     * @apiParam {int} TOP_RANKING
-     * @apiParam {double} BASE_SCORE
-     * @apiParam {double} EXCELLENT_SCORE
-     * @apiParam {double} PROGRESS_SCORE
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
@@ -193,13 +172,6 @@ public class AcademicRecordController extends BaseSecurityController {
      * @api {POST} /v2/p/academic_record/:id/  04更新-AcademicRecord学业成绩记录
      * @apiName updateAcademicRecord
      * @apiGroup ACADEMIC-RECORD-CONTROLLER
-     * @apiParam {int} EXAM_MIDTERM
-     * @apiParam {int} EXAM_FINAL
-     * @apiParam {double} PASS_SCORE
-     * @apiParam {int} TOP_RANKING
-     * @apiParam {double} BASE_SCORE
-     * @apiParam {double} EXCELLENT_SCORE
-     * @apiParam {double} PROGRESS_SCORE
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
@@ -323,7 +295,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record_excel_template/ 07导出学业成绩导入模板
      * @apiName exportAcTemplate
-     * @apiGroup PERSONNEL-CONTROLLER
+     * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiSuccess (Success 200){file} Excel文件 导入模板文件
      */
     public CompletionStage<Result> exportAcTemplate(Http.Request request) {
@@ -343,19 +315,5 @@ public class AcademicRecordController extends BaseSecurityController {
         });
     }
 
-    /**
-     * @api {GET} /v2/p/test/ 07导出学业成绩导入模板
-     * @apiName exportAcTemplate
-     * @apiGroup PERSONNEL-CONTROLLER
-     * @apiSuccess (Success 200){file} Excel文件 导入模板文件
-     */
-    public CompletionStage<Result> test(Http.Request request) {
-        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
-            if (adminMember == null) return unauth403();
-            Student student = Student.find.all().get(0);
-            student.setBadges("星辰徽章,星火徽章");
-            student.save();
-            return okJSON200();
-        });
-    }
+
 }

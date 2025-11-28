@@ -161,6 +161,4 @@ GET        /v2/p/class_teacher_relation_list/                 controllers.busine
 POST        /v2/p/student_excel/                              controllers.business.StudentController.studentImport(request: Request)
 GET        /v2/p/student_excel_template/                      controllers.business.StudentController.exportStudentTemplate(request: Request)
 
-GET        /v2/p/test/                                        controllers.business.AcademicRecordController.test(request: Request)
-
 GET        /*file                                             controllers.Assets.versioned(path="/public", file: Asset)

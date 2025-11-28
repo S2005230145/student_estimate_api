@@ -26,15 +26,6 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
-     * @apiSuccess (Success 200) {double} ACADEMIC_WEIGHT
-     * @apiSuccess (Success 200) {double} SPECIALTY_WEIGHT
-     * @apiSuccess (Success 200) {double} ROUTINE_WEIGHT
-     * @apiSuccess (Success 200) {double} HOME_VISIT_WEIGHT
-     * @apiSuccess (Success 200) {double} ACADEMIC_EXCELLENT
-     * @apiSuccess (Success 200) {double} ACADEMIC_GOOD
-     * @apiSuccess (Success 200) {double} ACADEMIC_PASS
-     * @apiSuccess (Success 200) {double} ACADEMIC_FAIL
-     * @apiSuccess (Success 200) {double} TOTAL_MAX_SCORE
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} className 班级名称
@@ -93,15 +84,6 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiGroup SCHOOL-CLASS-CONTROLLER
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
-     * @apiSuccess (Success 200) {double} ACADEMIC_WEIGHT
-     * @apiSuccess (Success 200) {double} SPECIALTY_WEIGHT
-     * @apiSuccess (Success 200) {double} ROUTINE_WEIGHT
-     * @apiSuccess (Success 200) {double} HOME_VISIT_WEIGHT
-     * @apiSuccess (Success 200) {double} ACADEMIC_EXCELLENT
-     * @apiSuccess (Success 200) {double} ACADEMIC_GOOD
-     * @apiSuccess (Success 200) {double} ACADEMIC_PASS
-     * @apiSuccess (Success 200) {double} ACADEMIC_FAIL
-     * @apiSuccess (Success 200) {double} TOTAL_MAX_SCORE
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} className 班级名称
@@ -139,15 +121,6 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiName addSchoolClass
      * @apiDescription 描述
      * @apiGroup SCHOOL-CLASS-CONTROLLER
-     * @apiParam {double} ACADEMIC_WEIGHT
-     * @apiParam {double} SPECIALTY_WEIGHT
-     * @apiParam {double} ROUTINE_WEIGHT
-     * @apiParam {double} HOME_VISIT_WEIGHT
-     * @apiParam {double} ACADEMIC_EXCELLENT
-     * @apiParam {double} ACADEMIC_GOOD
-     * @apiParam {double} ACADEMIC_PASS
-     * @apiParam {double} ACADEMIC_FAIL
-     * @apiParam {double} TOTAL_MAX_SCORE
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
@@ -187,15 +160,6 @@ public class SchoolClassController extends BaseSecurityController {
      * @api {POST} /v2/p/school_class/:id/  04更新-SchoolClass班级信息
      * @apiName updateSchoolClass
      * @apiGroup SCHOOL-CLASS-CONTROLLER
-     * @apiParam {double} ACADEMIC_WEIGHT
-     * @apiParam {double} SPECIALTY_WEIGHT
-     * @apiParam {double} ROUTINE_WEIGHT
-     * @apiParam {double} HOME_VISIT_WEIGHT
-     * @apiParam {double} ACADEMIC_EXCELLENT
-     * @apiParam {double} ACADEMIC_GOOD
-     * @apiParam {double} ACADEMIC_PASS
-     * @apiParam {double} ACADEMIC_FAIL
-     * @apiParam {double} TOTAL_MAX_SCORE
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
