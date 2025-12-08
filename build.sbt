@@ -1,7 +1,7 @@
 import play.core.PlayVersion
 import play.sbt.PlayImport.{cacheApi, guice}
 
-name := """studentEstimateApi"""
+name := """student_estimate_api"""
 
 version := "1.0"
 lazy val root = (project in file(".")).enablePlugins(PlayJava, PlayEbean)
