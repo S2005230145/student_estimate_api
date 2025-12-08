@@ -3,78 +3,78 @@
 # ~~~~
 
 +nocsrf
-POST        /v2/s/upload/                                     controllers.basic.UploaderManager.upload(request: Request)
-POST        /v2/s/upload2/                                    controllers.basic.UploaderManager.upload2(request: Request)
-POST        /v2/s/upload_base64/                              controllers.basic.UploaderManager.uploadBase64(request: Request)
+POST        /v2/p/upload/                                     controllers.basic.UploaderManager.upload(request: Request)
+POST        /v2/p/upload2/                                    controllers.basic.UploaderManager.upload2(request: Request)
+POST        /v2/p/upload_base64/                              controllers.basic.UploaderManager.uploadBase64(request: Request)
 #ADMIN MODULE
 
-POST        /v2/s/reset_login_password/                       controllers.basic.LoginController.resetLoginPassword(request: Request)
-POST        /v2/s/set_login_password/                         controllers.basic.LoginController.setLoginPassword(request: Request)
+POST        /v2/p/reset_login_password/                       controllers.basic.LoginController.resetLoginPassword(request: Request)
+POST        /v2/p/set_login_password/                         controllers.basic.LoginController.setLoginPassword(request: Request)
 
 +nocsrf
-POST        /v2/s/login/noauth/                               controllers.basic.LoginController.login(request:Request)
+POST        /v2/p/login/noauth/                               controllers.basic.LoginController.login(request:Request)
 +nocsrf
-GET        /v2/s/is_login/                                    controllers.basic.LoginController.isLogin(request:Request)
+GET        /v2/p/is_login/                                    controllers.basic.LoginController.isLogin(request:Request)
 +nocsrf
-POST        /v2/s/user/new/                                   controllers.basic.LoginController.signUp(request:Request)
-GET        /v2/s/admin_member/info/                           controllers.basic.LoginController.getAdminMemberInfo(request:Request)
-GET        /v2/s/shop_info/                                   controllers.basic.LoginController.getShopInfo(request:Request)
+POST        /v2/p/user/new/                                   controllers.basic.LoginController.signUp(request:Request)
+GET        /v2/p/admin_member/info/                           controllers.basic.LoginController.getAdminMemberInfo(request:Request)
+GET        /v2/p/shop_info/                                   controllers.basic.LoginController.getShopInfo(request:Request)
 
 +nocsrf
-POST        /v2/s/logout/                                     controllers.basic.LogoutController.logout(request:Request)
-GET         /v2/s/test/                                       controllers.TestController.test()
+POST        /v2/p/logout/                                     controllers.basic.LogoutController.logout(request:Request)
+GET         /v2/p/test/                                       controllers.TestController.test()
 
 
-GET        /v2/s/groups/                                      controllers.basic.GroupController.listGroups()
-POST        /v2/s/group/new/                                  controllers.basic.GroupController.addGroup(request: Request)
-POST        /v2/s/group/                                      controllers.basic.GroupController.delGroup(request: Request)
-POST        /v2/s/group/:id/                                  controllers.basic.GroupController.updateGroup(request: Request,id:Int)
-GET        /v2/s/groups/:groupId/                             controllers.basic.GroupController.getGroup(request: Request,groupId:Int)
-GET        /v2/s/actions/                                     controllers.basic.ActionController.listActions()
-POST        /v2/s/action/new/                                 controllers.basic.ActionController.addAction(request: Request)
-POST        /v2/s/action/:id/                                 controllers.basic.ActionController.updateAction(request: Request,id:String)
-POST        /v2/s/action/                                     controllers.basic.ActionController.delAction(request: Request)
-GET        /v2/s/action/:actionId/                            controllers.basic.ActionController.getAction(request: Request,actionId:String)
-GET        /v2/s/actions_by_filter/:groupId/                  controllers.basic.ActionController.getGroupActionByGroupId(request: Request,groupId:Int)
+GET        /v2/p/groups/                                      controllers.basic.GroupController.listGroups()
+POST        /v2/p/group/new/                                  controllers.basic.GroupController.addGroup(request: Request)
+POST        /v2/p/group/                                      controllers.basic.GroupController.delGroup(request: Request)
+POST        /v2/p/group/:id/                                  controllers.basic.GroupController.updateGroup(request: Request,id:Int)
+GET        /v2/p/groups/:groupId/                             controllers.basic.GroupController.getGroup(request: Request,groupId:Int)
+GET        /v2/p/actions/                                     controllers.basic.ActionController.listActions()
+POST        /v2/p/action/new/                                 controllers.basic.ActionController.addAction(request: Request)
+POST        /v2/p/action/:id/                                 controllers.basic.ActionController.updateAction(request: Request,id:String)
+POST        /v2/p/action/                                     controllers.basic.ActionController.delAction(request: Request)
+GET        /v2/p/action/:actionId/                            controllers.basic.ActionController.getAction(request: Request,actionId:String)
+GET        /v2/p/actions_by_filter/:groupId/                  controllers.basic.ActionController.getGroupActionByGroupId(request: Request,groupId:Int)
 
-POST        /v2/s/admin_member/:id/                           controllers.basic.ShopAdminController.updateAdminMember(request:Request,id:Long)
-GET        /v2/s/admin_members/                               controllers.basic.ShopAdminController.listShopMembers(request:Request)
-GET        /v2/s/admin_members/:memberId/                     controllers.basic.ShopAdminController.getAdminMember(request:Request,memberId:Long)
-POST        /v2/s/admin_members/new/                          controllers.basic.ShopAdminController.addAdminMember(request:Request)
-POST        /v2/s/admin_member/                               controllers.basic.ShopAdminController.delAdminMember(request:Request)
-POST        /v2/s/admin_members/status/                       controllers.basic.ShopAdminController.setAdminMemberStatus(request:Request)
-POST        /v2/s/bind_member_to_group/                       controllers.basic.ShopAdminController.bindMemberToGroup(request:Request)
-GET        /v2/s/user_groups/                                 controllers.basic.ShopAdminController.listUserGroups(request:Request,memberId:Long?=0)
-
-
-
-POST        /v2/s/group_action/                               controllers.basic.GroupActionController.updateGroupAction(request: Request)
-POST        /v2/s/group_user/new/                             controllers.basic.GroupUserController.addGroupUser(request: Request)
-POST        /v2/s/group_user/                                 controllers.basic.GroupUserController.delGroupUser(request: Request)
-GET        /v2/s/group_user/:groupId/                         controllers.basic.GroupUserController.listUsersByGroupId(request: Request,groupId:Int)
-
-POST        /v2/s/members/                                    controllers.member.MemberController.listMembers(request:Request)
-GET        /v2/s/members/:uid/                                controllers.member.MemberController.getMember(request: Request,uid:Long)
-POST        /v2/s/members/status/                             controllers.member.MemberController.setMemberStatus(request:Request)
-POST        /v2/s/members/:uid/                               controllers.member.MemberController.updateMember(request: Request,uid:Long)
-POST        /v2/s/dealer_customers/                           controllers.member.MemberController.listCustomers(request:Request)
-
-GET        /v2/s/param_config/                                controllers.basic.SystemController.listParamConfig(request: Request,key:String?="")
-GET        /v2/s/param_config/:id/                            controllers.basic.SystemController.getParamConfig(request: Request,id:Long)
-POST        /v2/s/param_config/new/                           controllers.basic.SystemController.addParamConfig(request: Request)
-POST        /v2/s/param_config/:id/                           controllers.basic.SystemController.updateParamConfig(request: Request,id:Long)
+POST        /v2/p/admin_member/:id/                           controllers.basic.ShopAdminController.updateAdminMember(request:Request,id:Long)
+GET        /v2/p/admin_members/                               controllers.basic.ShopAdminController.listShopMembers(request:Request)
+GET        /v2/p/admin_members/:memberId/                     controllers.basic.ShopAdminController.getAdminMember(request:Request,memberId:Long)
+POST        /v2/p/admin_members/new/                          controllers.basic.ShopAdminController.addAdminMember(request:Request)
+POST        /v2/p/admin_member/                               controllers.basic.ShopAdminController.delAdminMember(request:Request)
+POST        /v2/p/admin_members/status/                       controllers.basic.ShopAdminController.setAdminMemberStatus(request:Request)
+POST        /v2/p/bind_member_to_group/                       controllers.basic.ShopAdminController.bindMemberToGroup(request:Request)
+GET        /v2/p/user_groups/                                 controllers.basic.ShopAdminController.listUserGroups(request:Request,memberId:Long?=0)
 
 
-GET        /v2/s/menu/                                        controllers.basic.MenuManager.listMenu(name:String?="",parentId:Int?=0)
-GET        /v2/s/menu/:id/                                    controllers.basic.MenuManager.getMenu(request: Request,id:Int)
-POST        /v2/s/menu/new/                                   controllers.basic.MenuManager.addMenu(request:Request)
-POST        /v2/s/menu/:id/                                   controllers.basic.MenuManager.updateMenu(request:Request,id:Int)
-POST        /v2/s/menu/                                       controllers.basic.MenuManager.deleteMenu(request:Request)
-POST        /v2/s/batch_update_menu_to_group/:groupId/        controllers.basic.MenuManager.batchUpdateGroupMenu(request: Request,groupId:Int)
-GET        /v2/s/group_menu/                                  controllers.basic.MenuManager.listGroupMenu(request: Request,groupId:Int)
-GET        /v2/s/member_menu/                                 controllers.basic.MenuManager.getMemberMenu(request: Request)
 
-GET        /v2/s/operation_logs/                              controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
+POST        /v2/p/group_action/                               controllers.basic.GroupActionController.updateGroupAction(request: Request)
+POST        /v2/p/group_user/new/                             controllers.basic.GroupUserController.addGroupUser(request: Request)
+POST        /v2/p/group_user/                                 controllers.basic.GroupUserController.delGroupUser(request: Request)
+GET        /v2/p/group_user/:groupId/                         controllers.basic.GroupUserController.listUsersByGroupId(request: Request,groupId:Int)
+
+POST        /v2/p/members/                                    controllers.member.MemberController.listMembers(request:Request)
+GET        /v2/p/members/:uid/                                controllers.member.MemberController.getMember(request: Request,uid:Long)
+POST        /v2/p/members/status/                             controllers.member.MemberController.setMemberStatus(request:Request)
+POST        /v2/p/members/:uid/                               controllers.member.MemberController.updateMember(request: Request,uid:Long)
+POST        /v2/p/dealer_customers/                           controllers.member.MemberController.listCustomers(request:Request)
+
+GET        /v2/p/param_config/                                controllers.basic.SystemController.listParamConfig(request: Request,key:String?="")
+GET        /v2/p/param_config/:id/                            controllers.basic.SystemController.getParamConfig(request: Request,id:Long)
+POST        /v2/p/param_config/new/                           controllers.basic.SystemController.addParamConfig(request: Request)
+POST        /v2/p/param_config/:id/                           controllers.basic.SystemController.updateParamConfig(request: Request,id:Long)
+
+
+GET        /v2/p/menu/                                        controllers.basic.MenuManager.listMenu(name:String?="",parentId:Int?=0)
+GET        /v2/p/menu/:id/                                    controllers.basic.MenuManager.getMenu(request: Request,id:Int)
+POST        /v2/p/menu/new/                                   controllers.basic.MenuManager.addMenu(request:Request)
+POST        /v2/p/menu/:id/                                   controllers.basic.MenuManager.updateMenu(request:Request,id:Int)
+POST        /v2/p/menu/                                       controllers.basic.MenuManager.deleteMenu(request:Request)
+POST        /v2/p/batch_update_menu_to_group/:groupId/        controllers.basic.MenuManager.batchUpdateGroupMenu(request: Request,groupId:Int)
+GET        /v2/p/group_menu/                                  controllers.basic.MenuManager.listGroupMenu(request: Request,groupId:Int)
+GET        /v2/p/member_menu/                                 controllers.basic.MenuManager.getMemberMenu(request: Request)
+
+GET        /v2/p/operation_logs/                              controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
 
 POST        /v2/p/academic_record/new/                        controllers.business.AcademicRecordController.addAcademicRecord(request: Request)
 GET        /v2/p/academic_record/:id/                         controllers.business.AcademicRecordController.getAcademicRecord(request: Request,id:Long)
