@@ -22,7 +22,7 @@ GET        /v2/s/shop_info/                                   controllers.basic.
 
 +nocsrf
 POST        /v2/s/logout/                                     controllers.basic.LogoutController.logout(request:Request)
-
+GET         /v2/s/test/                                       controllers.TestController.test()
 
 
 GET        /v2/s/groups/                                      controllers.basic.GroupController.listGroups()
