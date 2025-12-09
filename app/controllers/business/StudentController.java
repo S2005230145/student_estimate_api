@@ -138,7 +138,7 @@ public class StudentController extends BaseSecurityController {
             Student student = Student.find.byId(id);
             if (null == student) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (student.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (student.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(student);
             result.put(CODE, CODE200);
             return ok(result);
@@ -214,7 +214,7 @@ public class StudentController extends BaseSecurityController {
             Student newStudent = Json.fromJson(jsonNode, Student.class);
             if (null == originalStudent) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (originalStudent.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalStudent.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newStudent.studentNumber))
                 originalStudent.setStudentNumber(newStudent.studentNumber);
             if (!ValidationUtil.isEmpty(newStudent.name)) originalStudent.setName(newStudent.name);
