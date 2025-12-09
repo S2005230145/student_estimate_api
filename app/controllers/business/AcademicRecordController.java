@@ -58,7 +58,7 @@ public class AcademicRecordController extends BaseSecurityController {
     public CompletionStage<Result> listAcademicRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -74,8 +74,8 @@ public class AcademicRecordController extends BaseSecurityController {
             else {
                 PagedList<AcademicRecord> pagedList = expressionList
                         .order().desc("id")
-                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
-                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_10)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_10)
                         .findPagedList();
                 list = pagedList.getList();
                 result.put("pages", pagedList.getTotalPageCount());
@@ -119,7 +119,7 @@ public class AcademicRecordController extends BaseSecurityController {
             AcademicRecord academicRecord = AcademicRecord.find.byId(id);
             if (null == academicRecord) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (academicRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (academicRecord.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(academicRecord);
             result.put(CODE, CODE200);
             return ok(result);
@@ -159,7 +159,7 @@ public class AcademicRecordController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             AcademicRecord academicRecord = Json.fromJson(jsonNode, AcademicRecord.class);
 // 数据sass化
-            academicRecord.setOrgId(admin.getOrgId());
+            academicRecord.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             academicRecord.setCreateTime(currentTimeBySecond);
             academicRecord.setUpdateTime(currentTimeBySecond);
@@ -199,7 +199,7 @@ public class AcademicRecordController extends BaseSecurityController {
             AcademicRecord newAcademicRecord = Json.fromJson(jsonNode, AcademicRecord.class);
             if (null == originalAcademicRecord) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (originalAcademicRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalAcademicRecord.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newAcademicRecord.studentId > 0) originalAcademicRecord.setStudentId(newAcademicRecord.studentId);
             if (newAcademicRecord.examType > 0) originalAcademicRecord.setExamType(newAcademicRecord.examType);
             if (newAcademicRecord.chineseScore > 0)
@@ -248,7 +248,7 @@ public class AcademicRecordController extends BaseSecurityController {
             AcademicRecord deleteModel = AcademicRecord.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
@@ -283,7 +283,6 @@ public class AcademicRecordController extends BaseSecurityController {
                 List<AcademicRecord> list = AcademicRecordExcel.importFromExcel(inputStream);
                 // 计算排名和徽章和学业分
                 List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadgesAndStudyScore(list);
-
                 DB.saveAll(academicRecords);
                 return okJSON200();
             } catch (Exception e) {

@@ -42,7 +42,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     public CompletionStage<Result> listSpecialtyAward(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -58,8 +58,8 @@ public class SpecialtyAwardController extends BaseSecurityController {
             else {
                 PagedList<SpecialtyAward> pagedList = expressionList
                         .order().desc("id")
-                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
-                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_10)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_10)
                         .findPagedList();
                 list = pagedList.getList();
                 result.put("pages", pagedList.getTotalPageCount());
@@ -101,7 +101,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward specialtyAward = SpecialtyAward.find.byId(id);
             if (null == specialtyAward) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (specialtyAward.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (specialtyAward.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(specialtyAward);
             result.put(CODE, CODE200);
             return ok(result);
@@ -138,8 +138,8 @@ public class SpecialtyAwardController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             SpecialtyAward specialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
-// 数据sass化
-            specialtyAward.setOrgId(admin.getOrgId());
+            // 数据sass化
+            specialtyAward.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             specialtyAward.setCreateTime(currentTimeBySecond);
             specialtyAward.setUpdateTime(currentTimeBySecond);
@@ -177,7 +177,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward newSpecialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
             if (null == originalSpecialtyAward) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (originalSpecialtyAward.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalSpecialtyAward.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newSpecialtyAward.studentId > 0) originalSpecialtyAward.setStudentId(newSpecialtyAward.studentId);
             //字段<< student >>非基础类型,请自行编写更新语句
             if (newSpecialtyAward.awardLevel > 0) originalSpecialtyAward.setAwardLevel(newSpecialtyAward.awardLevel);
@@ -219,7 +219,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward deleteModel = SpecialtyAward.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
