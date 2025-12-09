@@ -37,7 +37,7 @@ public class HabitRecordController extends BaseSecurityController {
     public CompletionStage<Result> listHabitRecord(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -46,7 +46,6 @@ public class HabitRecordController extends BaseSecurityController {
             //编写其他条件
             //编写其他条件
             //编写其他条件
-
             ObjectNode result = Json.newObject();
             List<HabitRecord> list;
             if (page == 0) list = expressionList.findList();
@@ -92,7 +91,7 @@ public class HabitRecordController extends BaseSecurityController {
             HabitRecord habitRecord = HabitRecord.find.byId(id);
             if (null == habitRecord) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (habitRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (habitRecord.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(habitRecord);
             result.put(CODE, CODE200);
             return ok(result);
@@ -184,7 +183,7 @@ public class HabitRecordController extends BaseSecurityController {
             HabitRecord newHabitRecord = Json.fromJson(jsonNode, HabitRecord.class);
             if (null == originalHabitRecord) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (originalHabitRecord.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalHabitRecord.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newHabitRecord.studentId > 0) originalHabitRecord.setStudentId(newHabitRecord.studentId);
             if (newHabitRecord.habitType > 0) originalHabitRecord.setHabitType(newHabitRecord.habitType);
             if (!ValidationUtil.isEmpty(newHabitRecord.evaluatorType))
@@ -225,4 +224,58 @@ public class HabitRecordController extends BaseSecurityController {
             return okJSON200();
         });
     }
+
+    /**
+     * @api {GET} /v2/p/habit_record_list_currentUser/   01列表-当前用户习惯评价记录
+     * @apiName listHabitRecord
+     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiParam {int} page 页码
+     * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {int} habitType 习惯类型
+     * @apiSuccess (Success 200) {String} evaluatorType 评价者类型
+     * @apiSuccess (Success 200) {long} evaluatorId 评价者ID
+     * @apiSuccess (Success 200) {double} scoreChange 分数变化
+     * @apiSuccess (Success 200) {String} description 行为描述
+     * @apiSuccess (Success 200) {String} evidenceImage 证据图片
+     * @apiSuccess (Success 200) {long} recordTime 记录时间
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     */
+    public CompletionStage<Result> listHabitRecordCurrentUser(Http.Request request, int page, String filter, int status) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().le("org_id", adminMember.getOrgId());
+            if (status > 0) expressionList.eq("status", status);
+            expressionList.eq("evaluatorId", adminMember.getId());
+            if (!ValidationUtil.isEmpty(filter)) expressionList
+                    .or()
+                    .icontains("filter", filter)
+                    .endOr();               //编写其他条件
+            //编写其他条件
+            //编写其他条件
+            //编写其他条件
+
+            ObjectNode result = Json.newObject();
+            List<HabitRecord> list;
+            if (page == 0) list = expressionList.findList();
+            else {
+                PagedList<HabitRecord> pagedList = expressionList
+                        .order().desc("id")
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .findPagedList();
+                list = pagedList.getList();
+                result.put("pages", pagedList.getTotalPageCount());
+                result.put("hasNest", pagedList.hasNext());
+            }
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(list));
+            return ok(result);
+
+        });
+
+    }
+
 }

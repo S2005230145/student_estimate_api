@@ -67,7 +67,7 @@ public class StudentController extends BaseSecurityController {
     public CompletionStage<Result> listStudent(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<Student> expressionList = Student.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -176,7 +176,7 @@ public class StudentController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             Student student = Json.fromJson(jsonNode, Student.class);
 // 数据sass化
-            student.setOrgId(admin.getOrgId());
+            student.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             student.setCreateTime(currentTimeBySecond);
             student.setUpdateTime(currentTimeBySecond);

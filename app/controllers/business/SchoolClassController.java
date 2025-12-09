@@ -47,7 +47,7 @@ public class SchoolClassController extends BaseSecurityController {
     public CompletionStage<Result> listSchoolClass(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -108,7 +108,7 @@ public class SchoolClassController extends BaseSecurityController {
             SchoolClass schoolClass = SchoolClass.find.byId(id);
             if (null == schoolClass) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (schoolClass.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (schoolClass.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(schoolClass);
             result.put(CODE, CODE200);
             return ok(result);
