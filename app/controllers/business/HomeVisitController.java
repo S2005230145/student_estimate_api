@@ -44,7 +44,7 @@ public class HomeVisitController extends BaseSecurityController {
     public CompletionStage<Result> listHomeVisit(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<HomeVisit> expressionList = HomeVisit.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<HomeVisit> expressionList = HomeVisit.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -60,8 +60,8 @@ public class HomeVisitController extends BaseSecurityController {
             else {
                 PagedList<HomeVisit> pagedList = expressionList
                         .order().desc("id")
-                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
-                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_10)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_10)
                         .findPagedList();
                 list = pagedList.getList();
                 result.put("pages", pagedList.getTotalPageCount());
@@ -105,7 +105,7 @@ public class HomeVisitController extends BaseSecurityController {
             HomeVisit homeVisit = HomeVisit.find.byId(id);
             if (null == homeVisit) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (homeVisit.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (homeVisit.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(homeVisit);
             result.put(CODE, CODE200);
             return ok(result);
@@ -144,8 +144,8 @@ public class HomeVisitController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HomeVisit homeVisit = Json.fromJson(jsonNode, HomeVisit.class);
-// 数据sass化
-            homeVisit.setOrgId(admin.getOrgId());
+            // 数据sass化
+            homeVisit.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             homeVisit.setCreateTime(currentTimeBySecond);
             homeVisit.save();
@@ -184,7 +184,7 @@ public class HomeVisitController extends BaseSecurityController {
             HomeVisit newHomeVisit = Json.fromJson(jsonNode, HomeVisit.class);
             if (null == originalHomeVisit) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (originalHomeVisit.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalHomeVisit.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newHomeVisit.teacherId > 0) originalHomeVisit.setTeacherId(newHomeVisit.teacherId);
             if (newHomeVisit.classId > 0) originalHomeVisit.setClassId(newHomeVisit.classId);
             if (newHomeVisit.studentId > 0) originalHomeVisit.setStudentId(newHomeVisit.studentId);
@@ -226,7 +226,7 @@ public class HomeVisitController extends BaseSecurityController {
             HomeVisit deleteModel = HomeVisit.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });

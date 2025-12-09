@@ -73,7 +73,7 @@ public class HomeVisit  extends Model {
 
     @Column(name = "base_score")
     @DbComment("基础分")
-    public int baseScore;
+        public int baseScore;
     
     @Column(name = "bonus_score")
     @DbComment("加分")
@@ -84,7 +84,7 @@ public class HomeVisit  extends Model {
     public int totalScore;
     
     @Column(name = "status")
-    @DbComment("状态")
+    @DbComment("状态")// 0-待审核,1-通过,2-拒绝
     public int status;
 
     @Column(name = "visit_time")
