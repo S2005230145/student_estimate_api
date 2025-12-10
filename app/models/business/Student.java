@@ -120,7 +120,7 @@ public class Student extends Model {
         else if (className.contains("六年级")) this.grade = 6;
         else throw new RuntimeException("无法识别的年级: " + className);
 
-        if (className.contains("一班")) this.classId = 1L;
+            if (className.contains("一班")) this.classId = 1L;
         else if (className.contains("二班")) this.classId = 2L;
         else if (className.contains("三班")) this.classId = 3L;
         else if (className.contains("四班")) this.classId = 4L;

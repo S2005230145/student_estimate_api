@@ -464,5 +464,4 @@ public class ShopAdminController extends BaseSecurityController {
             return ok(node);
         });
     }
-
 }

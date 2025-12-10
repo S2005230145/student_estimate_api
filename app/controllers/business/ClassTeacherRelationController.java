@@ -35,7 +35,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     public CompletionStage<Result> listClassTeacherRelation(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -87,7 +87,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             ClassTeacherRelation classTeacherRelation = ClassTeacherRelation.find.byId(id);
             if (null == classTeacherRelation) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (classTeacherRelation.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (classTeacherRelation.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(classTeacherRelation);
             result.put(CODE, CODE200);
             return ok(result);
