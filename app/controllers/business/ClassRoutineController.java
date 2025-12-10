@@ -46,7 +46,7 @@ public class ClassRoutineController extends BaseSecurityController {
     public CompletionStage<Result> listClassRoutine(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ClassRoutine> expressionList = ClassRoutine.find.query().where().eq("org_id", adminMember.getOrgId());
+            ExpressionList<ClassRoutine> expressionList = ClassRoutine.find.query().where().le("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -62,8 +62,8 @@ public class ClassRoutineController extends BaseSecurityController {
             else {
                 PagedList<ClassRoutine> pagedList = expressionList
                         .order().desc("id")
-                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
-                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_10)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_10)
                         .findPagedList();
                 list = pagedList.getList();
                 result.put("pages", pagedList.getTotalPageCount());
@@ -109,7 +109,7 @@ public class ClassRoutineController extends BaseSecurityController {
             ClassRoutine classRoutine = ClassRoutine.find.byId(id);
             if (null == classRoutine) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (classRoutine.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (classRoutine.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(classRoutine);
             result.put(CODE, CODE200);
             return ok(result);
@@ -143,7 +143,6 @@ public class ClassRoutineController extends BaseSecurityController {
      * @apiParam {long} updateTime 更新时间
      * @apiSuccess (Success 200){int} code 200
      */
-
     public CompletionStage<Result> addClassRoutine(Http.Request request) {
         JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
@@ -151,8 +150,10 @@ public class ClassRoutineController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassRoutine classRoutine = Json.fromJson(jsonNode, ClassRoutine.class);
 
-            classRoutine.setOrgId(admin.getOrgId());
+            classRoutine.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+            classRoutine.setEvaluatorId(admin.getId());
+            classRoutine.setEvaluatorName(admin.getPhoneNumber());
             classRoutine.setCreateTime(currentTimeBySecond);
             classRoutine.setUpdateTime(currentTimeBySecond);
             classRoutine.save();
@@ -193,7 +194,7 @@ public class ClassRoutineController extends BaseSecurityController {
             ClassRoutine newClassRoutine = Json.fromJson(jsonNode, ClassRoutine.class);
             if (null == originalClassRoutine) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (originalClassRoutine.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalClassRoutine.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (newClassRoutine.classId > 0) originalClassRoutine.setClassId(newClassRoutine.classId);
             if (newClassRoutine.weekNumber > 0) originalClassRoutine.setWeekNumber(newClassRoutine.weekNumber);
             if (newClassRoutine.month > 0) originalClassRoutine.setMonth(newClassRoutine.month);
@@ -238,7 +239,7 @@ public class ClassRoutineController extends BaseSecurityController {
             ClassRoutine deleteModel = ClassRoutine.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
