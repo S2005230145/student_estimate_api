@@ -17,6 +17,7 @@ import java.util.concurrent.CompletionStage;
 
 public class ClassRoutineController extends BaseSecurityController {
 
+
     /**
      * @api {GET} /v2/p/class_routine_list/   01列表-班级常规评比
      * @apiName listClassRoutine
@@ -154,7 +155,7 @@ public class ClassRoutineController extends BaseSecurityController {
             classRoutine.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             classRoutine.setEvaluatorId(admin.getId());
-            classRoutine.setEvaluatorName(admin.getPhoneNumber());
+            classRoutine.setEvaluatorName(admin.getRealName());
             classRoutine.setCreateTime(currentTimeBySecond);
             classRoutine.setUpdateTime(currentTimeBySecond);
             classRoutine.save();
