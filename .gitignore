@@ -16,3 +16,4 @@
 /logs/application.log
 /.bsp/sbt.json
 /conf/application.conf
+conf/application.conf
