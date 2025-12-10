@@ -51,7 +51,8 @@ public class ClassRoutineController extends BaseSecurityController {
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
                     .icontains("filter", filter)
-                    .endOr();               //编写其他条件
+                    .endOr();
+            //编写其他条件
             //编写其他条件
             //编写其他条件
             //编写其他条件
