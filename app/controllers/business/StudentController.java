@@ -261,7 +261,7 @@ public class StudentController extends BaseSecurityController {
             Student deleteModel = Student.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
