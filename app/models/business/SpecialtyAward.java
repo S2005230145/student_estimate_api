@@ -223,18 +223,16 @@ public class SpecialtyAward extends Model {
         boolean isAcademicQualified = student.academicScore >= 60.0;
 
         // 检查习惯评定是否良好（习惯得分不低于30分）
-        boolean isHabitGood = student.habitScore >= 30.0;
+        boolean isHabitGood = student.habitScore >= 32.0;
 
         // 只有学业合格且习惯良好才能获得徽章
         if (isAcademicQualified && isHabitGood) {
             if (this.awardLevel <= LEVEL_CITY) {
                 // 市级以上获得星河徽章
                 this.badgeAwarded = "星河徽章";
-            } else if (this.awardLevel <= LEVEL_SCHOOL) {
+            } else if ((this.awardLevel <= LEVEL_SCHOOL && student.getRewardRankGrade() <= 50)||(student.getRewardRankSchool()<=50)) {
                 // 校级获得星辰徽章
                 this.badgeAwarded = "星辰徽章";
-            } else {
-                this.badgeAwarded = null;
             }
         } else {
             this.badgeAwarded = null;

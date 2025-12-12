@@ -7,6 +7,7 @@ import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import models.business.ClassTeacherRelation;
+import models.business.MonthlyRatingQuota;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -123,6 +124,27 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             classTeacherRelation.setCreateTime(currentTimeBySecond);
             classTeacherRelation.setUpdateTime(currentTimeBySecond);
             classTeacherRelation.save();
+//分配每月评分额度
+            MonthlyRatingQuota monthlyRatingQuota = new MonthlyRatingQuota();
+            monthlyRatingQuota.setOrgId(admin.getOrgId());
+            monthlyRatingQuota.setClassId(classTeacherRelation.getClassId());
+            monthlyRatingQuota.setTeacherId(classTeacherRelation.getTeacherId());
+            monthlyRatingQuota.setRoleType(admin.getRules());
+            //获取当前月的月份
+            String monthKey = dateUtils.getCurrentMonth();
+            monthlyRatingQuota.setMonthKey(monthKey);
+            if(admin.getRules().contains("班主任")){
+                monthlyRatingQuota.setRatingAmount(300);
+            }else if(admin.getRules().contains("科任教师")){
+                monthlyRatingQuota.setRatingAmount(200);
+            }else if(admin.getRules().contains("科任老师")){
+                monthlyRatingQuota.setRatingAmount(200);
+            }else if(admin.getRules().contains("其他老师")){
+                monthlyRatingQuota.setRatingAmount(50);
+            }
+            monthlyRatingQuota.setCreateTime(currentTimeBySecond);
+            monthlyRatingQuota.setUpdateTime(currentTimeBySecond);
+            monthlyRatingQuota.save();
             return okJSON200();
         });
     }

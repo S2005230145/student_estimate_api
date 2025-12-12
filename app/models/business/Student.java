@@ -1,8 +1,10 @@
 package models.business;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.Transaction;
 import io.ebean.annotation.DbArray;
 import io.ebean.annotation.DbComment;
 import io.ebean.annotation.WhenCreated;
@@ -14,6 +16,10 @@ import myannotation.EscapeHtmlAuthoritySerializer;
 import myannotation.Translation;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -23,12 +29,15 @@ public class Student extends Model {
 
     public static final int SCHEME_A = 0; // 方案A
     public static final int SCHEME_B = 1; // 方案B
-    public static final double ACADEMIC_MAX_SCORE_A = 40.0; // 方案A学业满分
-    public static final double ACADEMIC_MAX_SCORE_B = 20.0; // 方案B学业满分
-    public static final double SPECIALTY_MAX_SCORE_A = 20.0; // 方案A特长满分
-    public static final double SPECIALTY_MAX_SCORE_B = 40.0; // 方案B特长满分
-    public static final double HABIT_MAX_SCORE = 40.0; // 习惯满分
+    public static final double ACADEMIC_MAX_SCORE_A = 40.0; // 方案A学业满分  //方案A学业素养
+    public static final double ACADEMIC_MAX_SCORE_B = 20.0; // 方案B学业满分  //方案B学业素养
+    public static final double SPECIALTY_MAX_SCORE_A = 20.0; // 方案A特长满分  //方案A扩展性素养
+    public static final double SPECIALTY_MAX_SCORE_B = 40.0; // 方案B特长满分  //方案B扩展性素养
+    public static final double HABIT_MAX_SCORE = 40.0; // 习惯满分  //固定
     public static final double TOTAL_MAX_SCORE = 100.0; // 总分满分
+
+    //学业及格分
+    public static final double ACADEMIC_PASS = 20.0;
 
     @Column(name = "org_id")
     @DbComment("机构ID")
@@ -87,6 +96,14 @@ public class Student extends Model {
 //    @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String badges;
 
+    @Column(name = "reward_rank_grade")
+    @DbComment("奖项年级排名")
+    public int rewardRankGrade;
+
+    @Column(name = "reward_rank_school")
+    @DbComment("奖项学校排名")
+    public int rewardRankSchool;
+
     @Column(name = "create_time")
     @DbComment("创建时间")
     @WhenCreated
@@ -102,6 +119,14 @@ public class Student extends Model {
     public boolean isOverAverage() {
         return this.academicScore > this.classAverageScore;
     }
+
+    /**
+     *判断是否达到及格分
+     */
+    public boolean isPass() {
+        return this.academicScore >= ACADEMIC_PASS;
+    }
+
 
     public boolean isHighGrade() {
         return this.grade >= 3;
@@ -139,6 +164,79 @@ public class Student extends Model {
         String gradeName = this.grade >= 1 && this.grade <= 6 ? gradeNames[this.grade] : "未知年级";
         String className = this.classId >= 1 && this.classId <= 6 ? classNames[(int)this.classId] : "未知班级";
         return gradeName + className;
+    }
+
+    /**
+     * 设置学校排名(总排名)
+     */
+    public void setRankRewardSchool() {
+        List<Student> students = Student.find.all();
+        // 累和每个学生的每个奖项的特长分(学生ID，所有奖项分)
+        Map<Long, Double> studentsGradeByGroup = students
+                .stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.id,
+                        Collectors.summingDouble(Student::getSpecialtyScore)
+                ));
+        List<Map.Entry<Long, Double>> sortedList = studentsGradeByGroup.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .toList();
+
+        AtomicInteger rank = new AtomicInteger(1);
+        for (Map.Entry<Long, Double> entry : sortedList) {
+            //定位当前学生
+            Student student = students.stream()
+                    .filter(v1 -> v1.getId() == entry.getKey())
+                    .findFirst().orElse(null);
+            if(student!=null){
+                student.rewardRankGrade=rank.get();
+                rank.getAndDecrement();
+            }
+        }
+        try(Transaction transaction = Student.find.db().beginTransaction()){
+            DB.updateAll(students);
+            transaction.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    /**
+     * 设置年级排名
+     */
+    public void setRankRewardGrade() {
+        List<Student> students = Student.find.all();
+        // 累和每个学生的每个奖项的特长分(学生ID，所有奖项分)
+        Map<Long, Double> studentsGradeByGroup = students
+                .stream()
+                .filter(student -> student.getGrade() == this.getGrade())
+                .collect(Collectors.groupingBy(
+                        r -> r.id,
+                        Collectors.summingDouble(Student::getSpecialtyScore)
+                ));
+        List<Map.Entry<Long, Double>> sortedList = studentsGradeByGroup.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .toList();
+
+        AtomicInteger rank = new AtomicInteger(1);
+        for (Map.Entry<Long, Double> entry : sortedList) {
+            //定位当前学生
+            Student student = students.stream()
+                    .filter(v1 -> v1.getId() == entry.getKey())
+                    .findFirst().orElse(null);
+            if(student!=null){
+                student.rewardRankGrade=rank.get();
+                rank.getAndDecrement();
+            }
+        }
+        try(Transaction transaction = Student.find.db().beginTransaction()){
+            DB.updateAll(students);
+            transaction.commit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 

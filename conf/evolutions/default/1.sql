@@ -62,7 +62,9 @@ create table v1_academic_record (
   math_score                    double not null comment '数学成绩',
   english_score                 double not null comment '英语成绩',
   average_score                 double not null comment '平均分',
+  chinese_math_average_score    double not null comment '语文、数学两科平均分',
   grade_ranking                 integer not null comment '年级排名',
+  chinese_math_grade_ranking    integer not null comment '语文、数学两科年级排名',
   class_ranking                 integer not null comment '班级排名',
   progress_amount               integer not null comment '进步名次',
   progress_ranking              integer not null comment '进步排名',
@@ -303,6 +305,20 @@ create table cp_menu (
   constraint pk_cp_menu primary key (id)
 );
 
+create table v1_monthly_rating_quota (
+  id                            bigint auto_increment not null,
+  org_id                        bigint not null comment '机构ID',
+  class_id                      bigint not null comment '班级ID',
+  teacher_id                    bigint not null comment '教师ID/评价者ID',
+  role_type                     varchar(255) comment '身份：head/basic/other/parent/adm',
+  month_key                     varchar(255) comment '月份yyyy-MM',
+  rating_amount                 double not null comment '当月已用额度',
+  cap_value                     double not null comment '当月上限冗余存储',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
+  constraint pk_v1_monthly_rating_quota primary key (id)
+) comment='每月评分额度表';
+
 create table v1_operation_log (
   id                            bigint auto_increment not null,
   admin_id                      bigint not null,
@@ -425,6 +441,8 @@ create table v1_student (
   habit_score                   double not null comment '习惯得分',
   total_score                   double not null comment '总分',
   badges                        varchar(255) comment '获得徽章',
+  reward_rank_grade             integer not null comment '奖项年级排名',
+  reward_rank_school            integer not null comment '奖项学校排名',
   create_time                   bigint not null comment '创建时间',
   update_time                   bigint not null comment '更新时间',
   constraint pk_v1_student primary key (id)
@@ -477,6 +495,8 @@ drop table if exists cp_log;
 drop table if exists v1_member;
 
 drop table if exists cp_menu;
+
+drop table if exists v1_monthly_rating_quota;
 
 drop table if exists v1_operation_log;
 

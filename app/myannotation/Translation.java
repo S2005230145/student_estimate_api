@@ -12,4 +12,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Translation {
     String value() default ""; //中文描述
     String english() default ""; // 英文描述
+
+    String chinese() default "";
 }
