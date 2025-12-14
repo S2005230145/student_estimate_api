@@ -32,6 +32,9 @@ public class Group extends Model {
     @Column(name = "create_time")
     public long createdTime;
 
+    @Column(name = "org_id")
+    public long orgId;
+
     public static Finder<Integer, Group> find = new Finder<>(Group.class);
 
     public void setId(int id) {

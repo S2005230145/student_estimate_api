@@ -489,7 +489,7 @@ public class BusinessConstant {
     public static final double ACADEMIC_PROGRESS_SCORE = 30.0; // 进步分
     public static final int ACADEMIC_TOP_RANK = 50; // 前50名
 
-    // 特长评分矩阵
+    // 特长评分矩阵  0-一等奖,1-二等奖,2-三等奖,3-优秀奖,
     public static final double[][] SPECIALTY_SCORE_MATRIX = {
             {20.0, 16.0, 12.0, 10.0,0.0}, // 国家级
             {10.0, 8.0, 6.0, 5.0,0.0},    // 省级
@@ -498,11 +498,11 @@ public class BusinessConstant {
             {2.0, 1.5, 1.0, 0.5,0.0}       // 校级
     };
 
-    //集体赛事评分矩阵
+    //集体赛事评分矩阵  // 0-一等奖,1-二等奖,2-三等奖,3-优秀奖,4-集体奖
     public static final double[][] COLLECTIVE_SCORE_MATRIX = {
-            {5.0, 5.0, 4.0,3.0},    // 省级
-            {5.0, 4.0, 3.0, 2.0},     // 市级
-            {4.0, 3.0, 2.0, 1.5},      // 县区级
+            {5.0, 5.0, 4.0,3.0},    // 省级及以上
+            {5.0, 4.0, 3.0, 2.0},     // 福州市级
+            {4.0, 3.0, 2.0, 1.5},      // 福清市级
             {1.5, 1.0, 0.5, 0.0}       // 校级
     };
 

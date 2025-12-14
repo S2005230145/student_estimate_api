@@ -190,7 +190,7 @@ public class Student extends Model {
                     .findFirst().orElse(null);
             if(student!=null){
                 student.rewardRankGrade=rank.get();
-                rank.getAndDecrement();
+                rank.getAndIncrement();
             }
         }
         try(Transaction transaction = Student.find.db().beginTransaction()){
@@ -227,7 +227,7 @@ public class Student extends Model {
                     .findFirst().orElse(null);
             if(student!=null){
                 student.rewardRankGrade=rank.get();
-                rank.getAndDecrement();
+                rank.getAndIncrement();
             }
         }
         try(Transaction transaction = Student.find.db().beginTransaction()){

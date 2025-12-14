@@ -126,7 +126,7 @@ public class GroupUserController extends BaseSecurityController {
     public CompletionStage<Result> listHeadTeachers(Http.Request request) {
         return CompletableFuture.supplyAsync(() -> {
             List<ShopAdmin> headTeachers = ShopAdmin.find.query().where()
-                    .eq("orgId", 1)
+                    .eq("orgId", 2)
                     .eq("isAdmin", true)
                     .eq("status", 1)
                     .findList();
