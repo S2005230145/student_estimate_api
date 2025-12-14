@@ -222,8 +222,11 @@ public class StudentController extends BaseSecurityController {
             if (newStudent.grade > 0) originalStudent.setGrade(newStudent.grade);
             if (newStudent.evaluationScheme > 0) {
                 if (newStudent.evaluationScheme==Student.SCHEME_B) {
-                    if (!newStudent.isOverAverage()) {
-                        return okCustomJson(CODE40001, "学业成绩未达到班级平均分，不能选择方案B");
+//                    if (!newStudent.isOverAverage()) {
+//                        return okCustomJson(CODE40001, "学业成绩未达到班级平均分，不能选择方案B");
+//                    }
+                    if(!newStudent.isPass()){
+                        return okCustomJson(CODE40001, "学业成绩未达到及格分20分，不能选择方案B");
                     }
                 }
                 originalStudent.setEvaluationScheme(newStudent.evaluationScheme);

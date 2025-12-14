@@ -138,10 +138,13 @@ public class HabitRecordController extends BaseSecurityController {
             try {
                 if (isTeacher) {
                     habitRecord.validate("科任教师");
+                    habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
                 } else if (isHeadTeacher) {
                     habitRecord.validate("班主任");
+                    habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
                 } else if (isParent) {
                     habitRecord.validate("家长");
+                    habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
                 } else {
                     return okCustomJson(CODE40001, "账号角色不属于可评分角色");
                 }

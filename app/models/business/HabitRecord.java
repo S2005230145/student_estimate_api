@@ -25,7 +25,7 @@ public class HabitRecord  extends Model {
     public static final int HABIT_LABOR = 2; // 劳动习惯
     public static final int HABIT_BEHAVIOR = 3; // 行为习惯
 
-    public static final double BASE_SCORE = 20.0; // 基础分
+    public static final double BASE_SCORE = 15.0; // 基础分
     public static final double MAX_SCORE = 40.0; // 最高分
     public static final double MIN_SCORE = 0.0; // 最低分
 
@@ -35,6 +35,11 @@ public class HabitRecord  extends Model {
     public static final double HEAD_TEACHER_SCORE_MIN = 1.0; // 班主任评分范围1-2分
     public static final double PARENT_SCORE_MAX = 1.0; // 家长评分范围0.5-1分
     public static final double PARENT_SCORE_MIN = 0.5; // 家长评分范围0.5-1分
+
+    public static final double MOUTH_PARENT_MAX_SCORE = 10.0; //家长习惯月封顶
+    public static final double MOUTH_HEADER_TEACHER_MAX_SCORE = 300.0; //班主任习惯月封顶
+    public static final double MOUTH_BASIC_TEACHER_MAX_SCORE = 200.0; // 基础学科老师（语数英）习惯月封顶
+    public static final double MOUTH_OTHER_TEACHER_PARENT_MAX_SCORE = 50.0; //艺体学科习惯月封顶
 
     @Column(name = "org_id")
     @DbComment("机构ID")
@@ -210,4 +215,36 @@ public class HabitRecord  extends Model {
         SchoolClass.recalcSpecialtyTotalScoreById(student.classId);
         student.update();
     }
+
+    /**
+     * 数据验证
+     * 每月当前评级人所在的这个班级是否有评价额度
+     */
+    public void validate(Long evaluatorId,Long classId,Double scoreChange) {
+        List<String> errors = new ArrayList<>();
+
+        MonthlyRatingQuota quota = MonthlyRatingQuota.find.query()
+                .where()
+                .eq("teacher_id", evaluatorId)
+                .eq("class_id", classId)
+                .findOne();
+
+        //scoreChange 取绝对值
+        scoreChange = Math.abs(scoreChange);
+        if (quota == null) {
+            errors.add("当前评价人所在的班级没有分配评价额度");
+        }
+
+        if (quota != null && quota.ratingAmount < scoreChange) {
+            errors.add("当前评价人所在的班级的评价额度不足");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new RuntimeException(String.join("; ", errors));
+        }
+
+    }
+
+
+
 }

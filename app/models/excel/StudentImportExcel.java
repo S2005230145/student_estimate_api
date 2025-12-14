@@ -163,7 +163,8 @@ public class StudentImportExcel {
         if (parent != null) {
 //            // 如果找到现有家长，更新姓名（如果姓名不同）
             if (!generateParentRealName(studentName, relationship).equals(parent.getRealName())) {
-                parent.setUserName(name);
+                parent.setUserName(phone);
+                parent.setRealName(generateParentRealName(studentName, relationship));
                 parent.update();
             }
             return parent;

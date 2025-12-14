@@ -159,6 +159,10 @@ public class AcademicRecordController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             AcademicRecord academicRecord = Json.fromJson(jsonNode, AcademicRecord.class);
 // 数据sass化
+            //计算语数英三科的平均分
+            academicRecord.setAverageScore((academicRecord.getChineseScore() + academicRecord.getMathScore() + academicRecord.getEnglishScore()) / 3);
+            //计算语数两科平均分
+            academicRecord.setChineseMathAverageScore((academicRecord.getChineseScore() + academicRecord.getMathScore()) / 2);
             academicRecord.setOrgId(0);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             academicRecord.setCreateTime(currentTimeBySecond);

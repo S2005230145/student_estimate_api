@@ -65,9 +65,19 @@ public class AcademicRecord extends Model {
     @DbComment("平均分")
     public double averageScore;
 
+    //语文、数学两科平均分
+    @Column(name = "chinese_math_average_score")
+    @DbComment("语文、数学两科平均分")
+    public double chineseMathAverageScore;
+
     @Column(name = "grade_ranking")
     @DbComment("年级排名")
     public int gradeRanking;
+
+    //语文、数学两科年级排名
+    @Column(name = "chinese_math_grade_ranking")
+    @DbComment("语文、数学两科年级排名")
+    public int chineseMathGradeRanking;
 
     @Column(name = "class_ranking")
     @DbComment("班级排名")
@@ -137,8 +147,6 @@ public class AcademicRecord extends Model {
         //7. 同步到班级表
         updateClassAverageScores(currentRecords);
 
-
-
         return currentRecords;
     }
 
@@ -182,7 +190,7 @@ public class AcademicRecord extends Model {
         // 1. 按平均分降序排序
         academicRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
 
-        // 2. 设置年级排名
+        // 2. 设置年级排名(三科)
         for (int i = 0; i < academicRecords.size(); i++) {
             academicRecords.get(i).gradeRanking = i + 1;
             academicRecords.get(i).updateTime = System.currentTimeMillis();
@@ -239,9 +247,9 @@ public class AcademicRecord extends Model {
             List<String> badges = new ArrayList<>();
 
             // 学业优秀：年级前50名获得星辰徽章
-            if (record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING) {
-                badges.add("星辰徽章");
-            }
+//            if (record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING) {
+//                badges.add("星辰徽章");
+//            }
 
             // 进步显著：进步排名前50名获得星火徽章
             if (record.progressRanking > 0 && record.progressRanking <= TOP_RANKING) {
@@ -277,23 +285,36 @@ public class AcademicRecord extends Model {
     private static double calculateStudyScore(AcademicRecord record) {
         double score = 0.0;
 
-        // 1. 保底分判断：平均分不低于60分得20分
-        if (record.averageScore >= PASS_SCORE) {
-            score = BASE_SCORE;
-        }
+        // 使用语数英三科平均分与语数两科平均分中较高的值进行区间判断
+        double bestAverage = Math.max(record.averageScore, record.chineseMathAverageScore);
 
-        // 2. 学业优秀：年级前50名得40分
-        if (record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING) {
-            score = Math.max(score, EXCELLENT_SCORE);
-        }
-
-        // 3. 进步显著：进步排名前50名得30分
-        if (record.progressRanking > 0 && record.progressRanking <= TOP_RANKING) {
-            score = Math.max(score, PROGRESS_SCORE);
-        }
-
-        // 4. 根据学生评价方案调整上限
+        // 根据学生评价方案调整上限
         Student student = Student.find.byId(record.studentId);
+        if (student != null) {
+            if(student.evaluationScheme == Student.SCHEME_A){
+                if (bestAverage >= 90) {
+                    score = 35.0;
+                } else if (bestAverage >= 80) {
+                    score = 30.0;
+                } else if (bestAverage >= 70) {
+                    score = 25.0;
+                } else if (bestAverage >= 60) {
+                    score = 20.0;
+                }else{
+                    score = 0.0;
+                }
+            }
+            else if(student.evaluationScheme == Student.SCHEME_B){
+                if(bestAverage >= 60){
+                    score = Math.min(score, Student.ACADEMIC_MAX_SCORE_B);
+                }else{
+                    score = 0.0;
+                }
+            }
+        }
+
+        // 根据学生评价方案调整上限
+/*         Student student = Student.find.byId(record.studentId);
         if (student != null) {
             if (student.evaluationScheme == Student.SCHEME_B) {
                 // 方案B：学业得分最高20分
@@ -302,7 +323,7 @@ public class AcademicRecord extends Model {
                 // 方案A：学业得分最高40分
                 score = Math.min(score, Student.ACADEMIC_MAX_SCORE_A);
             }
-        }
+        } */
 
         return score;
     }

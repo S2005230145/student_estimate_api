@@ -7,6 +7,7 @@ import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import models.business.SpecialtyAward;
+import models.business.Student;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -243,6 +244,11 @@ public class SpecialtyAwardController extends BaseSecurityController {
             int opinion = jsonNode.findPath("opinion").asInt();
             if (jsonNode.has("opinion")){
                 specialtyAward.setStatus(opinion);
+                Student student = Student.find.byId(specialtyAward.studentId);
+                if(student != null){
+                    student.setRankRewardGrade();
+                    student.setRankRewardSchool();
+                }
                 specialtyAward.processSingleAward();
             }
             specialtyAward.save();
