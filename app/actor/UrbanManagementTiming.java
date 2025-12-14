@@ -1,6 +1,11 @@
 package actor;
 
 import akka.actor.ActorSystem;
+import io.ebean.DB;
+import io.ebean.Transaction;
+import models.business.HabitRecord;
+import models.business.SpecialtyAward;
+import models.business.Student;
 import play.Logger;
 import play.cache.NamedCache;
 
@@ -25,6 +30,7 @@ public class UrbanManagementTiming {
 
     private final ActorSystem actorSystem;
 
+    private final double student_base_habit_record_score=15.0;
 
 
     @Inject
@@ -44,48 +50,6 @@ public class UrbanManagementTiming {
                 actorSystem.dispatcher()
         );
 
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask,
-                actorSystem.dispatcher()
-        );
-
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask2,
-                actorSystem.dispatcher()
-        );
-
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask3,
-                actorSystem.dispatcher()
-        );
-
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask4,
-                actorSystem.dispatcher()
-        );
-
-//        actorSystem.scheduler().scheduleOnce(
-//                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-//                this::scheduleVehicleSituationTask5,
-//                actorSystem.dispatcher()
-//        );
-
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask6,
-                actorSystem.dispatcher()
-        );
-
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleVehicleSituationTask7,
-                actorSystem.dispatcher()
-        );
-
     }
 
     private void scheduleFenceTask() {
@@ -94,126 +58,25 @@ public class UrbanManagementTiming {
                 scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
                 () -> {
                     try {
-                    } catch (Exception e) {
-                        logger.error("电子围栏自动下发-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(0, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        logger.info("车场停车情况-定时任务执行");
-
-                    } catch (Exception e) {
-                        logger.error("车场停车情况-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask2() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(3, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        logger.info("车场停车情况-定时任务执行");
-                    } catch (Exception e) {
-                        logger.error("车场停车情况-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask3() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(2, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        logger.info("设置/更新车辆运输次数Redis-GPS信息-定时任务执行");
-                        setVehicleGps();
-                    } catch (Exception e) {
-                        logger.error("设置/更新车辆运输次数Redis-GPS信息-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask4() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(0, 15), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        // 精确判断是否为每月1号
-                        if (java.time.LocalDate.now().getDayOfMonth() == 1) {
-                            logger.info("月初街道考评数据生成-定时任务执行");
-
+                        List<Student> allStudent = Student.find.all();
+                        List<HabitRecord> allHabitRecord = HabitRecord.find.all();
+                        List<HabitRecord> habitRecordList = allHabitRecord.stream().filter(v1 -> v1.getMonthEndTime() != null).toList();
+                        allStudent.forEach(student->{
+                            double total = habitRecordList.stream()
+                                    .filter(v1 -> v1.getStudentId() == student.getId())
+                                    .map(HabitRecord::getScoreChange)
+                                    .mapToDouble(Double::valueOf)
+                                    .sum();
+                            student.setHabitScore(student_base_habit_record_score+total);
+                        });
+                        try(Transaction transaction = Student.find.db().beginTransaction()){
+                            DB.updateAll(allStudent);
+                            transaction.commit();
+                        } catch (Exception e) {
+                            logger.error("每月更新学生分数出错", e);
                         }
                     } catch (Exception e) {
-                        logger.error("月初街道考评数据生成-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask7() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(0, 1), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        // 精确判断是否为每月1号
-                        if (java.time.LocalDate.now().getDayOfMonth() == 1) {
-                            logger.info("月初街道考评数据状态修改-定时任务执行");
-
-                        }
-                    } catch (Exception e) {
-                        logger.error("月初街道考评数据状态修改-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask5() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(0, 1), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(10 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        logger.info("检测车辆连续行驶-定时任务执行");
-
-                    } catch (Exception e) {
-                        logger.error("检测车辆连续行驶-定时任务执行异常", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
-
-    private void scheduleVehicleSituationTask6() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(0, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-//                        logger.info("检测车辆在线状态-定时任务执行");
-
-
-                    } catch (Exception e) {
-                        logger.error("检测车辆在线状态-定时任务执行异常", e);
+                        logger.error("月份定时出错", e);
                     }
                 },
                 actorSystem.dispatcher()
@@ -241,15 +104,6 @@ public class UrbanManagementTiming {
         }
 
         return initialDelay;
-    }
-
-    /**
-     * 设置车辆GPS信息
-     */
-    public void setVehicleGps() {
-
-
-
     }
 
 

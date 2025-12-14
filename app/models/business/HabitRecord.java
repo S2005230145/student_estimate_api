@@ -10,6 +10,10 @@ import lombok.Data;
 import myannotation.EscapeHtmlAuthoritySerializer;
 import myannotation.Translation;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +93,10 @@ public class HabitRecord  extends Model {
     @Column(name = "create_time")
     @DbComment("创建时间")
     public long createTime;
+
+    @Column(name = "month_end_time")
+    @DbComment("对应月末时间")
+    public Long monthEndTime;
 
     public static Finder<Long, HabitRecord> find = new Finder<>(HabitRecord.class);
 
@@ -245,6 +253,21 @@ public class HabitRecord  extends Model {
 
     }
 
+    /**
+     * 计算月份截至时间
+     */
+    public void calculateEndMonth(){
+        long ct = this.createTime;
+        LocalDate date = Instant.ofEpochMilli(ct)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
 
+        YearMonth yearMonth = YearMonth.from(date);
+        LocalDate lastDay = yearMonth.atEndOfMonth();
+        this.monthEndTime= lastDay.atTime(23, 59, 59, 999_999_999)
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();;
+    }
 
 }

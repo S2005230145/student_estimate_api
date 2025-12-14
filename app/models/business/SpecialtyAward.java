@@ -1,22 +1,21 @@
 package models.business;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
+import io.ebean.Transaction;
 import io.ebean.annotation.DbComment;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import myannotation.EscapeHtmlAuthoritySerializer;
-import myannotation.Translation;
 
-import java.util.HashMap;
+import java.time.*;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static constants.BusinessConstant.SPECIALTY_SCORE_MATRIX;
 
+@Slf4j
 @Data
 @Entity
 @Table(name = "v1_specialty_award")
@@ -103,6 +102,8 @@ public class SpecialtyAward extends Model {
     @Column(name = "update_time")
     @DbComment("更新时间")
     public long updateTime;
+
+
 
     public static Finder<Long, SpecialtyAward> find = new Finder<>(SpecialtyAward.class);
 
@@ -255,4 +256,7 @@ public class SpecialtyAward extends Model {
         }
         return true;
     }
+
+
+
 }
