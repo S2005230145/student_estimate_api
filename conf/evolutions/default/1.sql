@@ -62,9 +62,7 @@ create table v1_academic_record (
   math_score                    double not null comment '数学成绩',
   english_score                 double not null comment '英语成绩',
   average_score                 double not null comment '平均分',
-  chinese_math_average_score    double not null comment '语文、数学两科平均分',
   grade_ranking                 integer not null comment '年级排名',
-  chinese_math_grade_ranking    integer not null comment '语文、数学两科年级排名',
   class_ranking                 integer not null comment '班级排名',
   progress_amount               integer not null comment '进步名次',
   progress_ranking              integer not null comment '进步排名',
@@ -165,6 +163,7 @@ create table cp_group (
   is_admin                      tinyint(1) default 0 not null,
   description                   varchar(255),
   create_time                   bigint not null,
+  org_id                        bigint not null,
   constraint pk_cp_group primary key (id)
 );
 
@@ -309,7 +308,7 @@ create table v1_monthly_rating_quota (
   id                            bigint auto_increment not null,
   org_id                        bigint not null comment '机构ID',
   class_id                      bigint not null comment '班级ID',
-  teacher_id                    bigint not null comment '教师ID/评价者ID',
+  evaluator_id                  bigint not null comment '教师ID/评价者ID',
   role_type                     varchar(255) comment '身份：head/basic/other/parent/adm',
   month_key                     varchar(255) comment '月份yyyy-MM',
   rating_amount                 double not null comment '当月已用额度',

@@ -6,6 +6,7 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import models.admin.ShopAdmin;
 import models.business.ClassTeacherRelation;
 import models.business.MonthlyRatingQuota;
 import play.libs.Json;
@@ -13,8 +14,13 @@ import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 public class ClassTeacherRelationController extends BaseSecurityController {
 
@@ -128,7 +134,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             MonthlyRatingQuota monthlyRatingQuota = new MonthlyRatingQuota();
             monthlyRatingQuota.setOrgId(admin.getOrgId());
             monthlyRatingQuota.setClassId(classTeacherRelation.getClassId());
-            monthlyRatingQuota.setTeacherId(classTeacherRelation.getTeacherId());
+            monthlyRatingQuota.setEvaluatorId(classTeacherRelation.getTeacherId());
             monthlyRatingQuota.setRoleType(admin.getRules());
             //获取当前月的月份
             String monthKey = dateUtils.getCurrentMonth();
@@ -136,8 +142,6 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             if(admin.getRules().contains("班主任")){
                 monthlyRatingQuota.setRatingAmount(300);
             }else if(admin.getRules().contains("科任教师")){
-                monthlyRatingQuota.setRatingAmount(200);
-            }else if(admin.getRules().contains("科任老师")){
                 monthlyRatingQuota.setRatingAmount(200);
             }else if(admin.getRules().contains("其他老师")){
                 monthlyRatingQuota.setRatingAmount(50);
@@ -212,5 +216,80 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             deleteModel.delete();
             return okJSON200();
         });
+    }
+
+    /**
+     * @api {GET} /v2/p/class_teacher_relation_list/new/   06列表-班级教师关系列表
+     * @apiName listClassTeacherRelation
+     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiParam {int} page 页码
+     * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {long} classId 班级ID
+     * @apiSuccess (Success 200) {long} teacherId 教师ID
+     * @apiSuccess (Success 200) {String} teacherName 教师姓名
+     * @apiSuccess (Success 200) {String} subject 任教科目
+     * @apiSuccess (Success 200) {boolean} isHeadTeacher 是否班主任
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
+     */
+    public CompletionStage<Result> listClassTeacherRelationNew(Http.Request request, int page, String filter, int status) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().le("org_id", adminMember.getOrgId());
+            if (status > 0) expressionList.eq("status", status);
+            if (!ValidationUtil.isEmpty(filter)) expressionList
+                    .or()
+                    .icontains("filter", filter)
+                    .endOr();               //编写其他条件
+            //编写其他条件
+            //编写其他条件
+            //编写其他条件
+
+            ObjectNode result = Json.newObject();
+            List<ClassTeacherRelation> list;
+            if (page == 0) list = expressionList.findList();
+            else {
+                PagedList<ClassTeacherRelation> pagedList = expressionList
+                        .order().desc("id")
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .findPagedList();
+                list = pagedList.getList();
+                result.put("pages", pagedList.getTotalPageCount());
+                result.put("hasNest", pagedList.hasNext());
+            }
+            
+            // 批量获取教师姓名
+            Set<Long> teacherIds = list.stream()
+                    .map(ctr -> ctr.teacherId)
+                    .filter(id -> id > 0)
+                    .collect(Collectors.toSet());
+            
+            Map<Long, String> teacherNameMap = new HashMap<>();
+            if (!teacherIds.isEmpty()) {
+                List<ShopAdmin> teachers = ShopAdmin.find.query()
+                        .where()
+                        .in("id", teacherIds)
+                        .findList();
+                for (ShopAdmin teacher : teachers) {
+                    teacherNameMap.put(teacher.id, teacher.realName);
+                }
+            }
+            
+            // 为每个关系添加教师姓名
+            List<ObjectNode> listWithTeacherName = list.stream().map(ctr -> {
+                ObjectNode item = (ObjectNode) Json.toJson(ctr);
+                String teacherName = teacherNameMap.getOrDefault(ctr.teacherId, "");
+                item.put("teacherName", teacherName);
+                return item;
+            }).collect(Collectors.toList());
+            
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(listWithTeacherName));
+            return ok(result);
+        });
+
     }
 }

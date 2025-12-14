@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import controllers.BaseSecurityController;
 import io.ebean.DB;
@@ -21,9 +22,11 @@ import utils.ValidationUtil;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import static constants.RedisKeyConstant.KEY_LOGIN_MAX_ERROR_TIMES;
 
@@ -55,12 +58,12 @@ public class ShopAdminController extends BaseSecurityController {
      * @apiSuccess {String} lastLoginTime 最后登录时间
      * @apiSuccess {String} lastLoginIP 最后登录ip
      */
-    public CompletionStage<Result> listShopMembers(Http.Request request) {
+    public CompletionStage<Result> listShopMembers(Http.Request request,long orgId) {
         return CompletableFuture.supplyAsync(() -> {
             ShopAdmin member = businessUtils.getUserIdByAuthToken2(request);
             if (null == member) return unauth403(request);
             List<ShopAdmin> list = ShopAdmin.find.query().where()
-                    .eq("orgId", member.orgId)
+                    .le("orgId", orgId!=0? orgId: member.orgId)
                     .orderBy().asc("id").findList();
             list.parallelStream().forEach((each) -> {
                 List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)
@@ -113,7 +116,7 @@ public class ShopAdminController extends BaseSecurityController {
 
 
     /**
-     * @api {POST} /v2/s/admin_members/new/ 03添加成员
+     * @api {POST}  03添加成员
      * @apiName addAdminMember
      * @apiGroup SHOP-ADMIN
      * @apiSuccess (Success 200) {int} code 200 请求成功
@@ -152,7 +155,24 @@ public class ShopAdminController extends BaseSecurityController {
             if (existMembers.size() > 0) return okCustomJson(request,CODE40002, "shopAdmin.phoneNumber.exist");
             long currentTime = dateUtils.getCurrentTimeByMilliSecond();
             String avatar = node.findPath("avatar").asText();
-            if (ValidationUtil.isEmpty(member.rules)) return okCustomJson(CODE40001, "角色不能为空");
+            JsonNode rulesNode = node.findPath("rules");
+            String rules = null;
+            if (rulesNode.isArray()) {
+                // 如果是数组，转换为逗号分隔的字符串
+                ArrayNode rulesArray = (ArrayNode) rulesNode;
+                List<String> rulesList = new ArrayList<>();
+                for (JsonNode ruleNode : rulesArray) {
+                    if (!ruleNode.isNull() && !ruleNode.asText().isEmpty()) {
+                        rulesList.add(ruleNode.asText());
+                    }
+                }
+                rules = String.join(",", rulesList);
+            } else if (!rulesNode.isNull() && !rulesNode.asText().isEmpty()) {
+                // 如果是字符串，直接使用
+                rules = rulesNode.asText();
+            }
+            if (!ValidationUtil.isEmpty(rules)) member.setRules(rules);
+            if (ValidationUtil.isEmpty(member.rules)) return okCustomJson(request, CODE40001, "角色不能为空");
             if (!ValidationUtil.isEmpty(avatar)) member.setAvatar(avatar);
             member.setPhoneNumber(member.phoneNumber);
             member.setStatus(ShopAdmin.STATUS_NORMAL);
@@ -161,7 +181,37 @@ public class ShopAdminController extends BaseSecurityController {
             member.setLastLoginIP(ip);
             member.setShopId(admin.shopId);
             member.setShopName(admin.shopName);
-            member.setOrgId(admin.orgId);
+            
+            // 通过rules查找对应的group，比较最大orgId
+            long maxOrgId = admin.orgId; // 默认使用admin的orgId
+            if (!ValidationUtil.isEmpty(rules)) {
+                // 解析rules（可能是逗号分隔的字符串）
+                List<String> ruleNames = Arrays.stream(rules.split(","))
+                        .map(String::trim)
+                        .filter(name -> !ValidationUtil.isEmpty(name))
+                        .collect(Collectors.toList());
+                
+                // 批量查询所有匹配的Group
+                List<Group> matchedGroups = new ArrayList<>();
+                if (!ruleNames.isEmpty()) {
+                    matchedGroups = Group.find.query()
+                            .where()
+                            .in("name", ruleNames)
+                            .findList();
+                }
+                
+                // 找到最大的orgId
+                if (!matchedGroups.isEmpty()) {
+                    maxOrgId = matchedGroups.stream()
+                            .mapToLong(g -> g.orgId)
+                            .max()
+                            .orElse(admin.orgId);
+                }
+            }
+            
+            member.setOrgId(maxOrgId);
+            // 根据maxOrgId查找对应的orgName（如果需要）
+            // 这里假设orgName需要从其他地方获取，暂时使用admin的orgName
             member.setOrgName(admin.orgName);
             member.setLastLoginTime(currentTime);
             member.setPinyinAbbr(pinyin4j.toPinYinUppercase(member.realName));
@@ -219,7 +269,24 @@ public class ShopAdminController extends BaseSecurityController {
                 System.out.println("改了头像");
                 existMember.setAvatar(avatar);
             }
-            String rules = node.findPath("rules").asText();
+
+            JsonNode rulesNode = node.findPath("rules");
+            String rules = null;
+            if (rulesNode.isArray()) {
+                // 如果是数组，转换为逗号分隔的字符串
+                ArrayNode rulesArray = (ArrayNode) rulesNode;
+                List<String> rulesList = new ArrayList<>();
+                for (JsonNode ruleNode : rulesArray) {
+                    if (!ruleNode.isNull() && !ruleNode.asText().isEmpty()) {
+                        rulesList.add(ruleNode.asText());
+                    }
+                }
+                rules = String.join(",", rulesList);
+            } else if (!rulesNode.isNull() && !rulesNode.asText().isEmpty()) {
+                // 如果是字符串，直接使用
+                rules = rulesNode.asText();
+            }
+
             if (!ValidationUtil.isEmpty(rules)) {
                 existMember.setRules(rules);
             }else {

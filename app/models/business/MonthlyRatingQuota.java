@@ -26,9 +26,9 @@ public class MonthlyRatingQuota extends Model {
     @DbComment("班级ID")
     public long classId;
 
-    @Column(name = "teacher_id")
+    @Column(name = "evaluator_id")
     @DbComment("教师ID/评价者ID")
-    public long teacherId;
+    public long evaluatorId;
 
     @Column(name = "role_type")
     @DbComment("身份：head/basic/other/parent/adm")
