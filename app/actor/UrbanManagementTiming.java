@@ -11,11 +11,14 @@ import models.business.Student;
 import models.mouth.MonthlyPerformanceSnapshot;
 import play.Logger;
 import play.cache.NamedCache;
-
+import utils.IdGenerator;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -57,6 +60,12 @@ public class UrbanManagementTiming {
         actorSystem.scheduler().scheduleOnce(
                 scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
                 this::scheduleMonth,
+                actorSystem.dispatcher()
+        );
+
+        actorSystem.scheduler().scheduleOnce(
+                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
+                this::scheduleMonthlyAwards,
                 actorSystem.dispatcher()
         );
 
@@ -186,6 +195,91 @@ public class UrbanManagementTiming {
 
         return initialDelay;
     }
+
+    /**
+     * 调度每月月底统计任务（每天检查一次，如果是月底最后一天则执行）
+     */
+    private void scheduleMonthlyAwards() {
+        actorSystem.scheduler().scheduleWithFixedDelay(
+                scala.concurrent.duration.Duration.create(calculateInitialDelay(23, 59), TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
+                () -> {
+                    try {
+                        LocalDate today = LocalDate.now();
+                        YearMonth currentMonth = YearMonth.from(today);
+                        LocalDate lastDayOfMonth = currentMonth.atEndOfMonth();
+
+                        // 如果是本月最后一天，执行统计任务
+                        if (today.equals(lastDayOfMonth)) {
+                            calculateMonthlyAwards();
+                        }
+                    } catch (Exception e) {
+                        logger.error("检查并执行月度统计任务出错", e);
+                    }
+                },
+                actorSystem.dispatcher()
+        );
+    }
+
+    /**
+     * 每个月月底统计每个学生月奖项分数
+     */
+    private void calculateMonthlyAwards() {
+        try {
+            // 获取当前年月
+            YearMonth currentYearMonth = YearMonth.now();
+            String year = String.valueOf(currentYearMonth.getYear());
+            String month = String.valueOf(currentYearMonth.getMonthValue());
+
+            // 获取所有学生
+            List<Student> allStudents = Student.find.all();
+
+            // 创建快照记录列表
+            List<MonthlyPerformanceSnapshot> snapshots = new ArrayList<>();
+            long currentTime = System.currentTimeMillis();
+
+            // 为每个学生创建快照记录并重置specialtyScore
+            for (Student student : allStudents) {
+                // 创建快照记录
+                MonthlyPerformanceSnapshot snapshot = new MonthlyPerformanceSnapshot();
+                snapshot.setRecordId(IdGenerator.getId());
+                snapshot.setStudentId(student.getId());
+                snapshot.setYear(year);
+                snapshot.setMouth(month);
+                snapshot.setSumMouthScore(String.valueOf(student.getSpecialtyScore()));
+                snapshot.setSumFinalScore(String.valueOf(student.getTotalScore()));
+                snapshot.setSettleState(1L); // 设置为已结算
+                snapshot.setSettleTime(currentTime);
+                snapshots.add(snapshot);
+
+                // 重置学生的specialtyScore为0
+                student.setSpecialtyScore(0.0);
+            }
+
+            // 保存所有快照记录
+            try (Transaction transaction = MonthlyPerformanceSnapshot.find.db().beginTransaction()) {
+                DB.saveAll(snapshots);
+                transaction.commit();
+            } catch (Exception e) {
+                logger.error("保存月度快照记录出错", e);
+                throw e;
+            }
+
+            // 更新所有学生的specialtyScore
+            try (Transaction transaction = Student.find.db().beginTransaction()) {
+                DB.updateAll(allStudents);
+                transaction.commit();
+            } catch (Exception e) {
+                logger.error("重置学生specialtyScore出错", e);
+                throw e;
+            }
+
+            logger.info("成功统计并保存 {} 个学生的月度奖项分数", allStudents.size());
+        } catch (Exception e) {
+            logger.error("统计月度奖项分数出错", e);
+        }
+    }
+
 
 
 }
