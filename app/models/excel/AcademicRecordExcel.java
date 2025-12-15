@@ -98,7 +98,8 @@ public class AcademicRecordExcel {
             if (student != null) {
                 excel.studentNumber = student.studentNumber;
                 excel.studentName = student.name;
-                student.setClassInfo(excel.className);
+                //excel.className = student.setClassInfo;
+                //student.setClassInfo(excel.className);
             }
 
             excel.examType = record.examType == AcademicRecord.EXAM_MIDTERM ? "期中" : "期末";
@@ -151,6 +152,7 @@ public class AcademicRecordExcel {
         Student student = Student.find.query()
                 .where()
                 .eq("student_number", excel.getStudentNumber())
+                .setMaxRows(1)
                 .findOne();
 
         if (student == null) {

@@ -278,13 +278,13 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200){int} 200 成功
      */
     @Transactional
-    public CompletionStage<Result> studentImport(Http.Request request) {
+    public CompletionStage<Result> studentImport(Http.Request request,Long classId) {
         Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
         Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
         // 获取班级ID参数
         DynamicForm form = formFactory.form().bindFromRequest(request);
-        long classId = Long.parseLong(form.get("classId"));
+        //long classId = Long.parseLong(form.get("classId"));
 
         if (filePart == null) {
             return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
@@ -303,16 +303,16 @@ public class StudentController extends BaseSecurityController {
 
             file.copyTo(Paths.get(destPath), true);
             File destFile = new File(destPath);
-            ;
+
             try (InputStream inputStream = new FileInputStream(destFile)) {
                 // 读取Excel文件
                 List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
 
                 // 数据验证
-                StudentImportExcel.validateData(list);
+                StudentImportExcel.validateData(list,classId);
 
                 // 转换为实体并保存
-                StudentImportExcel.toEntity(list,classId );
+                StudentImportExcel.toEntity(list,classId);
 
                 return okJSON200();
             } catch (Exception e) {

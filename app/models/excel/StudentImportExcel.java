@@ -14,15 +14,13 @@ import utils.EncodeUtils;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Translation("学生信息")
 public class StudentImportExcel {
-
-    @ExcelIgnore
-    @Translation("班级ID")
-    public long classId;
 
     @ExcelProperty(value = "学号", index = 0)
     @Translation("学号")
@@ -32,21 +30,21 @@ public class StudentImportExcel {
     @Translation("姓名")
     public String name;
 
-    @ExcelProperty(value = "关系一", index = 2)
-    @Translation("关系一")
-    public String relationNameOne;
+    @ExcelProperty(value = "班级名称",index = 2)
+    @Translation("班级名称")
+    public String className;
 
-    @ExcelProperty(value = "关系一手机号", index = 3)
-    @Translation("关系一手机号")
-    public String relationPhoneOne;
+    @ExcelProperty(value = "爸爸手机号", index = 3)
+    @Translation("爸爸手机号")
+    public String fatherPhoneOne;
 
-    @ExcelProperty(value = "关系二", index = 4)
-    @Translation("关系二")
-    public String relationNameTwo;
+    @ExcelProperty(value = "妈妈手机号", index = 4)
+    @Translation("妈妈手机号")
+    public String motherPhoneTwo;
 
-    @ExcelProperty(value = "关系二手机号", index = 5)
-    @Translation("关系二手机号")
-    public String relationPhoneTwo;
+    @ExcelProperty(value = "家庭地址", index = 5)
+    @Translation("家庭地址")
+    public String homeAddress;
 
     @ExcelIgnore
     private static EncodeUtils encodeUtils = new EncodeUtils();
@@ -54,16 +52,16 @@ public class StudentImportExcel {
     /**
      * 转为实体类数据
      */
-    public static void toEntity(List<StudentImportExcel> list, long classId) {
+    public static void toEntity(List<StudentImportExcel> list,Long classId) {
         if (list == null || list.isEmpty()) {
             throw new RuntimeException("数据为空");
         }
 
         // 验证班级是否存在
-        SchoolClass schoolClass = SchoolClass.find.byId(classId);
-        if (schoolClass == null) {
-            throw new RuntimeException("班级不存在");
-        }
+//        SchoolClass schoolClass = SchoolClass.find.byId(classId);
+//        if (schoolClass == null) {
+//            throw new RuntimeException("班级不存在");
+//        }
 
         for (StudentImportExcel studentExcel : list) {
             // 验证学号唯一性
@@ -73,6 +71,35 @@ public class StudentImportExcel {
                     .findOne();
             if (existing != null) {
                 throw new RuntimeException("学号 " + studentExcel.getStudentNumber() + " 已存在");
+            }
+
+            //studentExcel.className是一年级一班，一年级二班，三年级三班
+//            Map<String,Long> classInfo = new HashMap<>();
+
+//            String className = studentExcel.getClassName();
+//
+//            if (className.contains("一年级")) classInfo.put("grade", 1L);
+//            else if (className.contains("二年级")) classInfo.put("grade", 2L);
+//            else if (className.contains("三年级")) classInfo.put("grade", 3L);
+//            else if (className.contains("四年级")) classInfo.put("grade", 4L);
+//            else if (className.contains("五年级")) classInfo.put("grade", 5L);
+//            else if (className.contains("六年级")) classInfo.put("grade", 6L);
+//            else throw new RuntimeException("无法识别的年级: " + className);
+//
+//            if (className.contains("一班"))  classInfo.put("classId", 1L);
+//            else if (className.contains("二班"))  classInfo.put("classId", 2L);
+//            else if (className.contains("三班"))  classInfo.put("classId", 3L);
+//            else if (className.contains("四班"))  classInfo.put("classId", 4L);
+//            else if (className.contains("五班"))  classInfo.put("classId", 5L);
+//            else if (className.contains("六班")) classInfo.put("classId", 6L);
+
+            //Long grade = classInfo.get("grade");
+            //Long classId = classInfo.get("classId");
+
+            SchoolClass schoolClass = SchoolClass.find.query().where().eq("id",classId).findOne();
+
+            if (schoolClass == null) {
+                throw new RuntimeException("班级不存在");
             }
 
             // 创建学生
@@ -85,6 +112,31 @@ public class StudentImportExcel {
             schoolClass.calcStudentNum();
         }
     }
+
+    /**
+     * 根据班级名称设置年级和班级ID
+     */
+    public Map<String, Long> setClassInfo(String className) {
+
+        Map<String,Long> classInfo = new HashMap<>();
+
+        if (className.contains("一年级")) classInfo.put("grade", 1L);
+        else if (className.contains("二年级")) classInfo.put("grade", 2L);
+        else if (className.contains("三年级")) classInfo.put("grade", 3L);
+        else if (className.contains("四年级")) classInfo.put("grade", 4L);
+        else if (className.contains("五年级")) classInfo.put("grade", 5L);
+        else if (className.contains("六年级")) classInfo.put("grade", 6L);
+        else throw new RuntimeException("无法识别的年级: " + className);
+
+        if (className.contains("一班"))  classInfo.put("classId", 1L);
+        else if (className.contains("二班"))  classInfo.put("classId", 2L);
+        else if (className.contains("三班"))  classInfo.put("classId", 3L);
+        else if (className.contains("四班"))  classInfo.put("classId", 4L);
+        else if (className.contains("五班"))  classInfo.put("classId", 5L);
+        else if (className.contains("六班")) classInfo.put("classId", 6L);
+        return classInfo;
+    }
+
 
     /**
      * 创建学生
@@ -112,28 +164,28 @@ public class StudentImportExcel {
         String studentName = excel.getName();
 
         // 创建关系一账号和关系
-        if (isValidParentInfo(excel.getRelationNameOne(), excel.getRelationPhoneOne())) {
+        if (isValidParentInfo(excel.getFatherPhoneOne())) {
             ShopAdmin relationOne = findOrCreateParent(
-                    excel.getRelationNameOne(),
-                    excel.getRelationPhoneOne(),
-                    excel.getRelationNameOne(),
+                    "爸爸",
+                    excel.getFatherPhoneOne(),
+                    "爸爸",
                     studentName
             );
             if (relationOne != null) {
-                ParentStudentRelation.addRelation(relationOne.getId(), studentId, excel.getRelationNameOne());
+                ParentStudentRelation.addRelation(relationOne.getId(), studentId, "爸爸");
             }
         }
 
         // 创建关系二账号和关系
-        if (isValidParentInfo(excel.getRelationNameTwo(), excel.getRelationPhoneTwo())) {
+        if (isValidParentInfo(excel.getMotherPhoneTwo())) {
             ShopAdmin relationTwo = findOrCreateParent(
-                    excel.getRelationNameTwo(),
-                    excel.getRelationPhoneTwo(),
-                    excel.getRelationNameTwo(),
+                    "妈妈",
+                    excel.getMotherPhoneTwo(),
+                    "妈妈",
                     studentName
             );
             if (relationTwo != null) {
-                ParentStudentRelation.addRelation(relationTwo.getId(), studentId, excel.getRelationNameTwo());
+                ParentStudentRelation.addRelation(relationTwo.getId(), studentId, "妈妈");
             }
         }
     }
@@ -163,9 +215,19 @@ public class StudentImportExcel {
         if (parent != null) {
 //            // 如果找到现有家长，更新姓名（如果姓名不同）
             if (!generateParentRealName(studentName, relationship).equals(parent.getRealName())) {
-                parent.setUserName(phone);
-                parent.setRealName(generateParentRealName(studentName, relationship));
-                parent.update();
+
+                if(parent.getRules().contains("家长")){
+                    parent.setUserName(phone);
+                    parent.setRealName(generateParentRealName(studentName, relationship));
+                    parent.update();
+                }
+                else if(parent.getRules().contains("科任教师")){
+                    parent.setUserName(phone);
+                    parent.setRealName(generateParentRealName(studentName, relationship));
+                    //parent.rulers 后面追加,家长
+                    parent.setRules(parent.getRules()+",家长");
+                    parent.update();
+                }
             }
             return parent;
         }
@@ -177,8 +239,8 @@ public class StudentImportExcel {
         parent.setRealName(generateParentRealName(studentName, relationship)); // 真实姓名设为"学生名_关系"
         parent.setRules("家长");
         parent.setPassword(generateDefaultPassword());
+        parent.setStatus(1);
         parent.save();
-
         return parent;
     }
 
@@ -199,9 +261,8 @@ public class StudentImportExcel {
     /**
      * 验证家长信息是否有效
      */
-    private static boolean isValidParentInfo(String name, String phone) {
-        return name != null && !name.trim().isEmpty() &&
-                phone != null && !phone.trim().isEmpty();
+    private static boolean isValidParentInfo(String phone) {
+        return phone != null && !phone.trim().isEmpty();
     }
 
     /**
@@ -224,7 +285,13 @@ public class StudentImportExcel {
             StudentImportExcel studentExcel = new StudentImportExcel();
             studentExcel.setStudentNumber(student.getStudentNumber());
             studentExcel.setName(student.getName());
-            studentExcel.setClassId(student.getClassId());
+            SchoolClass schoolClass = SchoolClass.find.byId(student.getClassId());
+
+            if (schoolClass != null) {
+                studentExcel.setClassName(schoolClass.className);
+            }
+
+            //studentExcel.setClassId(student.getClassId());
 
             // 查询家长信息
             List<ParentStudentRelation> parentRelations = ParentStudentRelation.findByStudentId(student.getId());
@@ -233,11 +300,9 @@ public class StudentImportExcel {
                 ShopAdmin parent = ShopAdmin.find.byId(relation.getParentId());
                 if (parent != null) {
                     if (relationCount == 0) {
-                        studentExcel.setRelationNameOne(relation.getRelationship());
-                        studentExcel.setRelationPhoneOne(parent.getPhoneNumber());
+                        studentExcel.setFatherPhoneOne(parent.getPhoneNumber());
                     } else if (relationCount == 1) {
-                        studentExcel.setRelationNameTwo(relation.getRelationship());
-                        studentExcel.setRelationPhoneTwo(parent.getPhoneNumber());
+                        studentExcel.setMotherPhoneTwo(parent.getPhoneNumber());
                     }
                     relationCount++;
                 }
@@ -276,9 +341,13 @@ public class StudentImportExcel {
     /**
      * 数据验证
      */
-    public static void validateData(List<StudentImportExcel> list) {
+    public static void validateData(List<StudentImportExcel> list,Long classId) {
         if (list == null || list.isEmpty()) {
             throw new RuntimeException("数据为空");
+        }
+
+        if(classId == null){
+            throw new RuntimeException("班级ID为空");
         }
 
         for (int i = 0; i < list.size(); i++) {
@@ -313,8 +382,8 @@ public class StudentImportExcel {
      */
     private static void validateParentInfo(StudentImportExcel excel, int rowNum) {
         // 至少需要一个家长
-        boolean hasRelationOne = isValidParentInfo(excel.getRelationNameOne(), excel.getRelationPhoneOne());
-        boolean hasRelationTwo = isValidParentInfo(excel.getRelationNameTwo(), excel.getRelationPhoneTwo());
+        boolean hasRelationOne = isValidParentInfo(excel.fatherPhoneOne);
+        boolean hasRelationTwo = isValidParentInfo(excel.motherPhoneTwo);
 
         if (!hasRelationOne && !hasRelationTwo) {
             throw new RuntimeException("第" + rowNum + "行: 至少需要填写一个家长信息");
@@ -322,40 +391,40 @@ public class StudentImportExcel {
 
         // 验证关系一信息
         if (hasRelationOne) {
-            if (!isValidPhone(excel.getRelationPhoneOne().trim())) {
+            if (!isValidPhone(excel.fatherPhoneOne.trim())) {
                 throw new RuntimeException("第" + rowNum + "行: 关系一手机号格式不正确");
             }
         }
 
         // 验证关系二信息
         if (hasRelationTwo) {
-            if (!isValidPhone(excel.getRelationPhoneTwo().trim())) {
+            if (!isValidPhone(excel.getMotherPhoneTwo().trim())) {
                 throw new RuntimeException("第" + rowNum + "行: 关系二手机号格式不正确");
             }
         }
 
         // 验证关系名称不能为空
-        if (hasRelationOne && (excel.getRelationNameOne() == null || excel.getRelationNameOne().trim().isEmpty())) {
-            throw new RuntimeException("第" + rowNum + "行: 关系一名称不能为空");
-        }
-
-        if (hasRelationTwo && (excel.getRelationNameTwo() == null || excel.getRelationNameTwo().trim().isEmpty())) {
-            throw new RuntimeException("第" + rowNum + "行: 关系二名称不能为空");
-        }
+//        if (hasRelationOne && (excel.getRelationNameOne() == null || excel.getRelationNameOne().trim().isEmpty())) {
+//            throw new RuntimeException("第" + rowNum + "行: 关系一名称不能为空");
+//        }
+//
+//        if (hasRelationTwo && (excel.getRelationNameTwo() == null || excel.getRelationNameTwo().trim().isEmpty())) {
+//            throw new RuntimeException("第" + rowNum + "行: 关系二名称不能为空");
+//        }
     }
 
     /**
      * 批量导入学生数据
      */
-    public static void batchImport(InputStream inputStream, long classId) {
+    public static void batchImport(InputStream inputStream,Long classId) {
         // 读取Excel数据
         List<StudentImportExcel> excelData = importFromExcel(inputStream);
 
         // 数据验证
-        validateData(excelData);
+        validateData(excelData,classId);
 
         // 转换为实体并保存
-        toEntity(excelData, classId);
+        toEntity(excelData,classId);
 
 
     }

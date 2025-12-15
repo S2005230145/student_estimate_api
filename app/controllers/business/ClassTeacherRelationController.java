@@ -1,6 +1,7 @@
 package controllers.business;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import constants.BusinessConstant;
 import controllers.BaseSecurityController;
@@ -9,6 +10,7 @@ import io.ebean.PagedList;
 import models.admin.ShopAdmin;
 import models.business.ClassTeacherRelation;
 import models.business.MonthlyRatingQuota;
+import models.business.SchoolClass;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -19,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 public class ClassTeacherRelationController extends BaseSecurityController {
@@ -42,7 +43,8 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     public CompletionStage<Result> listClassTeacherRelation(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().eq("org_id", adminMember.getOrgId());
+
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -65,8 +67,22 @@ public class ClassTeacherRelationController extends BaseSecurityController {
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }
+            
+            // 为每个 ClassTeacherRelation 动态添加 className 字段
+            ArrayNode listNode = Json.newArray();
+            for (ClassTeacherRelation relation : list) {
+                ObjectNode relationNode = (ObjectNode) Json.toJson(relation);
+                SchoolClass schoolClass = SchoolClass.find.byId(relation.classId);
+                if (schoolClass != null) {
+                    relationNode.put("className", schoolClass.className);
+                } else {
+                    relationNode.put("className", "");
+                }
+                listNode.add(relationNode);
+            }
+            
             result.put(CODE, CODE200);
-            result.set("list", Json.toJson(list));
+            result.set("list", listNode);
             return ok(result);
 
         });
@@ -110,6 +126,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} classId 班级ID
+     * @apiParam {String} id 唯一标识
      * @apiParam {long} teacherId 教师ID
      * @apiParam {String} subject 任教科目
      * @apiParam {boolean} isHeadTeacher 是否班主任
@@ -124,6 +141,10 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassTeacherRelation classTeacherRelation = Json.fromJson(jsonNode, ClassTeacherRelation.class);
+
+            boolean isAlreadyAdd = ClassTeacherRelation.isTeacherInClass(classTeacherRelation.getTeacherId(), classTeacherRelation.getClassId());
+            if (isAlreadyAdd) return okCustomJson(CODE40001, "该老师已经添加过该班级");
+
 // 数据sass化
             classTeacherRelation.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
@@ -136,15 +157,20 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             monthlyRatingQuota.setClassId(classTeacherRelation.getClassId());
             monthlyRatingQuota.setEvaluatorId(classTeacherRelation.getTeacherId());
             monthlyRatingQuota.setRoleType(admin.getRules());
+
+            ShopAdmin shopAdmin = ShopAdmin.find.byId(classTeacherRelation.getTeacherId());
+
             //获取当前月的月份
             String monthKey = dateUtils.getCurrentMonth();
             monthlyRatingQuota.setMonthKey(monthKey);
-            if(admin.getRules().contains("班主任")){
-                monthlyRatingQuota.setRatingAmount(300);
-            }else if(admin.getRules().contains("科任教师")){
-                monthlyRatingQuota.setRatingAmount(200);
-            }else if(admin.getRules().contains("其他老师")){
-                monthlyRatingQuota.setRatingAmount(50);
+            if(shopAdmin != null){
+                if(shopAdmin.getRules().contains("班主任")){
+                    monthlyRatingQuota.setRatingAmount(300);
+                }else if(shopAdmin.getRules().contains("科任教师")){
+                    monthlyRatingQuota.setRatingAmount(200);
+                }else if(shopAdmin.getRules().contains("其他老师")){
+                    monthlyRatingQuota.setRatingAmount(50);
+                }
             }
             monthlyRatingQuota.setCreateTime(currentTimeBySecond);
             monthlyRatingQuota.setUpdateTime(currentTimeBySecond);
@@ -292,4 +318,34 @@ public class ClassTeacherRelationController extends BaseSecurityController {
         });
 
     }
+
+    /**
+     * @api {GET} /v2/p/header_teacher_class/   07列表-获取当前班主任所在的班级
+     * @apiName noBindingClassTeacher
+     * @apiGroup no-Bing-Class
+     */
+    public CompletionStage<Result> headerTeacherClass(Http.Request request) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            //查看是否是班主任
+            if (!adminMember.getRules().contains("班主任")) throw new RuntimeException("您不是班主任");
+
+            List<Long> classIds = ClassTeacherRelation.find.query()
+                    .where()
+                    .eq("teacher_id", adminMember.getId())
+                    .eq("is_head_teacher", true)
+                    .findIds();
+
+            List<SchoolClass> classes = SchoolClass.find.query()
+                    .where()
+                    .in("id", classIds).findList();
+
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(classes));
+            return ok(result);
+
+        });
+    }
+
 }

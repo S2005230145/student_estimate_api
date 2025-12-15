@@ -124,8 +124,6 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
-     * @apiParam {int} grade 年级
-     * @apiParam {long} headTeacherId 班主任ID
      * @apiParam {ShopAdmin} headTeacher
      * @apiParam {int} studentNum 人数
      * @apiParam {double} academicScore 学业得分总分
@@ -147,6 +145,18 @@ public class SchoolClassController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             SchoolClass schoolClass = Json.fromJson(jsonNode, SchoolClass.class);
+            //解析SchoolClass的className,拆分出年级grade和班级class,比如说一年级一班 ，用contains
+            String className = schoolClass.getClassName();
+            if (className.contains("一年级")) schoolClass.grade = 1;
+            if (className.contains("二年级")) schoolClass.grade =2 ;
+            if (className.contains("三年级")) schoolClass.grade = 3;
+            if (className.contains("四年级")) schoolClass.grade = 4;
+            if (className.contains("五年级")) schoolClass.grade = 5;
+            if (className.contains("六年级")) schoolClass.grade = 6;
+            if (className.contains("一班")) schoolClass.classId = 1;
+            if (className.contains("二班")) schoolClass.classId = 2;
+            if (className.contains("三班")) schoolClass.classId = 3;
+            if (className.contains("四班")) schoolClass.classId = 4;
 // 数据sass化
             schoolClass.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();

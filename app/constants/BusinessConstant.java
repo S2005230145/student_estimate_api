@@ -506,6 +506,7 @@ public class BusinessConstant {
             {1.5, 1.0, 0.5, 0.0}       // 校级
     };
 
+
     // 习惯评分规则
     public static final double HABIT_BASE_SCORE = 20.0; // 基础分
     public static final double HABIT_MAX_SCORE = 40.0; // 最高分

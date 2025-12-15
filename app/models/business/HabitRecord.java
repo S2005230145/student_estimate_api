@@ -45,6 +45,11 @@ public class HabitRecord  extends Model {
     public static final double MOUTH_BASIC_TEACHER_MAX_SCORE = 200.0; // 基础学科老师（语数英）习惯月封顶
     public static final double MOUTH_OTHER_TEACHER_PARENT_MAX_SCORE = 50.0; //艺体学科习惯月封顶
 
+    //未结算
+    public static final int STATUS_UNSETTLED = 0;
+    //已结算
+    public static final int STATUS_SETTLED = 1;
+
     @Column(name = "org_id")
     @DbComment("机构ID")
     public long orgId;
@@ -97,6 +102,10 @@ public class HabitRecord  extends Model {
     @Column(name = "month_end_time")
     @DbComment("对应月末时间")
     public Long monthEndTime;
+
+    @Column(name = "status")
+    @DbComment("状态")
+    public Integer status;
 
     public static Finder<Long, HabitRecord> find = new Finder<>(HabitRecord.class);
 

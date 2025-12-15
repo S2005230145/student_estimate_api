@@ -1,5 +1,6 @@
 package controllers.basic;
 
+import akka.util.ByteString;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,6 +9,7 @@ import io.ebean.DB;
 import models.admin.Group;
 import models.admin.GroupUser;
 import models.admin.ShopAdmin;
+import models.excel.TeacherImportExcel;
 import play.db.ebean.Transactional;
 import play.libs.Json;
 import play.mvc.BodyParser;
@@ -18,6 +20,7 @@ import utils.Pinyin4j;
 import utils.ValidationUtil;
 
 import javax.inject.Inject;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,12 +58,14 @@ public class ShopAdminController extends BaseSecurityController {
      * @apiSuccess {String} lastLoginTime 最后登录时间
      * @apiSuccess {String} lastLoginIP 最后登录ip
      */
-    public CompletionStage<Result> listShopMembers(Http.Request request,long orgId) {
+    public CompletionStage<Result> listShopMembers(Http.Request request) {
         return CompletableFuture.supplyAsync(() -> {
             ShopAdmin member = businessUtils.getUserIdByAuthToken2(request);
             if (null == member) return unauth403(request);
             List<ShopAdmin> list = ShopAdmin.find.query().where()
-                    .le("orgId", orgId!=0? orgId: member.orgId)
+                    .eq("orgId", member.orgId)
+                    .not()
+                    .icontains("rules", "家长")
                     .orderBy().asc("id").findList();
             list.parallelStream().forEach((each) -> {
                 List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)
@@ -73,7 +78,6 @@ public class ShopAdminController extends BaseSecurityController {
             result.set("list", Json.toJson(list));
             return ok(result);
         });
-
     }
 
     /**
@@ -178,37 +182,7 @@ public class ShopAdminController extends BaseSecurityController {
             member.setLastLoginIP(ip);
             member.setShopId(admin.shopId);
             member.setShopName(admin.shopName);
-            
-            // 通过rules查找对应的group，比较最大orgId
-            long maxOrgId = admin.orgId; // 默认使用admin的orgId
-            if (!ValidationUtil.isEmpty(rules)) {
-                // 解析rules（可能是逗号分隔的字符串）
-                List<String> ruleNames = Arrays.stream(rules.split(","))
-                        .map(String::trim)
-                        .filter(name -> !ValidationUtil.isEmpty(name))
-                        .collect(Collectors.toList());
-                
-                // 批量查询所有匹配的Group
-                List<Group> matchedGroups = new ArrayList<>();
-                if (!ruleNames.isEmpty()) {
-                    matchedGroups = Group.find.query()
-                            .where()
-                            .in("name", ruleNames)
-                            .findList();
-                }
-                
-                // 找到最大的orgId
-                if (!matchedGroups.isEmpty()) {
-                    maxOrgId = matchedGroups.stream()
-                            .mapToLong(g -> g.orgId)
-                            .max()
-                            .orElse(admin.orgId);
-                }
-            }
-            
-            member.setOrgId(maxOrgId);
-            // 根据maxOrgId查找对应的orgName（如果需要）
-            // 这里假设orgName需要从其他地方获取，暂时使用admin的orgName
+            member.setOrgId(admin.orgId);
             member.setOrgName(admin.orgName);
             member.setLastLoginTime(currentTime);
             member.setPinyinAbbr(pinyin4j.toPinYinUppercase(member.realName));
@@ -528,4 +502,72 @@ public class ShopAdminController extends BaseSecurityController {
             return ok(node);
         });
     }
+
+    /**
+     * @api {GET} /v2/s/teacher_members/ 10获取老师列表
+     * @apiName listShopMembers
+     * @apiGroup SHOP-ADMIN
+     * @apiSuccess (Success 200) {int} code 200 请求成功
+     * @apiSuccess {json} list
+     * @apiSuccess {int} id 用户id
+     * @apiSuccess {string} userName 用户名
+     * @apiSuccess {string} realName 真名
+     * @apiSuccess {String} avatar 头像
+     * @apiSuccess {String} phoneNumber 手机号码
+     * @apiSuccess {boolean} isAdmin 是否是管理员
+     * @apiSuccess {String} shopName 归属店铺
+     * @apiSuccess {String} orgName 机构名
+     * @apiSuccess {int} status 状态 1正常 2锁定
+     * @apiSuccess {String} lastLoginTime 最后登录时间
+     * @apiSuccess {String} lastLoginIP 最后登录ip
+     */
+    public CompletionStage<Result> listTeacherMembers(Http.Request request) {
+        return CompletableFuture.supplyAsync(() -> {
+            ShopAdmin member = businessUtils.getUserIdByAuthToken2(request);
+            if (null == member) return unauth403(request);
+
+            List<ShopAdmin> list = ShopAdmin.find.query()
+                    .where()
+                    .eq("orgId", member.orgId)
+                    .icontains("rules", "科任教师")
+                    .orderBy().asc("id")
+                    .findList();
+            list.parallelStream().forEach((each) -> {
+                List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)
+                        .orderBy().asc("id")
+                        .findList();
+                each.groupUserList.addAll(groupUserList);
+            });
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(list));
+            return ok(result);
+        });
+    }
+
+    @BodyParser.Of(BodyParser.Raw.class)
+    @Transactional
+    public CompletionStage<Result> importTeachers(Http.Request request) {
+        return CompletableFuture.supplyAsync(() -> {
+            ShopAdmin admin = businessUtils.getUserIdByAuthToken2(request);
+            if (admin == null) return unauth403(request);
+
+            Http.RawBuffer raw = request.body().asRaw();
+            if (raw == null || raw.asBytes() == null) {
+                return okCustomJson(request, CODE40001, "上传文件为空");
+            }
+            ByteString byteString = raw.asBytes();
+            try (InputStream is = new java.io.ByteArrayInputStream(byteString.toArray())) {
+                TeacherImportExcel.batchImport(is, admin);
+                return okJSON200();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return okCustomJson(request, CODE500, e.getMessage());
+            }
+        });
+    }
+
+    
+
+
 }

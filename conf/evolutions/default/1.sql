@@ -109,6 +109,14 @@ create table v1_badge_record (
   constraint pk_v1_badge_record primary key (id)
 ) comment='徽章授予记录';
 
+create table v1_class_config (
+  id                            varchar(255) not null comment 'id',
+  class_name                    varchar(255) comment '班级名称',
+  org_id                        varchar(255) comment '机构id',
+  status                        bigint comment '状态',
+  constraint pk_v1_class_config primary key (id)
+) comment='班级配置表';
+
 create table v1_class_routine (
   id                            bigint auto_increment not null comment '唯一标识',
   org_id                        bigint not null comment '机构ID',
@@ -204,6 +212,7 @@ create table v1_habit_record (
   record_time                   bigint not null comment '记录时间',
   create_time                   bigint not null comment '创建时间',
   month_end_time                bigint comment '对应月末时间',
+  status                        integer comment '状态',
   constraint pk_v1_habit_record primary key (id)
 ) comment='习惯评价记录';
 
@@ -305,6 +314,18 @@ create table cp_menu (
   constraint pk_cp_menu primary key (id)
 );
 
+create table monthly_performance_snapshot (
+  record_id                     bigint auto_increment not null,
+  student_id                    bigint,
+  year                          varchar(255),
+  mouth                         varchar(255),
+  sum_final_score               double,
+  settle_state                  bigint,
+  settle_time                   bigint,
+  type                          varchar(255),
+  constraint pk_monthly_performance_snapshot primary key (record_id)
+);
+
 create table v1_monthly_rating_quota (
   id                            bigint auto_increment not null,
   org_id                        bigint not null comment '机构ID',
@@ -373,6 +394,7 @@ create table v1_school_class (
   org_id                        bigint not null comment '机构ID',
   class_name                    varchar(255) comment '班级名称',
   grade                         integer not null comment '年级',
+  class                         integer not null comment '班级',
   head_teacher_id               bigint not null comment '班主任ID',
   student_num                   integer not null comment '人数',
   academic_score                double not null comment '学业得分总分',
@@ -472,6 +494,8 @@ drop table if exists v1_admin_config;
 
 drop table if exists v1_badge_record;
 
+drop table if exists v1_class_config;
+
 drop table if exists v1_class_routine;
 
 drop table if exists v1_class_teacher_relation;
@@ -495,6 +519,8 @@ drop table if exists cp_log;
 drop table if exists v1_member;
 
 drop table if exists cp_menu;
+
+drop table if exists monthly_performance_snapshot;
 
 drop table if exists v1_monthly_rating_quota;
 
