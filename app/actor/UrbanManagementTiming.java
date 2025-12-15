@@ -109,7 +109,7 @@ public class UrbanManagementTiming {
     private void scheduleMonth(){
         actorSystem.scheduler().scheduleWithFixedDelay(
                 scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(24 * 60 * 60 * 30, TimeUnit.SECONDS),
                 () -> {
                     try {
 
