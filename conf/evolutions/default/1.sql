@@ -204,6 +204,7 @@ create table v1_habit_record (
   record_time                   bigint not null comment '记录时间',
   create_time                   bigint not null comment '创建时间',
   month_end_time                bigint comment '对应月末时间',
+  status                        integer comment '状态',
   constraint pk_v1_habit_record primary key (id)
 ) comment='习惯评价记录';
 
@@ -303,6 +304,18 @@ create table cp_menu (
   active_menu                   varchar(255),
   create_time                   bigint not null,
   constraint pk_cp_menu primary key (id)
+);
+
+create table monthly_performance_snapshot (
+  record_id                     bigint auto_increment not null,
+  student_id                    bigint,
+  year                          varchar(255),
+  mouth                         varchar(255),
+  sum_final_score               double,
+  settle_state                  bigint,
+  settle_time                   bigint,
+  type                          varchar(255),
+  constraint pk_monthly_performance_snapshot primary key (record_id)
 );
 
 create table v1_monthly_rating_quota (
@@ -495,6 +508,8 @@ drop table if exists cp_log;
 drop table if exists v1_member;
 
 drop table if exists cp_menu;
+
+drop table if exists monthly_performance_snapshot;
 
 drop table if exists v1_monthly_rating_quota;
 

@@ -1,15 +1,20 @@
 package models.business;
 
+import actor.UrbanManagementTiming;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.inject.Inject;
 import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
 import io.ebean.annotation.DbComment;
 import jakarta.persistence.*;
 import lombok.Data;
+import models.mouth.MonthlyPerformanceSnapshot;
 import myannotation.EscapeHtmlAuthoritySerializer;
 import utils.ValidationUtil;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -114,6 +119,9 @@ public class AcademicRecord extends Model {
 
     public static Finder<Long, AcademicRecord> find = new Finder<>(AcademicRecord.class);
 
+    @Inject
+    static UrbanManagementTiming timing;
+
     /**
      * 一键计算所有排名、获得徽章、获得学业分，并同步到学生表
      */
@@ -146,6 +154,9 @@ public class AcademicRecord extends Model {
 
         //7. 同步到班级表
         updateClassAverageScores(currentRecords);
+
+        //结束月统计
+        timing.cancelMonthTask();
 
         return currentRecords;
     }
@@ -246,17 +257,44 @@ public class AcademicRecord extends Model {
         for (AcademicRecord record : academicRecords) {
             List<String> badges = new ArrayList<>();
 
+
             //获取当前的学生的生活习惯得分
             Student student = Student.find.byId(record.studentId);
 
-            // 学业优秀：年级前50名获得星辰徽章
-            if (student != null && record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING && student.getHabitScore() >= 32) {
-                badges.add("敏行徽章");
+            //查询习惯monthly_performance_snapshot
+            List<MonthlyPerformanceSnapshot> list = MonthlyPerformanceSnapshot.find.query()
+                    .where()
+                    .eq("student_id", record.studentId)
+                    .eq("settle_state", 0)
+                    .eq("type", "Habit").findList();
+
+            BigDecimal habitScore = null;
+            BigDecimal averageHabit = null;
+            if (student != null) {
+                habitScore = BigDecimal.valueOf(student.getHabitScore());
+            }
+            BigDecimal sumHabit = list.stream()
+                    .map(MonthlyPerformanceSnapshot::getSumFinalScore)
+                    .map(BigDecimal::valueOf)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .add(habitScore);
+
+            int size = list.size();
+            if (size > 0) {
+                averageHabit = sumHabit.divide(BigDecimal.valueOf(size), 2, RoundingMode.HALF_UP);
+                // 使用 averageHabit.doubleValue() 或保留 BigDecimal 传递
             }
 
-            // 进步显著：进步排名前50名获得星火徽章
-            if (student != null && record.progressRanking > 0 && record.progressRanking <= TOP_RANKING && student.getHabitScore() >= 32) {
-                badges.add("力行徽章");
+
+            if (student != null  && averageHabit!=null && averageHabit.compareTo(new BigDecimal("32.0"))>=0) {
+                // 学业优秀：年级前50名获得星辰徽章
+                if(record.gradeRanking > 0 && record.gradeRanking <= TOP_RANKING){
+                    badges.add("敏行徽章");
+                }
+                // 进步显著：进步排名前50名获得星火徽章
+                if(record.progressRanking > 0 && record.progressRanking <= TOP_RANKING){
+                    badges.add("力行徽章");
+                }
             }
 
             record.badgeAwarded = badges.isEmpty() ? null : String.join(",", badges);

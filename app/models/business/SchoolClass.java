@@ -198,7 +198,7 @@ public class SchoolClass  extends Model {
      * @param classIds 班级ID列表
      * @return 成功计算的班级数量
      */
-    public static int batchRecalcAcademicScores(List<Long> classIds) {
+    public static int  batchRecalcAcademicScores(List<Long> classIds) {
         int successCount = 0;
         for (Long classId : classIds) {
             try {

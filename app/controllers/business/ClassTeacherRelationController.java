@@ -124,6 +124,10 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassTeacherRelation classTeacherRelation = Json.fromJson(jsonNode, ClassTeacherRelation.class);
+
+            boolean isAlreadyAdd = ClassTeacherRelation.isTeacherInClass(classTeacherRelation.getTeacherId(), classTeacherRelation.getClassId());
+            if (isAlreadyAdd) return okCustomJson(CODE40001, "该老师已经添加过该班级");
+
 // 数据sass化
             classTeacherRelation.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
@@ -136,15 +140,20 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             monthlyRatingQuota.setClassId(classTeacherRelation.getClassId());
             monthlyRatingQuota.setEvaluatorId(classTeacherRelation.getTeacherId());
             monthlyRatingQuota.setRoleType(admin.getRules());
+
+            ShopAdmin shopAdmin = ShopAdmin.find.byId(classTeacherRelation.getTeacherId());
+
             //获取当前月的月份
             String monthKey = dateUtils.getCurrentMonth();
             monthlyRatingQuota.setMonthKey(monthKey);
-            if(admin.getRules().contains("班主任")){
-                monthlyRatingQuota.setRatingAmount(300);
-            }else if(admin.getRules().contains("科任教师")){
-                monthlyRatingQuota.setRatingAmount(200);
-            }else if(admin.getRules().contains("其他老师")){
-                monthlyRatingQuota.setRatingAmount(50);
+            if(shopAdmin != null){
+                if(shopAdmin.getRules().contains("班主任")){
+                    monthlyRatingQuota.setRatingAmount(300);
+                }else if(shopAdmin.getRules().contains("科任教师")){
+                    monthlyRatingQuota.setRatingAmount(200);
+                }else if(shopAdmin.getRules().contains("其他老师")){
+                    monthlyRatingQuota.setRatingAmount(50);
+                }
             }
             monthlyRatingQuota.setCreateTime(currentTimeBySecond);
             monthlyRatingQuota.setUpdateTime(currentTimeBySecond);

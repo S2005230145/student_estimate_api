@@ -30,12 +30,9 @@ public class MonthlyPerformanceSnapshot extends Model {
     @Column(name = "mouth")
     @JsonDeserialize(using = EscapeHtmlSerializer.class)
     private String mouth;
-    @Column(name = "sum_mouth_score")
-    @JsonDeserialize(using = EscapeHtmlSerializer.class)
-    private String sumMouthScore;
     @Column(name = "sum_final_score")
     @JsonDeserialize(using = EscapeHtmlSerializer.class)
-    private String sumFinalScore;
+    private Double sumFinalScore;
     @Column(name = "settle_state")
     private Long settleState;
     @Column(name = "settle_time")

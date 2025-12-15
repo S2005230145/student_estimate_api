@@ -528,4 +528,45 @@ public class ShopAdminController extends BaseSecurityController {
             return ok(node);
         });
     }
+
+    /**
+     * @api {GET} /v2/s/teacher_members/ 10获取老师列表
+     * @apiName listShopMembers
+     * @apiGroup SHOP-ADMIN
+     * @apiSuccess (Success 200) {int} code 200 请求成功
+     * @apiSuccess {json} list
+     * @apiSuccess {int} id 用户id
+     * @apiSuccess {string} userName 用户名
+     * @apiSuccess {string} realName 真名
+     * @apiSuccess {String} avatar 头像
+     * @apiSuccess {String} phoneNumber 手机号码
+     * @apiSuccess {boolean} isAdmin 是否是管理员
+     * @apiSuccess {String} shopName 归属店铺
+     * @apiSuccess {String} orgName 机构名
+     * @apiSuccess {int} status 状态 1正常 2锁定
+     * @apiSuccess {String} lastLoginTime 最后登录时间
+     * @apiSuccess {String} lastLoginIP 最后登录ip
+     */
+    public CompletionStage<Result> listTeacherMembers(Http.Request request) {
+        return CompletableFuture.supplyAsync(() -> {
+            ShopAdmin member = businessUtils.getUserIdByAuthToken2(request);
+            if (null == member) return unauth403(request);
+            //orgId 在 [2,3]
+            List<ShopAdmin> list = ShopAdmin.find.query()
+                    .where()
+                    .in("orgId", Arrays.asList(1L, 2L)) // orgId 等于 2 或 3
+                    .orderBy().asc("id")
+                    .findList();
+            list.parallelStream().forEach((each) -> {
+                List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)
+                        .orderBy().asc("id")
+                        .findList();
+                each.groupUserList.addAll(groupUserList);
+            });
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(list));
+            return ok(result);
+        });
+    }
 }
