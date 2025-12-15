@@ -27,7 +27,7 @@ public class SchoolClass  extends Model {
     // 学业评分等级
     public static final double ACADEMIC_EXCELLENT = 30.0; // 优
     public static final double ACADEMIC_GOOD = 24.0;      // 良
-    public static final double ACADEMIC_PASS = 18.0;      // 合格
+    public static final double ACADEMIC_PASS = 20.0;      // 合格
     public static final double ACADEMIC_FAIL = 0.0;       // 不合格
 
     public static final double TOTAL_MAX_SCORE = 100.0; // 班级总分满分
