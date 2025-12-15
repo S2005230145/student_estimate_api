@@ -14,6 +14,8 @@ import java.time.*;
 import java.util.List;
 
 import static constants.BusinessConstant.SPECIALTY_SCORE_MATRIX;
+import static models.business.SchoolClass.ACADEMIC_PASS;
+import static models.business.Student.HABIT_PASS;
 
 @Slf4j
 @Data
@@ -220,20 +222,22 @@ public class SpecialtyAward extends Model {
             return;
         }
 
-        // 检查学业评定是否合格（学业得分不低于60分）
-        boolean isAcademicQualified = student.academicScore >= 60.0;
+        // 检查学业评定是否合格（学业得分不低于20分）
+        boolean isAcademicQualified = student.academicScore >= ACADEMIC_PASS;
 
         // 检查习惯评定是否良好（习惯得分不低于30分）
-        boolean isHabitGood = student.habitScore >= 32.0;
+        boolean isHabitGood = student.habitScore >= HABIT_PASS;
 
         // 只有学业合格且习惯良好才能获得徽章
         if (isAcademicQualified && isHabitGood) {
-            if (this.awardLevel <= LEVEL_CITY) {
+            if (this.awardLevel <= LEVEL_COUNTY) {
                 // 市级以上获得星河徽章
-                this.badgeAwarded = "星河徽章";
-            } else if ((this.awardLevel <= LEVEL_SCHOOL && student.getRewardRankGrade() <= 50)||(student.getRewardRankSchool()<=50)) {
+                this.badgeAwarded = "敏行徽章";
+            } else if ((this.awardLevel <= LEVEL_SCHOOL && student.getRewardRankGrade() > 0 && student.getRewardRankGrade() <= 50)) {
                 // 校级获得星辰徽章
-                this.badgeAwarded = "星辰徽章";
+                this.badgeAwarded = "力行徽章";
+            } else if(student.getRewardRankSchool() > 0 && student.getRewardRankSchool() <= 50){
+                this.badgeAwarded = "敏行徽章";
             }
         } else {
             this.badgeAwarded = null;

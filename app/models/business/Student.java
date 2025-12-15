@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static models.business.SchoolClass.ACADEMIC_PASS;
+
 @Data
 @Entity
 @Table(name = "v1_student")
@@ -36,8 +38,10 @@ public class Student extends Model {
     public static final double HABIT_MAX_SCORE = 40.0; // 习惯满分  //固定
     public static final double TOTAL_MAX_SCORE = 100.0; // 总分满分
 
+    public static final double HABIT_PASS = 32.0; // 习惯及格
+
     //学业及格分
-    public static final double ACADEMIC_PASS = 20.0;
+    //public static final double ACADEMIC_PASS = 20.0;
 
     @Column(name = "org_id")
     @DbComment("机构ID")

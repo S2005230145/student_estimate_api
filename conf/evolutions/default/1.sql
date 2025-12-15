@@ -203,6 +203,7 @@ create table v1_habit_record (
   evidence_image                varchar(255) comment '证据图片',
   record_time                   bigint not null comment '记录时间',
   create_time                   bigint not null comment '创建时间',
+  month_end_time                bigint comment '对应月末时间',
   constraint pk_v1_habit_record primary key (id)
 ) comment='习惯评价记录';
 
