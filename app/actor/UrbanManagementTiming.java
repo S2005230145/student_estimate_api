@@ -1,6 +1,8 @@
 package actor;
 
 import akka.actor.ActorSystem;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ebean.DB;
 import io.ebean.Transaction;
 import models.business.HabitRecord;
@@ -32,6 +34,7 @@ public class UrbanManagementTiming {
 
     private final double student_base_habit_record_score=15.0;
 
+    private final static ObjectMapper objectMapper=new ObjectMapper();
 
     @Inject
     @NamedCache("redis")
@@ -50,6 +53,12 @@ public class UrbanManagementTiming {
                 actorSystem.dispatcher()
         );
 
+        actorSystem.scheduler().scheduleOnce(
+                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
+                this::scheduleMonth,
+                actorSystem.dispatcher()
+        );
+
     }
 
     private void scheduleFenceTask() {
@@ -58,8 +67,22 @@ public class UrbanManagementTiming {
                 scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
                 () -> {
                     try {
-                        List<Student> allStudent = Student.find.all();
-                        List<HabitRecord> allHabitRecord = HabitRecord.find.all();
+                        List<Student> allStudent =null;
+                        List<HabitRecord> allHabitRecord=null;
+                        Optional<Object> obj1 = redis.sync().get("allStudent");
+                        if(obj1.isPresent()){
+                            allStudent =objectMapper.convertValue(obj1.get(),new TypeReference<>() {});
+                        }else{
+                            allStudent=Student.find.all();
+                            redis.set("allStudent",Student.find.all());
+                        }
+                        Optional<Object> obj2 = redis.sync().get("allHabitRecord");
+                        if(obj2.isPresent()){
+                            allHabitRecord =objectMapper.convertValue(obj2.get(),new TypeReference<>() {});
+                        }else{
+                            allHabitRecord=HabitRecord.find.all();
+                            redis.set("allHabitRecord",Student.find.all());
+                        }
                         List<HabitRecord> habitRecordList = allHabitRecord.stream().filter(v1 -> v1.getMonthEndTime() != null).toList();
                         allStudent.forEach(student->{
                             double total = habitRecordList.stream()
@@ -83,6 +106,19 @@ public class UrbanManagementTiming {
         );
     }
 
+    private void scheduleMonth(){
+        actorSystem.scheduler().scheduleWithFixedDelay(
+                scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
+                () -> {
+                    try {
+
+                    } catch (Exception e) {
+                    }
+                },
+                actorSystem.dispatcher()
+        );
+    }
 
     /**
      * 计算到指定时间的初始延迟（秒）
