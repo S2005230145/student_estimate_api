@@ -8,6 +8,7 @@ import io.ebean.Transaction;
 import models.business.HabitRecord;
 import models.business.SpecialtyAward;
 import models.business.Student;
+import models.mouth.MonthlyPerformanceSnapshot;
 import play.Logger;
 import play.cache.NamedCache;
 
@@ -47,11 +48,11 @@ public class UrbanManagementTiming {
         this.actorSystem = actorSystem;
 
         // 调度任务
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleFenceTask,
-                actorSystem.dispatcher()
-        );
+//        actorSystem.scheduler().scheduleOnce(
+//                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
+//                this::scheduleFenceTask,
+//                actorSystem.dispatcher()
+//        );
 
         actorSystem.scheduler().scheduleOnce(
                 scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
@@ -106,14 +107,58 @@ public class UrbanManagementTiming {
         );
     }
 
+    //特长(每月计算一次)
     private void scheduleMonth(){
         actorSystem.scheduler().scheduleWithFixedDelay(
                 scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
                 scala.concurrent.duration.Duration.create(24 * 60 * 60 * 30, TimeUnit.SECONDS),
                 () -> {
-                    try {
 
+                    try {
+                        List<Student> allStudent = Student.find.all();
+                        List<Long> studentIds = allStudent.stream().map(Student::getId).toList();
+
+                        List<MonthlyPerformanceSnapshot> mpsList = MonthlyPerformanceSnapshot.find.query().where()
+                                .in("student_id",studentIds)
+                                .eq("settle_state", 0)
+                                .findList();
+                        allStudent.parallelStream().forEach(student -> {
+                            //奖项
+                            List<MonthlyPerformanceSnapshot> mpsListByStudent1 = mpsList.parallelStream()
+                                    .filter(v1 -> v1.getStudentId() == student.getId()&&v1.getType().toLowerCase().contains("specialtyaward"))
+                                    .toList();
+                            //月总分
+                            double sum1 = mpsListByStudent1.parallelStream()
+                                    .map(MonthlyPerformanceSnapshot::getSumFinalScore)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(Double::valueOf)
+                                    .sum();
+                            //月数
+                            int size1 = mpsListByStudent1.size();
+                            student.setSpecialtyScore(Math.round(sum1/size1));
+
+                            //习惯
+                            List<MonthlyPerformanceSnapshot> mpsListByStudent2 = mpsList.parallelStream()
+                                    .filter(v1 -> v1.getStudentId() == student.getId()&&v1.getType().toLowerCase().contains("habit"))
+                                    .toList();
+                            //月总分
+                            double sum2 = mpsListByStudent2.parallelStream()
+                                    .map(MonthlyPerformanceSnapshot::getSumFinalScore)
+                                    .filter(Objects::nonNull)
+                                    .mapToDouble(Double::valueOf)
+                                    .sum();
+                            //月数
+                            int size2 = mpsListByStudent2.size();
+                            student.setHabitScore(Math.round(sum2/size2));
+                        });
+                        try(Transaction transaction = Student.find.db().beginTransaction()){
+                            DB.updateAll(allStudent);
+                            transaction.commit();
+                        } catch (Exception e) {
+                            logger.error("MonthlyPerformanceSnapshot更新学生分数出错", e);
+                        }
                     } catch (Exception e) {
+                        logger.error("MonthlyPerformanceSnapshot定时出错", e);
                     }
                 },
                 actorSystem.dispatcher()
