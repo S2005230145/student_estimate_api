@@ -1,12 +1,9 @@
 package actor;
 
 import akka.actor.ActorSystem;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ebean.DB;
 import io.ebean.Transaction;
-import models.business.HabitRecord;
-import models.business.SpecialtyAward;
 import models.business.Student;
 import models.mouth.MonthlyPerformanceSnapshot;
 import play.Logger;
@@ -15,17 +12,13 @@ import utils.IdGenerator;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.YearMonth;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Singleton
 public class UrbanManagementTiming {
@@ -63,67 +56,71 @@ public class UrbanManagementTiming {
                 actorSystem.dispatcher()
         );
 
-        actorSystem.scheduler().scheduleOnce(
-                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                this::scheduleMonthlyAwards,
-                actorSystem.dispatcher()
-        );
+//        actorSystem.scheduler().scheduleOnce(
+//                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
+//                this::scheduleMonthlyAwards,
+//                actorSystem.dispatcher()
+//        );
 
     }
 
-    private void scheduleFenceTask() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        List<Student> allStudent =null;
-                        List<HabitRecord> allHabitRecord=null;
-                        Optional<Object> obj1 = redis.sync().get("allStudent");
-                        if(obj1.isPresent()){
-                            allStudent =objectMapper.convertValue(obj1.get(),new TypeReference<>() {});
-                        }else{
-                            allStudent=Student.find.all();
-                            redis.set("allStudent",Student.find.all());
-                        }
-                        Optional<Object> obj2 = redis.sync().get("allHabitRecord");
-                        if(obj2.isPresent()){
-                            allHabitRecord =objectMapper.convertValue(obj2.get(),new TypeReference<>() {});
-                        }else{
-                            allHabitRecord=HabitRecord.find.all();
-                            redis.set("allHabitRecord",Student.find.all());
-                        }
-                        List<HabitRecord> habitRecordList = allHabitRecord.stream().filter(v1 -> v1.getMonthEndTime() != null).toList();
-                        allStudent.forEach(student->{
-                            double total = habitRecordList.stream()
-                                    .filter(v1 -> v1.getStudentId() == student.getId())
-                                    .map(HabitRecord::getScoreChange)
-                                    .mapToDouble(Double::valueOf)
-                                    .sum();
-                            student.setHabitScore(student_base_habit_record_score+total);
-                        });
-                        try(Transaction transaction = Student.find.db().beginTransaction()){
-                            DB.updateAll(allStudent);
-                            transaction.commit();
-                        } catch (Exception e) {
-                            logger.error("每月更新学生分数出错", e);
-                        }
-                    } catch (Exception e) {
-                        logger.error("月份定时出错", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
+//    private void scheduleFenceTask() {
+//        actorSystem.scheduler().scheduleWithFixedDelay(
+//                scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
+//                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
+//                () -> {
+//                    try {
+//                        List<Student> allStudent =null;
+//                        List<HabitRecord> allHabitRecord=null;
+//                        Optional<Object> obj1 = redis.sync().get("allStudent");
+//                        if(obj1.isPresent()){
+//                            allStudent =objectMapper.convertValue(obj1.get(),new TypeReference<>() {});
+//                        }else{
+//                            allStudent=Student.find.all();
+//                            redis.set("allStudent",Student.find.all());
+//                        }
+//                        Optional<Object> obj2 = redis.sync().get("allHabitRecord");
+//                        if(obj2.isPresent()){
+//                            allHabitRecord =objectMapper.convertValue(obj2.get(),new TypeReference<>() {});
+//                        }else{
+//                            allHabitRecord=HabitRecord.find.all();
+//                            redis.set("allHabitRecord",Student.find.all());
+//                        }
+//                        List<HabitRecord> habitRecordList = allHabitRecord.stream().filter(v1 -> v1.getMonthEndTime() != null).toList();
+//                        allStudent.forEach(student->{
+//                            double total = habitRecordList.stream()
+//                                    .filter(v1 -> v1.getStudentId() == student.getId())
+//                                    .map(HabitRecord::getScoreChange)
+//                                    .mapToDouble(Double::valueOf)
+//                                    .sum();
+//                            student.setHabitScore(student_base_habit_record_score+total);
+//                        });
+//                        try(Transaction transaction = Student.find.db().beginTransaction()){
+//                            DB.updateAll(allStudent);
+//                            transaction.commit();
+//                        } catch (Exception e) {
+//                            logger.error("每月更新学生分数出错", e);
+//                        }
+//                    } catch (Exception e) {
+//                        logger.error("月份定时出错", e);
+//                    }
+//                },
+//                actorSystem.dispatcher()
+//        );
+//    }
 
-    //特长(每月计算一次)
     private void scheduleMonth(){
+        final LocalDateTime[] startTime = {LocalDateTime.now()};
         actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(5, 0), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60 * 30, TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(startTime[0].getSecond(), TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(calculateSecondsToMonthEnd(startTime[0]), TimeUnit.SECONDS),
                 () -> {
-
                     try {
+                        startTime[0] = startTime[0].with(TemporalAdjusters.firstDayOfNextMonth())
+                                .withHour(0)
+                                .withMinute(0)
+                                .withSecond(0)
+                                .withNano(0);
                         List<Student> allStudent = Student.find.all();
                         List<Long> studentIds = allStudent.stream().map(Student::getId).toList();
 
@@ -196,30 +193,43 @@ public class UrbanManagementTiming {
         return initialDelay;
     }
 
+    public long calculateSecondsToMonthEnd(LocalDateTime now) {
+        // 获取当月最后一天的最后时刻
+        LocalDateTime endOfMonth = now
+                .with(TemporalAdjusters.lastDayOfMonth())
+                .withHour(23)
+                .withMinute(59)
+                .withSecond(59)
+                .withNano(999_999_999);
+
+        Duration duration = Duration.between(now, endOfMonth);
+        return duration.getSeconds();  // 返回秒数
+    }
+
     /**
      * 调度每月月底统计任务（每天检查一次，如果是月底最后一天则执行）
      */
-    private void scheduleMonthlyAwards() {
-        actorSystem.scheduler().scheduleWithFixedDelay(
-                scala.concurrent.duration.Duration.create(calculateInitialDelay(23, 59), TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
-                () -> {
-                    try {
-                        LocalDate today = LocalDate.now();
-                        YearMonth currentMonth = YearMonth.from(today);
-                        LocalDate lastDayOfMonth = currentMonth.atEndOfMonth();
-
-                        // 如果是本月最后一天，执行统计任务
-                        if (today.equals(lastDayOfMonth)) {
-                            calculateMonthlyAwards();
-                        }
-                    } catch (Exception e) {
-                        logger.error("检查并执行月度统计任务出错", e);
-                    }
-                },
-                actorSystem.dispatcher()
-        );
-    }
+//    private void scheduleMonthlyAwards() {
+//        actorSystem.scheduler().scheduleWithFixedDelay(
+//                scala.concurrent.duration.Duration.create(calculateInitialDelay(23, 59), TimeUnit.SECONDS),
+//                scala.concurrent.duration.Duration.create(24 * 60 * 60, TimeUnit.SECONDS),
+//                () -> {
+//                    try {
+//                        LocalDate today = LocalDate.now();
+//                        YearMonth currentMonth = YearMonth.from(today);
+//                        LocalDate lastDayOfMonth = currentMonth.atEndOfMonth();
+//
+//                        // 如果是本月最后一天，执行统计任务
+//                        if (today.equals(lastDayOfMonth)) {
+//                            calculateMonthlyAwards();
+//                        }
+//                    } catch (Exception e) {
+//                        logger.error("检查并执行月度统计任务出错", e);
+//                    }
+//                },
+//                actorSystem.dispatcher()
+//        );
+//    }
 
     /**
      * 每个月月底统计每个学生月奖项分数
