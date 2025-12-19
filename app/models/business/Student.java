@@ -71,6 +71,10 @@ public class Student extends Model {
     @DbComment("年级")
     public int grade;
 
+    @Column(name = "class")
+    @DbComment("班级")
+    public int classHg;
+
     @Column(name = "evaluation_scheme")
     @DbComment("评价方案") // 0-方案A, 1-方案B
     public int evaluationScheme;

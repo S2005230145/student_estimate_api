@@ -65,7 +65,7 @@ public class ShopAdminController extends BaseSecurityController {
             List<ShopAdmin> list = ShopAdmin.find.query().where()
                     .eq("orgId", member.orgId)
                     .not()
-                    .icontains("rules", "家长")
+                    .icontains("rules", "家长")   //排除家长信息
                     .orderBy().asc("id").findList();
             list.parallelStream().forEach((each) -> {
                 List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)

@@ -42,9 +42,9 @@ public class StudentImportExcel {
     @Translation("妈妈手机号")
     public String motherPhoneTwo;
 
-    @ExcelProperty(value = "家庭地址", index = 5)
-    @Translation("家庭地址")
-    public String homeAddress;
+//    @ExcelProperty(value = "家庭地址", index = 5)
+//    @Translation("家庭地址")
+//    public String homeAddress;
 
     @ExcelIgnore
     private static EncodeUtils encodeUtils = new EncodeUtils();
@@ -114,6 +114,65 @@ public class StudentImportExcel {
     }
 
     /**
+     * 转为实体类数据
+     */
+    public static void toEntity(List<StudentImportExcel> list) {
+        if (list == null || list.isEmpty()) {
+            throw new RuntimeException("数据为空");
+        }
+
+        for (StudentImportExcel studentExcel : list) {
+            // 验证学号唯一性
+            Student existing = Student.find.query()
+                    .where()
+                    .eq("student_number", studentExcel.getStudentNumber())
+                    .findOne();
+            if (existing != null) {
+                throw new RuntimeException("学号 " + studentExcel.getStudentNumber() + " 已存在");
+            }
+
+            //studentExcel.className是一年级一班，一年级二班，三年级三班
+            Map<String,Long> classInfo = new HashMap<>();
+
+            String className = studentExcel.getClassName();
+
+            if (className.contains("一年级")) classInfo.put("grade", 1L);
+            else if (className.contains("二年级")) classInfo.put("grade", 2L);
+            else if (className.contains("三年级")) classInfo.put("grade", 3L);
+            else if (className.contains("四年级")) classInfo.put("grade", 4L);
+            else if (className.contains("五年级")) classInfo.put("grade", 5L);
+            else if (className.contains("六年级")) classInfo.put("grade", 6L);
+            else throw new RuntimeException("无法识别的年级: " + className);
+
+            if (className.contains("一班"))  classInfo.put("classId", 1L);
+            else if (className.contains("二班"))  classInfo.put("classId", 2L);
+            else if (className.contains("三班"))  classInfo.put("classId", 3L);
+            else if (className.contains("四班"))  classInfo.put("classId", 4L);
+            else if (className.contains("五班"))  classInfo.put("classId", 5L);
+            else if (className.contains("六班")) classInfo.put("classId", 6L);
+
+            Long grade = classInfo.get("grade");
+            Long classId = classInfo.get("classId");
+
+            SchoolClass schoolClass = SchoolClass.find.query().where()
+                    .eq("grade", grade).eq("class", classId).findOne();
+
+            if (schoolClass == null) {
+                throw new RuntimeException("班级不存在");
+            }
+
+            // 创建学生
+            Student student = createStudent(studentExcel, schoolClass.id);
+
+            // 创建家长关系和账号
+            createParentRelations(studentExcel, student.getId());
+
+            // 更新班级学生数
+            schoolClass.calcStudentNum();
+        }
+    }
+
+    /**
      * 根据班级名称设置年级和班级ID
      */
     public Map<String, Long> setClassInfo(String className) {
@@ -149,6 +208,7 @@ public class StudentImportExcel {
         student.setClassId(classId);
         if (schoolClass != null) {
             student.setGrade(schoolClass.grade);
+            student.setClassHg(schoolClass.classId);
         }
         student.setCreateTime(System.currentTimeMillis());
         student.setUpdateTime(System.currentTimeMillis());
@@ -348,6 +408,41 @@ public class StudentImportExcel {
 
         if(classId == null){
             throw new RuntimeException("班级ID为空");
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            StudentImportExcel excel = list.get(i);
+            int rowNum = i + 2; // 从第2行开始（标题行是第1行）
+
+            // 必填字段验证
+            if (excel.getStudentNumber() == null || excel.getStudentNumber().trim().isEmpty()) {
+                throw new RuntimeException("第" + rowNum + "行: 学号不能为空");
+            }
+
+            if (excel.getName() == null || excel.getName().trim().isEmpty()) {
+                throw new RuntimeException("第" + rowNum + "行: 姓名不能为空");
+            }
+
+            // 学号唯一性验证
+            Student existing = Student.find.query()
+                    .where()
+                    .eq("student_number", excel.getStudentNumber().trim())
+                    .findOne();
+            if (existing != null) {
+                throw new RuntimeException("第" + rowNum + "行: 学号 " + excel.getStudentNumber() + " 已存在");
+            }
+
+            // 家长信息验证
+            validateParentInfo(excel, rowNum);
+        }
+    }
+
+    /**
+     * 数据验证
+     */
+    public static void validateData(List<StudentImportExcel> list) {
+        if (list == null || list.isEmpty()) {
+            throw new RuntimeException("数据为空");
         }
 
         for (int i = 0; i < list.size(); i++) {

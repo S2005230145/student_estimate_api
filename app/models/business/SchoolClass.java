@@ -1,6 +1,5 @@
 package models.business;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
@@ -10,7 +9,6 @@ import lombok.Data;
 import models.admin.ShopAdmin;
 import myannotation.EscapeHtmlAuthoritySerializer;
 
-import javax.inject.Inject;
 import java.util.List;
 
 @Data

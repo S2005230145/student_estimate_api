@@ -106,21 +106,13 @@ public class TeacherImportExcel {
             // 已存在则更新姓名（可选）
             teacher.setRealName(excel.getTeacherName().trim());
             teacher.update();
-
-            if(teacher.getRules().contains("科任教师")){
-                teacher.setRealName(excel.getTeacherName().trim());
-                teacher.update();
-            }else if(teacher.getRules().contains("家长")){
-                teacher.setRealName(excel.getTeacherName().trim());
-                teacher.setRules(teacher.getRules()+",科任教师");
-                teacher.update();
-            }
         }
 
         // 2. 解析教学职责：格式为 "班级|科目老师,班级|科目老师"
         List<TeachingDuty> duties = parseTeachingDuties(excel.getTeachingDuties());
         
         // 3. 为每个教学职责创建班级教师关系
+        boolean hasHeadTeacher = false; // 标记是否是班主任
         for (TeachingDuty duty : duties) {
             SchoolClass schoolClass = SchoolClass.find.query()
                     .where().eq("class_name", duty.getClassName().trim())
@@ -134,6 +126,9 @@ public class TeacherImportExcel {
             boolean isHead = !ValidationUtil.isEmpty(excel.getHeadTeacherClass()) 
                     && !"否".equals(excel.getHeadTeacherClass().trim())
                     && duty.getClassName().trim().equals(excel.getHeadTeacherClass().trim());
+            if (isHead) {
+                hasHeadTeacher = true;
+            }
 
             // 插入 ClassTeacherRelation 记录（避免重复）
             if (!ClassTeacherRelation.isTeacherInClass(teacher.getId(), schoolClass.getId())) {
@@ -162,9 +157,6 @@ public class TeacherImportExcel {
         if (!duties.isEmpty()) {
             List<String> rulesList = new ArrayList<>();
             rulesList.add("科任教师");
-            // 检查是否有班主任身份
-            boolean hasHeadTeacher = !ValidationUtil.isEmpty(excel.getHeadTeacherClass()) 
-                    && !"否".equals(excel.getHeadTeacherClass().trim());
             if (hasHeadTeacher) {
                 rulesList.add("班主任");
             }

@@ -6,7 +6,6 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
-import io.ebean.annotation.Transactional;
 import models.admin.ShopAdmin;
 import models.business.ClassTeacherRelation;
 import models.business.ParentStudentRelation;
@@ -16,11 +15,11 @@ import models.excel.StudentImportExcel;
 import org.apache.commons.io.FilenameUtils;
 import play.data.DynamicForm;
 import play.data.FormFactory;
+import play.db.ebean.Transactional;
 import play.libs.Files;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
-import utils.DateUtils;
 import utils.EncodeUtils;
 import utils.ValidationUtil;
 
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
 
 public class StudentController extends BaseSecurityController {
     @Inject
@@ -270,14 +268,13 @@ public class StudentController extends BaseSecurityController {
         });
     }
     /**
-     * @api {POST} /v2/p/student_excel/   06导入学生文件
+     * @api {POST} /v2/p/student_excel/   06导入学生文件(按班的)
      * @apiName studentImport
      * @apiGroup STUDENT-CONTROLLER
      * @apiParam {file} file 学生文件
      * @apiParam {long} classId 班级ID
      * @apiSuccess (Success 200){int} 200 成功
      */
-    @Transactional
     public CompletionStage<Result> studentImport(Http.Request request,Long classId) {
         Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
         Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
@@ -308,14 +305,21 @@ public class StudentController extends BaseSecurityController {
                 // 读取Excel文件
                 List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
 
-                // 数据验证
-                StudentImportExcel.validateData(list,classId);
+                // 使用事务，导入过程中任意一步出错则整体回滚
+                try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
+                    // 数据验证
+                    StudentImportExcel.validateData(list, classId);
 
-                // 转换为实体并保存
-                StudentImportExcel.toEntity(list,classId);
+                    // 转换为实体并保存
+                    StudentImportExcel.toEntity(list, classId);
+
+                    // 一切成功后提交事务
+                    txn.commit();
+                }
 
                 return okJSON200();
             } catch (Exception e) {
+                // 发生异常时事务未提交，Ebean 会自动回滚
                 return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
             }
         });
@@ -520,6 +524,92 @@ public class StudentController extends BaseSecurityController {
 
             } catch (Exception e) {
                 return okCustomJson(CODE40001, "批量分配失败：" + e.getMessage());
+            }
+        });
+    }
+
+
+    /**
+     * @api {GET} /v2/p/student_list_class_currentUser/   12列表-当前用户的所在班级的学生列表
+     * @apiName listStudent
+     * @apiGroup STUDENT-CONTROLLER
+     * @apiParam {int} page 页码
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {String} studentNumber 学号
+     * @apiSuccess (Success 200) {String} name 学生姓名
+     * @apiSuccess (Success 200) {long} classId 班级ID
+     * @apiSuccess (Success 200) {int} grade 年级
+     * @apiSuccess (Success 200) {int} evaluationScheme 评价方案
+     * @apiSuccess (Success 200) {double} classAverageScore 班级平均分
+     * @apiSuccess (Success 200) {double} academicScore 学业得分
+     * @apiSuccess (Success 200) {double} specialtyScore 特长得分
+     * @apiSuccess (Success 200) {double} habitScore 习惯得分
+     * @apiSuccess (Success 200) {double} totalScore 总分
+     * @apiSuccess (Success 200) {String} badges 获得徽章
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {long} updateTime 更新时间
+     */
+    public CompletionStage<Result> listStudentClassCurrentUser (Http.Request request, long classId, int status) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            ExpressionList<Student> expressionList = Student.find.query().where().le("org_id", adminMember.getOrgId());
+            if (status > 0) expressionList.eq("status", status);
+            SchoolClass schoolClass = SchoolClass.find.byId(classId);
+
+            return null ;
+        });
+
+    }
+
+
+    /**
+     * @api {POST} /v2/p/student_excel/   13导入学生文件(全校)
+     * @apiName studentImport
+     * @apiGroup STUDENT-CONTROLLER
+     * @apiParam {file} file 学生文件
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+    @Transactional
+    public CompletionStage<Result> studentImportSchool(Http.Request request) {
+        Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
+        Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
+
+        // 获取班级ID参数
+        DynamicForm form = formFactory.form().bindFromRequest(request);
+        //long classId = Long.parseLong(form.get("classId"));
+
+        if (filePart == null) {
+            return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
+        }
+
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+            if (adminMember == null) return unauth403();
+
+            Files.TemporaryFile file = filePart.getRef();
+            String fileName = filePart.getFilename();
+            String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+            String destPath = FILE_DIR_LOCATION + targetFileName;
+
+            // 确保目录存在
+            new File(FILE_DIR_LOCATION).mkdirs();
+
+            file.copyTo(Paths.get(destPath), true);
+            File destFile = new File(destPath);
+
+            try (InputStream inputStream = new FileInputStream(destFile)) {
+                // 读取Excel文件
+                List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
+
+                // 数据验证
+                StudentImportExcel.validateData(list);
+
+                // 转换为实体并保存
+                StudentImportExcel.toEntity(list);
+
+                return okJSON200();
+            } catch (Exception e) {
+                return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
             }
         });
     }
