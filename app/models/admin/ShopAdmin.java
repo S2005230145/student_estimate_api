@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
-import io.ebean.annotation.DbArray;
 import jakarta.persistence.*;
 import myannotation.EscapeHtmlSerializer;
 

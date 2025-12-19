@@ -456,6 +456,7 @@ create table v1_student (
   name                          varchar(255) comment '学生姓名',
   class_id                      bigint not null comment '班级ID',
   grade                         integer not null comment '年级',
+  class                         integer not null comment '班级',
   evaluation_scheme             integer not null comment '评价方案',
   class_average_score           double not null comment '班级平均分',
   academic_score                double not null comment '学业得分',

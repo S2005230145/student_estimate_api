@@ -4,8 +4,12 @@ import akka.util.ByteString;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.DB;
+import io.ebean.Expr;
+import io.ebean.ExpressionList;
+import io.ebean.PagedList;
 import models.admin.Group;
 import models.admin.GroupUser;
 import models.admin.ShopAdmin;
@@ -26,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
+
 
 import static constants.RedisKeyConstant.KEY_LOGIN_MAX_ERROR_TIMES;
 
@@ -41,11 +45,16 @@ public class ShopAdminController extends BaseSecurityController {
     Pinyin4j pinyin4j;
 
     /**
-     * @api {GET} /v2/s/admin_members/ 01查看管理员列表
+     * @api {POST} /v2/s/admin_members/ 01查看管理员列表
      * @apiName listShopMembers
      * @apiGroup SHOP-ADMIN
+     * @apiParam {int} page 页码，0表示不分页
+     * @apiParam {String} realName 姓名筛选（模糊匹配）
+     * @apiParam {String} rules 角色筛选（模糊匹配）
      * @apiSuccess (Success 200) {int} code 200 请求成功
      * @apiSuccess {json} list
+     * @apiSuccess {int} pages 总页数（分页时返回）
+     * @apiSuccess {boolean} hasNest 是否有下一页（分页时返回）
      * @apiSuccess {int} id 用户id
      * @apiSuccess {string} userName 用户名
      * @apiSuccess {string} realName 真名
@@ -59,21 +68,65 @@ public class ShopAdminController extends BaseSecurityController {
      * @apiSuccess {String} lastLoginIP 最后登录ip
      */
     public CompletionStage<Result> listShopMembers(Http.Request request) {
+        JsonNode node = request.body().asJson();
         return CompletableFuture.supplyAsync(() -> {
             ShopAdmin member = businessUtils.getUserIdByAuthToken2(request);
             if (null == member) return unauth403(request);
-            List<ShopAdmin> list = ShopAdmin.find.query().where()
+
+            // 获取分页参数
+            int page = 0;
+            if (node != null && node.has("page") && !node.get("page").isNull()) {
+                page = node.get("page").asInt();
+            }
+
+            // 构建查询条件
+            ExpressionList<ShopAdmin> expressionList = ShopAdmin.find.query().where()
                     .eq("orgId", member.orgId)
-                    .not()
-                    .icontains("rules", "家长")
-                    .orderBy().asc("id").findList();
+                    .and()
+                    //.not(Expr.icontains("rules", "家长"));   //排除家长信息
+                    .ne("rules", "家长");
+            
+            // 姓名筛选
+            if (node != null && node.has("realName") && !node.get("realName").isNull()) {
+                String realName = node.get("realName").asText();
+                if (!ValidationUtil.isEmpty(realName)) {
+                    expressionList.icontains("realname", realName);
+                }
+            }
+
+            // 角色筛选
+            if (node != null && node.has("rules") && !node.get("rules").isNull()) {
+                String rules = node.get("rules").asText();
+                if (!ValidationUtil.isEmpty(rules)) {
+                    expressionList.icontains("rules", rules);
+                }
+            }
+
+            ObjectNode result = Json.newObject();
+            List<ShopAdmin> list;
+            if (page == 0) {
+                // 不分页
+                list = expressionList.orderBy().asc("id").findList();
+            } else {
+                // 分页
+                PagedList<ShopAdmin> pagedList = expressionList
+                        .orderBy().asc("id")
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .findPagedList();
+                list = pagedList.getList();
+                result.put("pages", pagedList.getTotalPageCount());
+                result.put("hasNest", pagedList.hasNext());
+            }
+
+            // 加载每个用户的角色组信息
             list.parallelStream().forEach((each) -> {
                 List<GroupUser> groupUserList = GroupUser.find.query().where().eq("memberId", each.id)
                         .orderBy().asc("id")
                         .findList();
                 each.groupUserList.addAll(groupUserList);
             });
-            ObjectNode result = Json.newObject();
+
             result.put(CODE, CODE200);
             result.set("list", Json.toJson(list));
             return ok(result);
@@ -545,6 +598,14 @@ public class ShopAdminController extends BaseSecurityController {
         });
     }
 
+    /**
+     * @api {POST} /v2/p/teacher_import/   06导入老师文件
+     * @apiName studentImport
+     * @apiGroup STUDENT-CONTROLLER
+     * @apiParam {file} file 老师文件
+     * @apiSuccess (Success 200){int} 200 成功
+     */
+
     @BodyParser.Of(BodyParser.Raw.class)
     @Transactional
     public CompletionStage<Result> importTeachers(Http.Request request) {
@@ -566,8 +627,4 @@ public class ShopAdminController extends BaseSecurityController {
             }
         });
     }
-
-    
-
-
 }

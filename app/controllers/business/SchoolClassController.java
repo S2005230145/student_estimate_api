@@ -47,7 +47,7 @@ public class SchoolClassController extends BaseSecurityController {
     public CompletionStage<Result> listSchoolClass(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -71,9 +71,8 @@ public class SchoolClassController extends BaseSecurityController {
                 result.put("hasNest", pagedList.hasNext());
             }
             result.put(CODE, CODE200);
-            result.set("list", Json.toJson(list));
+            result.put("list", Json.toJson(list));
             return ok(result);
-
         });
 
     }

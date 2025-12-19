@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class ClassTeacherRelationController extends BaseSecurityController {
 
     /**
-     * @api {GET} /v2/p/class_teacher_relation_list/   01列表-班级教师关系表
+     * @api {POST} /v2/p/class_teacher_relation_list/   01列表-班级教师关系表
      * @apiName listClassTeacherRelation
      * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {int} page 页码
@@ -40,16 +40,37 @@ public class ClassTeacherRelationController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
-    public CompletionStage<Result> listClassTeacherRelation(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listClassTeacherRelation(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().eq("org_id", adminMember.getOrgId());
 
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
+            int page = jsonNode.get("page").asInt();
+            String subject =  jsonNode.get("subject").asText();
+            int teacherId = jsonNode.get("teacherId").asInt();
+
+            if (!ValidationUtil.isEmpty(subject)) expressionList
                     .or()
-                    .icontains("filter", filter)
+                    .eq("subject", subject)
                     .endOr();               //编写其他条件  
+
+            if (jsonNode.has("classId") && !jsonNode.get("classId").isNull()) {
+                Long classId = jsonNode.get("classId").asLong();
+                // 处理 classId 相关逻辑
+                expressionList
+                        .or()
+                        .eq("class_id", classId)
+                        .endOr();               //编写其他条件
+            }
+
+            if (teacherId != 0) {
+                expressionList
+                        .or()
+                        .eq("teacher_id", teacherId)
+                        .endOr();               //编写其他条件
+            }
+
             //编写其他条件
             //编写其他条件
             //编写其他条件
@@ -245,7 +266,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/class_teacher_relation_list/new/   06列表-班级教师关系列表
+     * @api {POST} /v2/p/class_teacher_relation_list/new/   06列表-班级教师关系列表
      * @apiName listClassTeacherRelation
      * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
      * @apiParam {int} page 页码
@@ -260,18 +281,47 @@ public class ClassTeacherRelationController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
-    public CompletionStage<Result> listClassTeacherRelationNew(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listClassTeacherRelationNew(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().le("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
-                    .or()
-                    .icontains("filter", filter)
-                    .endOr();               //编写其他条件
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
+            ExpressionList<ClassTeacherRelation> expressionList = ClassTeacherRelation.find.query().where().eq("org_id", adminMember.getOrgId());
+
+            int page = 0;
+            if (jsonNode.has("page") && !jsonNode.get("page").isNull()) {
+                page = jsonNode.get("page").asInt();
+            }
+            
+            // 科目筛选
+            if (jsonNode.has("subject") && !jsonNode.get("subject").isNull()) {
+                String subject = jsonNode.get("subject").asText();
+                if (!ValidationUtil.isEmpty(subject)) {
+                    expressionList.eq("subject", subject);
+                }
+            }
+
+            // 班级ID筛选
+            if (jsonNode.has("classId") && !jsonNode.get("classId").isNull()) {
+                Long classId = jsonNode.get("classId").asLong();
+                if (classId != null && classId > 0) {
+                    expressionList.eq("class_id", classId);
+                }
+            }
+
+            // 教师ID筛选
+            if (jsonNode.has("teacherId") && !jsonNode.get("teacherId").isNull()) {
+                Long teacherId = jsonNode.get("teacherId").asLong();
+                if (teacherId != null && teacherId > 0) {
+                    expressionList.eq("teacher_id", teacherId);
+                }
+            }
+
+            // 是否是班主任筛选
+            if (jsonNode.has("isHeadTeacher") && !jsonNode.get("isHeadTeacher").isNull()) {
+                boolean isHeadTeacher = jsonNode.get("isHeadTeacher").asBoolean();
+                expressionList.eq("is_head_teacher", isHeadTeacher);
+            }
+
 
             ObjectNode result = Json.newObject();
             List<ClassTeacherRelation> list;
@@ -334,7 +384,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
                     .where()
                     .eq("teacher_id", adminMember.getId())
                     .eq("is_head_teacher", true)
-                    .findIds();
+                    .findList().stream().map(ClassTeacherRelation::getClassId).toList();
 
             List<SchoolClass> classes = SchoolClass.find.query()
                     .where()

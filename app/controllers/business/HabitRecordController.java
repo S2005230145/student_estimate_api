@@ -1,6 +1,7 @@
 package controllers.business;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import constants.BusinessConstant;
 import controllers.BaseSecurityController;
@@ -229,7 +230,7 @@ public class HabitRecordController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/habit_record_list_currentUser/   01列表-当前用户习惯评价记录
+     * @api {GET} /v2/p/habit_record_list_currentUser/   06列表-当前用户习惯评价记录
      * @apiName listHabitRecord
      * @apiGroup HABIT-RECORD-CONTROLLER
      * @apiParam {int} page 页码
@@ -259,7 +260,6 @@ public class HabitRecordController extends BaseSecurityController {
             //编写其他条件
             //编写其他条件
             //编写其他条件
-
             ObjectNode result = Json.newObject();
             List<HabitRecord> list;
             if (page == 0) list = expressionList.findList();
@@ -273,12 +273,94 @@ public class HabitRecordController extends BaseSecurityController {
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }
-            result.put(CODE, CODE200);
-            result.set("list", Json.toJson(list));
-            return ok(result);
 
+            // 为每个 HabitRecord 动态添加学生学号和姓名
+            ArrayNode listNode = Json.newArray();
+            for (HabitRecord record : list) {
+                ObjectNode recordNode = (ObjectNode) Json.toJson(record);
+                Student student = Student.find.byId(record.studentId);
+                if (student != null) {
+                    recordNode.put("studentNumber", student.studentNumber != null ? student.studentNumber : "");
+                    recordNode.put("studentName", student.name != null ? student.name : "");
+                } else {
+                    recordNode.put("studentNumber", "");
+                    recordNode.put("studentName", "");
+                }
+                listNode.add(recordNode);
+            }
+
+            result.put(CODE, CODE200);
+            result.set("list", listNode);
+            return ok(result);
         });
 
     }
 
+
+    /**
+     * @api {GET} /v2/p/habit_record_list_new/   07列表-习惯评价记录
+     * @apiName listHabitRecord
+     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiParam {int} page 页码
+     * @apiParam {String} filter 搜索栏()
+     * @apiSuccess (Success 200) {long} orgId 机构ID
+     * @apiSuccess (Success 200) {long} id 唯一标识
+     * @apiSuccess (Success 200) {long} studentId 学生ID
+     * @apiSuccess (Success 200) {String} studentNumber  学号
+     * @apiSuccess (Success 200) {String} studentName 学生姓名
+     * @apiSuccess (Success 200) {int} habitType 习惯类型
+     * @apiSuccess (Success 200) {String} evaluatorType 评价者类型
+     * @apiSuccess (Success 200) {long} evaluatorId 评价者ID
+     * @apiSuccess (Success 200) {double} scoreChange 分数变化
+     * @apiSuccess (Success 200) {String} description 行为描述
+     * @apiSuccess (Success 200) {String} evidenceImage 证据图片
+     * @apiSuccess (Success 200) {long} recordTime 记录时间
+     * @apiSuccess (Success 200) {long} createTime 创建时间
+     */
+    public CompletionStage<Result> listHabitRecordNew(Http.Request request, int page, String filter, int status) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+            if (null == adminMember) return unauth403();
+            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().le("org_id", adminMember.getOrgId());
+            if (status > 0) expressionList.eq("status", status);
+            if (!ValidationUtil.isEmpty(filter)) expressionList
+                    .or()
+                    .icontains("filter", filter)
+                    .endOr();               //编写其他条件
+            //编写其他条件
+            //编写其他条件
+            //编写其他条件
+            ObjectNode result = Json.newObject();
+            List<HabitRecord> list;
+            if (page == 0) list = expressionList.findList();
+            else {
+                PagedList<HabitRecord> pagedList = expressionList
+                        .order().desc("id")
+                        .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_20)
+                        .setMaxRows(BusinessConstant.PAGE_SIZE_20)
+                        .findPagedList();
+                list = pagedList.getList();
+                result.put("pages", pagedList.getTotalPageCount());
+                result.put("hasNest", pagedList.hasNext());
+            }
+            
+            // 为每个 HabitRecord 动态添加学生学号和姓名
+            ArrayNode listNode = Json.newArray();
+            for (HabitRecord record : list) {
+                ObjectNode recordNode = (ObjectNode) Json.toJson(record);
+                Student student = Student.find.byId(record.studentId);
+                if (student != null) {
+                    recordNode.put("studentNumber", student.studentNumber != null ? student.studentNumber : "");
+                    recordNode.put("studentName", student.name != null ? student.name : "");
+                } else {
+                    recordNode.put("studentNumber", "");
+                    recordNode.put("studentName", "");
+                }
+                listNode.add(recordNode);
+            }
+            
+            result.put(CODE, CODE200);
+            result.set("list", listNode);
+            return ok(result);
+        });
+    }
 }

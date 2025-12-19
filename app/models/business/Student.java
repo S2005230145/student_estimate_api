@@ -71,6 +71,10 @@ public class Student extends Model {
     @DbComment("年级")
     public int grade;
 
+    @Column(name = "class")
+    @DbComment("班级")
+    public int classHg;
+
     @Column(name = "evaluation_scheme")
     @DbComment("评价方案") // 0-方案A, 1-方案B
     public int evaluationScheme;
@@ -163,10 +167,10 @@ public class Student extends Model {
      */
     public String getClassName() {
         String[] gradeNames = {"", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级"};
-        String[] classNames = {"", "一班", "二班", "三班", "四班", "五班", "六班"};
+        String[] classNames = {"", "一班", "二班", "三班", "四班", "五班", "六班","七班","八班"};
 
-        String gradeName = this.grade >= 1 && this.grade <= 6 ? gradeNames[this.grade] : "未知年级";
-        String className = this.classId >= 1 && this.classId <= 6 ? classNames[(int)this.classId] : "未知班级";
+        String gradeName = this.grade >= 1 && this.grade <= 8 ? gradeNames[this.grade] : "未知年级";
+        String className = this.classHg >= 1 && this.classHg <= 8 ? classNames[(int)this.classHg] : "未知班级";
         return gradeName + className;
     }
 
