@@ -16,6 +16,8 @@ import utils.ValidationUtil;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import static constants.BusinessConstant.SPECIALTY_SCORE_MATRIX;
+
 public class SpecialtyAwardController extends BaseSecurityController {
 
     /**
@@ -102,7 +104,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
             SpecialtyAward specialtyAward = SpecialtyAward.find.byId(id);
             if (null == specialtyAward) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (specialtyAward.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (specialtyAward.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(specialtyAward);
             result.put(CODE, CODE200);
             return ok(result);
@@ -140,10 +142,13 @@ public class SpecialtyAwardController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             SpecialtyAward specialtyAward = Json.fromJson(jsonNode, SpecialtyAward.class);
             // 数据sass化
-            specialtyAward.setOrgId(0);
+            specialtyAward.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             specialtyAward.setCreateTime(currentTimeBySecond);
             specialtyAward.setUpdateTime(currentTimeBySecond);
+            //根据奖项设置分数
+            Double score = SPECIALTY_SCORE_MATRIX[specialtyAward.awardLevel][specialtyAward.awardGrade];
+            specialtyAward.setAwardScore(score);
             specialtyAward.save();
             return okJSON200();
         });

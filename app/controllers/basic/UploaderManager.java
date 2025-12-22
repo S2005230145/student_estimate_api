@@ -42,8 +42,12 @@ public class UploaderManager extends BaseController {
     private static final double THUMB_QUALITY = 0.8;
     private static final String BASE_IMG_PREFIX = "data:image/jpeg;base64,";
     private static final String RENAME_FILE_PREFIX = "upload_";
-    private static final String TEMP_FOLDER = "/tmp/upload/";
-    
+    //private static final String TEMP_FOLDER = "/tmp/upload/";
+
+    // 改为跨平台的路径
+    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "upload" + File.separator;
+
+
     /**
      * @api {POST} /v2/s/upload/ 上传
      * @apiName upload

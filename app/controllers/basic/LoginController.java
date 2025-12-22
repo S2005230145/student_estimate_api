@@ -73,6 +73,7 @@ public class LoginController extends BaseController {
 
             ShopAdmin member = ShopAdmin.find.query().where()
                     .eq("userName", userName)
+                    .ne("rules","家长")
                     .orderBy().asc("id")
                     .setMaxRows(1).findOne();
             if (null == member) return okCustomJson(request,CODE40003, "user.login.failed");
@@ -361,5 +362,116 @@ public class LoginController extends BaseController {
             return okJSON200();
         });
     }
+
+    /**
+     * @api {POST} /V2/p/front/login/noauth/   前台app登录模块
+     * @apiName login
+     * @apiGroup Admin-Authority
+     * @apiParam {jsonObject} data json串格式
+     * @apiParam {string} username 用户名
+     * @apiParam {string} password 密码, 6位至20位
+     * @apiParam {string} loginRules 登录规则 0-家长登录  1-非家长登录
+     * @apiParam {string} vcode 手机验证码
+     * @apiSuccess (Success 200){String}  userName 用户名
+     * @apiSuccess (Success 200){String}  realName 真名
+     * @apiSuccess (Success 200){String}  lastLoginTimeForShow 最后登录时间
+     * @apiSuccess (Success 200){String}  lastLoginIP 最后登录ip
+     * @apiSuccess (Success 200){long} id 用户id
+     * @apiSuccess (Success 200){String} token token
+     * @apiSuccess (Success 200){String} groupName 所在组名
+     * @apiSuccess (Error 40001) {int} code 40001  参数错误
+     * @apiSuccess (Error 40003) {int} code 40003 用户名或密码错误
+     */
+    public CompletionStage<Result> loginFront(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
+        String loginIP = businessUtils.getRequestIP(request);
+        return CompletableFuture.supplyAsync(() -> {
+            if (null == jsonNode) return okCustomJson(request,CODE40001, "base.argument.error");
+            String userName = jsonNode.findPath("username").asText();
+            String password = jsonNode.findPath("password").asText();
+            String type = jsonNode.findPath("type").asText();
+            //获取登录类型
+            String loginRules = jsonNode.findPath("loginRules").asText();
+
+            String verificationCode = jsonNode.findPath("vcode").asText();
+            if (ValidationUtil.isEmpty(userName) || ValidationUtil.isEmpty(password))
+                return okCustomJson(request,CODE40001, "base.argument.error");
+//            if (!businessUtils.checkVcode(verificationCode)) return okCustomJson(CODE40002, "base.captcha.error");
+
+            if(ValidationUtil.isEmpty(loginRules)){
+                return okCustomJson(request,CODE40001, "base.argument.error");
+            }
+
+            if(loginRules.equals("0")){
+                // 家长登录：rules 必须包含"家长"（可以是"家长"或"科任教师，家长"等）
+                ShopAdmin member = ShopAdmin.find.query().where()
+                        .eq("userName", userName)
+                        .icontains("rules", "家长")
+                        .orderBy().asc("id")
+                        .setMaxRows(1).findOne();
+                if (null == member) return okCustomJson(request,CODE40003, "user.login.failed");
+                if (!member.password.equalsIgnoreCase(encodeUtils.getMd5WithSalt(password))) {
+                    if (businessUtils.uptoErrorLimit(request, KEY_LOGIN_MAX_ERROR_BY_ID + member.id, 10)) {
+                        member.setStatus(ShopAdmin.STATUS_LOCK);
+                        member.save();
+                    }
+                    return okCustomJson(request,CODE40003, "user.login.failed");
+                }
+                if (member.status == ShopAdmin.STATUS_LOCK) return okCustomJson(request,CODE40008, "user.login.member.lock");
+                if (!ValidationUtil.isEmpty(type)) {
+                    if (type.equalsIgnoreCase("pos")) {
+                        if (member.shopId < 1) return okCustomJson(request,CODE40008, "member.shop.bind.error");
+                    }
+                }
+                redis.remove(KEY_LOGIN_MAX_ERROR_TIMES + loginIP);
+                ObjectNode result = (ObjectNode) Json.toJson(member);
+                result.put("code", 200);
+                //保存到缓存中
+                String authToken = UUID.randomUUID().toString();
+                result.put("token", authToken);
+//            int deviceType = httpRequestDeviceUtils.getMobileDeviceType(request);
+                handleCacheToken(member, authToken);
+                businessUtils.deleteVcodeCache(userName);
+                redis.remove(KEY_LOGIN_MAX_ERROR_TIMES + member.id);
+                return ok(result);
+            }else if(loginRules.equals("1")){
+                // 非家长登录：rules 不能包含"家长"（排除"家长"和"科任教师，家长"等）
+                ShopAdmin member = ShopAdmin.find.query().where()
+                        .eq("userName", userName)
+                        .ne("rules", "家长")
+                        .orderBy().asc("id")
+                        .setMaxRows(1).findOne();
+                if (null == member) return okCustomJson(request,CODE40003, "user.login.failed");
+                if (!member.password.equalsIgnoreCase(encodeUtils.getMd5WithSalt(password))) {
+                    if (businessUtils.uptoErrorLimit(request, KEY_LOGIN_MAX_ERROR_BY_ID + member.id, 10)) {
+                        member.setStatus(ShopAdmin.STATUS_LOCK);
+                        member.save();
+                    }
+                    return okCustomJson(request,CODE40003, "user.login.failed");
+                }
+                if (member.status == ShopAdmin.STATUS_LOCK) return okCustomJson(request,CODE40008, "user.login.member.lock");
+                if (!ValidationUtil.isEmpty(type)) {
+                    if (type.equalsIgnoreCase("pos")) {
+                        if (member.shopId < 1) return okCustomJson(request,CODE40008, "member.shop.bind.error");
+                    }
+                }
+                redis.remove(KEY_LOGIN_MAX_ERROR_TIMES + loginIP);
+                ObjectNode result = (ObjectNode) Json.toJson(member);
+                result.put("code", 200);
+                //保存到缓存中
+                String authToken = UUID.randomUUID().toString();
+                result.put("token", authToken);
+//            int deviceType = httpRequestDeviceUtils.getMobileDeviceType(request);
+                handleCacheToken(member, authToken);
+                businessUtils.deleteVcodeCache(userName);
+                redis.remove(KEY_LOGIN_MAX_ERROR_TIMES + member.id);
+                return ok(result);
+            } else {
+                // loginRules 既不是 "0" 也不是 "1"
+                return okCustomJson(request, CODE40001, "base.argument.error");
+            }
+        });
+    }
+
 
 }

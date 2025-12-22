@@ -68,8 +68,11 @@ public class StudentController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
 
             int page = jsonNode.get("page").asInt();
-            String studentName = jsonNode.get("studentName").asText();
 
+            // 修复：检查studentName节点是否存在
+            String studentName = jsonNode.has("studentName") && !jsonNode.get("studentName").isNull()
+                    ? jsonNode.get("studentName").asText()
+                    : null;
 
             ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
             //if (status > 0) expressionList.eq("status", status);

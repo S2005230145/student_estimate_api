@@ -178,7 +178,7 @@ public class StudentImportExcel {
     /**
      * 转为实体类数据
      */
-    public static void toEntity(List<StudentImportExcel> list) {
+    public static void toEntity1(List<StudentImportExcel> list,long orgId) {
         if (list == null || list.isEmpty()) {
             throw new RuntimeException("数据为空");
         }
@@ -224,10 +224,10 @@ public class StudentImportExcel {
             }
 
             // 创建学生
-            Student student = createStudent(studentExcel, schoolClass.id);
+            Student student = createStudent(studentExcel, schoolClass.id,orgId);
 
             // 创建家长关系和账号
-            createParentRelations(studentExcel, student.getId());
+            createParentRelations(studentExcel, student.getId(),orgId);
 
             // 更新班级学生数
             schoolClass.calcStudentNum();

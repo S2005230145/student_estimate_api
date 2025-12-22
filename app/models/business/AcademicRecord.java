@@ -67,19 +67,9 @@ public class AcademicRecord extends Model {
     @DbComment("平均分")
     public double averageScore;
 
-    //语文、数学两科平均分
-//    @Column(name = "chinese_math_average_score")
-//    @DbComment("语文、数学两科平均分")
-//    public double chineseMathAverageScore;
-
     @Column(name = "grade_ranking")
     @DbComment("年级排名")
     public int gradeRanking;
-
-    //语文、数学两科年级排名
-//    @Column(name = "chinese_math_grade_ranking")
-//    @DbComment("语文、数学两科年级排名")
-//    public int chineseMathGradeRanking;
 
     @Column(name = "class_ranking")
     @DbComment("班级排名")

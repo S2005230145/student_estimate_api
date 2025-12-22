@@ -97,6 +97,18 @@ create table v1_admin_config (
   constraint pk_v1_admin_config primary key (id)
 );
 
+create table v1_badge (
+  id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
+  badge_id                      integer not null comment '所属徽章类型',
+  badge_name                    varchar(255) comment '徽章名称',
+  badge_image                   varchar(255) comment '徽章图片',
+  description                   varchar(255) comment '描述',
+  active                        tinyint(1) default 0 not null comment '是否启用',
+  create_time                   bigint not null comment '创建时间',
+  constraint pk_v1_badge primary key (id)
+) comment='徽章表';
+
 create table v1_badge_record (
   id                            bigint auto_increment not null comment '唯一标识',
   org_id                        bigint not null comment '机构ID',
@@ -155,9 +167,9 @@ create table v1_class_teacher_relation (
 create table v1_evaluation_rule (
   id                            bigint auto_increment not null comment '唯一标识',
   org_id                        bigint not null comment '机构ID',
-  rule_type                     varchar(255) comment '规则类型',
-  conditions                    varchar(255) comment '条件',
-  score                         double not null comment '得分',
+  name                          varchar(255) comment '指标名称',
+  score_basic                   double not null comment '基础分',
+  score_max                     double not null comment '上限分',
   badge_type                    varchar(255) comment '徽章类型',
   description                   varchar(255) comment '描述',
   active                        tinyint(1) default 0 not null comment '是否启用',
@@ -492,6 +504,8 @@ drop table if exists v1_academic_record;
 drop table if exists cp_system_action;
 
 drop table if exists v1_admin_config;
+
+drop table if exists v1_badge;
 
 drop table if exists v1_badge_record;
 

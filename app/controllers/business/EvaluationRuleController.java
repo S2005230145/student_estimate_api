@@ -6,6 +6,7 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import models.business.Badge;
 import models.business.EvaluationRule;
 import play.libs.Json;
 import play.mvc.Http;
@@ -14,6 +15,7 @@ import utils.ValidationUtil;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 public class EvaluationRuleController extends BaseSecurityController {
 
@@ -23,12 +25,13 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
+     * @apiParam {String} name 指标名称
+     * @apiParam {double} scoreBasic 类型基础分
+     * @apiParam {double} scoreMax 类型上限分
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
-     * @apiSuccess (Success 200) {String} ruleType 规则类型
-     * @apiSuccess (Success 200) {String} conditions 条件
-     * @apiSuccess (Success 200) {double} score 得分
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
+     * @apiSuccess (Success 200) {String} name 指标名称
      * @apiSuccess (Success 200) {String} description 描述
      * @apiSuccess (Success 200) {boolean} active 是否启用
      * @apiSuccess (Success 200) {long} createTime 创建时间
@@ -38,13 +41,13 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             ExpressionList<EvaluationRule> expressionList = EvaluationRule.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
-                    .or()
-                    .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
+//            if (!ValidationUtil.isEmpty(filter)) expressionList
+//                    .or()
+//                    .icontains("filter", filter)
+//                    .endOr();               //编写其他条件
+//            //编写其他条件
+//            //编写其他条件
+//            //编写其他条件
 
             ObjectNode result = Json.newObject();
             List<EvaluationRule> list;
@@ -59,8 +62,23 @@ public class EvaluationRuleController extends BaseSecurityController {
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }
+            
+            // 为每个 EvaluationRule 查询关联的 Badge 列表（一对多）
+            for (EvaluationRule rule : list) {
+                List<Badge> badges = getBadgesByRule(rule, adminMember.getOrgId());
+                rule.badges = badges;
+            }
+            
+            // 构建返回结果，包含 Badge 列表
+            com.fasterxml.jackson.databind.node.ArrayNode listNode = Json.newArray();
+            for (EvaluationRule rule : list) {
+                ObjectNode ruleNode = (ObjectNode) Json.toJson(rule);
+                ruleNode.set("badges", Json.toJson(rule.badges));
+                listNode.add(ruleNode);
+            }
+            
             result.put(CODE, CODE200);
-            result.set("list", Json.toJson(list));
+            result.set("list", listNode);
             return ok(result);
 
         });
@@ -75,9 +93,8 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
-     * @apiSuccess (Success 200) {String} ruleType 规则类型
-     * @apiSuccess (Success 200) {String} conditions 条件
-     * @apiSuccess (Success 200) {double} score 得分
+     * @apiParam {double} scoreBasic 类型基础分
+     * @apiParam {double} scoreMax 类型上限分
      * @apiSuccess (Success 200) {String} badgeType 徽章类型
      * @apiSuccess (Success 200) {String} description 描述
      * @apiSuccess (Success 200) {boolean} active 是否启用
@@ -90,7 +107,13 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == evaluationRule) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
             if (evaluationRule.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            
+            // 查询关联的 Badge 列表（一对多）
+            List<Badge> badges = getBadgesByRule(evaluationRule, adminMember.getOrgId());
+            evaluationRule.badges = badges;
+            
             ObjectNode result = (ObjectNode) Json.toJson(evaluationRule);
+            result.set("badges", Json.toJson(badges));
             result.put(CODE, CODE200);
             return ok(result);
         });
@@ -104,13 +127,12 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
-     * @apiParam {String} ruleType 规则类型
-     * @apiParam {String} conditions 条件
-     * @apiParam {double} score 得分
-     * @apiParam {String} badgeType 徽章类型
-     * @apiParam {String} description 描述
-     * @apiParam {boolean} active 是否启用
-     * @apiParam {long} createTime 创建时间
+     * @apiParam {double} scoreBasic 类型基础分
+     * @apiParam {double} scoreMax 类型上限分
+     * @apiSuccess (Success 200) {String} badgeType 徽章类型
+     * @apiSuccess (Success 200) {String} description 描述
+     * @apiSuccess (Success 200) {boolean} active 是否启用
+     * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200){int} code 200
      */
 
@@ -135,13 +157,13 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiGroup EVALUATION-RULE-CONTROLLER
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
-     * @apiParam {String} ruleType 规则类型
-     * @apiParam {String} conditions 条件
-     * @apiParam {double} score 得分
-     * @apiParam {String} badgeType 徽章类型
-     * @apiParam {String} description 描述
-     * @apiParam {boolean} active 是否启用
-     * @apiParam {long} createTime 创建时间
+
+     * @apiParam {double} scoreBasic 类型基础分
+     * @apiParam {double} scoreMax 类型上限分
+     * @apiSuccess (Success 200) {String} badgeType 徽章类型
+     * @apiSuccess (Success 200) {String} description 描述
+     * @apiSuccess (Success 200) {boolean} active 是否启用
+     * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200){int} code 200
      */
     public CompletionStage<Result> updateEvaluationRule(Http.Request request, long id) {
@@ -153,11 +175,8 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == originalEvaluationRule) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
             if (originalEvaluationRule.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
-            if (!ValidationUtil.isEmpty(newEvaluationRule.ruleType))
-                originalEvaluationRule.setRuleType(newEvaluationRule.ruleType);
-            if (!ValidationUtil.isEmpty(newEvaluationRule.conditions))
-                originalEvaluationRule.setConditions(newEvaluationRule.conditions);
-            if (newEvaluationRule.score > 0) originalEvaluationRule.setScore(newEvaluationRule.score);
+            if (newEvaluationRule.scoreBasic > 0) originalEvaluationRule.setScoreBasic(newEvaluationRule.scoreBasic);
+            if (newEvaluationRule.scoreMax > 0) originalEvaluationRule.setScoreMax(newEvaluationRule.scoreMax);
             if (!ValidationUtil.isEmpty(newEvaluationRule.badgeType))
                 originalEvaluationRule.setBadgeType(newEvaluationRule.badgeType);
             if (!ValidationUtil.isEmpty(newEvaluationRule.description))
@@ -192,5 +211,33 @@ public class EvaluationRuleController extends BaseSecurityController {
             deleteModel.delete();
             return okJSON200();
         });
+    }
+
+    /**
+     * 根据 EvaluationRule 查询关联的 Badge 列表（一对多关系）
+     * @param rule EvaluationRule 对象
+     * @param orgId 机构ID
+     * @return Badge 列表
+     */
+    private List<Badge> getBadgesByRule(EvaluationRule rule, long orgId) {
+        if (ValidationUtil.isEmpty(rule.badgeType)) {
+            return java.util.Collections.emptyList();
+        }
+        
+        try {
+            // 假设 badgeType 是字符串形式的 badgeId，转换为 int
+            int badgeId = Integer.parseInt(rule.badgeType);
+            return Badge.find.query().where()
+                    .eq("org_id", orgId)
+                    .eq("badge_id", badgeId)
+                    .findList();
+        } catch (NumberFormatException e) {
+            // 如果 badgeType 不是数字，可能是类型名称，尝试按名称匹配
+            // 这里可以根据实际业务逻辑调整
+            return Badge.find.query().where()
+                    .eq("org_id", orgId)
+                    .icontains("badge_name", rule.badgeType)
+                    .findList();
+        }
     }
 }
