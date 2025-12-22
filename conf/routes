@@ -80,7 +80,7 @@ POST        /v2/p/academic_record/new/                        controllers.busine
 GET        /v2/p/academic_record/:id/                         controllers.business.AcademicRecordController.getAcademicRecord(request: Request,id:Long)
 POST        /v2/p/academic_record/:id/                        controllers.business.AcademicRecordController.updateAcademicRecord(request: Request,id:Long)
 POST        /v2/p/academic_record/                            controllers.business.AcademicRecordController.deleteAcademicRecord(request: Request)
-GET        /v2/p/academic_record_list/                        controllers.business.AcademicRecordController.listAcademicRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/academic_record_list/                       controllers.business.AcademicRecordController.listAcademicRecord(request: Request)
 POST        /v2/p/academic_record_excel/                      controllers.business.AcademicRecordController.academicRecordImport(request: Request)
 GET        /v2/p/academic_record_excel_template/              controllers.business.AcademicRecordController.exportAcTemplate(request: Request)
 
@@ -139,7 +139,7 @@ POST        /v2/p/student/new/                                controllers.busine
 GET        /v2/p/student/:id/                                 controllers.business.StudentController.getStudent(request: Request,id:Long)
 POST        /v2/p/student/:id/                                controllers.business.StudentController.updateStudent(request: Request,id:Long)
 POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
-GET        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request)
 
 POST        /v2/p/student_parent/                             controllers.business.StudentController.createStudentParent(request: play.mvc.Http.Request)
 GET        /v2/p/student/:id/parents/                         controllers.business.StudentController.getStudentParents(request: play.mvc.Http.Request, id: Long)

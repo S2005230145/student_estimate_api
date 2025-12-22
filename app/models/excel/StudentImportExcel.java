@@ -52,7 +52,7 @@ public class StudentImportExcel {
     /**
      * 转为实体类数据
      */
-    public static void toEntity(List<StudentImportExcel> list,Long classId) {
+    public static void toEntity(List<StudentImportExcel> list,Long classId,Long orgId) {
         if (list == null || list.isEmpty()) {
             throw new RuntimeException("数据为空");
         }
@@ -103,10 +103,10 @@ public class StudentImportExcel {
             }
 
             // 创建学生
-            Student student = createStudent(studentExcel, classId);
+            Student student = createStudent(studentExcel, classId,orgId);
 
             // 创建家长关系和账号
-            createParentRelations(studentExcel, student.getId());
+            createParentRelations(studentExcel, student.getId(), orgId);
 
             // 更新班级学生数
             schoolClass.calcStudentNum();
@@ -116,7 +116,7 @@ public class StudentImportExcel {
     /**
      * 转为实体类数据
      */
-    public static void toEntity(List<StudentImportExcel> list) {
+    public static void toEntity(List<StudentImportExcel> list,long orgId) {
         if (list == null || list.isEmpty()) {
             throw new RuntimeException("数据为空");
         }
@@ -165,10 +165,10 @@ public class StudentImportExcel {
             }
 
             // 创建学生
-            Student student = createStudent(studentExcel, schoolClass.id);
+            Student student = createStudent(studentExcel, schoolClass.id,orgId);
 
             // 创建家长关系和账号
-            createParentRelations(studentExcel, student.getId());
+            createParentRelations(studentExcel, student.getId(),orgId);
 
             // 更新班级学生数
             schoolClass.calcStudentNum();
@@ -203,7 +203,7 @@ public class StudentImportExcel {
     /**
      * 创建学生
      */
-    private static Student createStudent(StudentImportExcel excel, long classId) {
+    private static Student createStudent(StudentImportExcel excel, long classId, long orgId) {
         Student student = new Student();
         student.setStudentNumber(excel.getStudentNumber());
         student.setName(excel.getName());
@@ -213,6 +213,7 @@ public class StudentImportExcel {
             student.setGrade(schoolClass.grade);
             student.setClassHg(schoolClass.classId);
         }
+        student.setOrgId(orgId);
         student.setCreateTime(System.currentTimeMillis());
         student.setUpdateTime(System.currentTimeMillis());
         student.save();
@@ -223,7 +224,7 @@ public class StudentImportExcel {
     /**
      * 创建家长关系和账号
      */
-    private static void createParentRelations(StudentImportExcel excel, long studentId) {
+    private static void createParentRelations(StudentImportExcel excel, long studentId,long orgId) {
         String studentName = excel.getName();
 
         // 创建关系一账号和关系
@@ -232,10 +233,11 @@ public class StudentImportExcel {
                     "爸爸",
                     excel.getFatherPhoneOne(),
                     "爸爸",
-                    studentName
+                    studentName,
+                    orgId
             );
             if (relationOne != null) {
-                ParentStudentRelation.addRelation(relationOne.getId(), studentId, "爸爸");
+                ParentStudentRelation.addRelation(relationOne.getId(), studentId, "爸爸",orgId);
             }
         }
 
@@ -245,10 +247,11 @@ public class StudentImportExcel {
                     "妈妈",
                     excel.getMotherPhoneTwo(),
                     "妈妈",
-                    studentName
+                    studentName,
+                    orgId
             );
             if (relationTwo != null) {
-                ParentStudentRelation.addRelation(relationTwo.getId(), studentId, "妈妈");
+                ParentStudentRelation.addRelation(relationTwo.getId(), studentId, "妈妈",orgId);
             }
         }
     }
@@ -256,7 +259,7 @@ public class StudentImportExcel {
     /**
      * 查找或创建家长账号
      */
-    private static ShopAdmin findOrCreateParent(String name, String phone, String relationship, String studentName) {
+    private static ShopAdmin findOrCreateParent(String name, String phone, String relationship, String studentName,long orgId) {
         if (name == null || name.trim().isEmpty() || phone == null || phone.trim().isEmpty()) {
             return null;
         }
@@ -282,12 +285,14 @@ public class StudentImportExcel {
                 if(parent.getRules().contains("家长")){
                     parent.setUserName(phone);
                     parent.setRealName(generateParentRealName(studentName, relationship));
+                    parent.setOrgId(orgId);
                     parent.update();
                 }
                 else if(parent.getRules().contains("科任教师")){
                     parent.setUserName(phone);
                     //parent.setRealName(generateParentRealName(studentName, relationship));
                     //parent.rulers 后面追加,家长
+                    parent.setOrgId(orgId);
                     parent.setRules(parent.getRules()+",家长");
                     parent.update();
                 }
@@ -302,6 +307,7 @@ public class StudentImportExcel {
         parent.setRealName(generateParentRealName(studentName, relationship)); // 真实姓名设为"学生名_关系"
         parent.setRules("家长");
         parent.setPassword(generateDefaultPassword());
+        parent.setOrgId(orgId);
         parent.setStatus(1);
         parent.save();
         return parent;

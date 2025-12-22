@@ -94,7 +94,7 @@ public class ParentStudentRelation extends Model {
     /**
      * 添加家长学生关系
      */
-    public static void addRelation(Long parentId, Long studentId, String relationship) {
+    public static void addRelation(Long parentId, Long studentId, String relationship,long orgId) {
         // 检查是否已存在关系
         if (isParentOfStudent(parentId, studentId)) {
             return;
@@ -104,6 +104,7 @@ public class ParentStudentRelation extends Model {
         relation.parentId = parentId;
         relation.studentId = studentId;
         relation.relationship = relationship;
+        relation.orgId = orgId;
         relation.createTime = System.currentTimeMillis();
         relation.updateTime = System.currentTimeMillis();
         relation.save();

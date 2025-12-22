@@ -9,6 +9,7 @@ import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import io.ebean.annotation.Transactional;
 import models.business.AcademicRecord;
+import models.business.Student;
 import models.excel.AcademicRecordExcel;
 import org.apache.commons.io.FilenameUtils;
 import play.libs.Files;
@@ -31,7 +32,7 @@ import java.util.concurrent.CompletionStage;
 public class AcademicRecordController extends BaseSecurityController {
 
     /**
-     * @api {GET} /v2/p/academic_record_list/   01列表-学业成绩记录
+     * @api {POST} /v2/p/academic_record_list/   01列表-学业成绩记录
      * @apiName listAcademicRecord
      * @apiGroup ACADEMIC-RECORD-CONTROLLER
      * @apiParam {int} page 页码
@@ -54,18 +55,46 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
-    public CompletionStage<Result> listAcademicRecord(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listAcademicRecord(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where().le("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
-                    .or()
-                    .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
+            ExpressionList<AcademicRecord> expressionList = AcademicRecord.find.query().where().eq("org_id", adminMember.getOrgId());
+
+            // 安全地提取参数
+            int page = 0;
+            String studentName = "";
+
+            if (jsonNode != null) {
+                JsonNode pageNode = jsonNode.get("page");
+                if (pageNode != null) {
+                    page = pageNode.asInt(1);
+                }
+
+                JsonNode studentNameNode = jsonNode.get("studentName");
+                if (studentNameNode != null) {
+                    studentName = studentNameNode.asText("");
+                }
+            }
+
+            // 如果提供了学生姓名，则先查找对应的学生ID
+            if (!ValidationUtil.isEmpty(studentName)) {
+                List<Student> students = Student.find.query()
+                        .where()
+                        .eq("org_id", adminMember.getOrgId())
+                        .icontains("name", studentName)
+                        .findList();
+
+                if (!students.isEmpty()) {
+                    List<Long> studentIds = students.stream()
+                            .map(student -> student.id)
+                            .toList();
+                    expressionList.in("student_id", studentIds);
+                } else {
+                    // 如果找不到匹配的学生，返回空结果
+                    expressionList.raw("1=0");
+                }
+            }
 
             ObjectNode result = Json.newObject();
             List<AcademicRecord> list;
@@ -274,6 +303,10 @@ public class AcademicRecordController extends BaseSecurityController {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
             if (adminMember == null) return unauth403();
 
+            if(adminMember.orgId < 1){
+                throw new RuntimeException("机构ID不能为空");
+            }
+
             Files.TemporaryFile file = filePart.getRef();
             String fileName = filePart.getFilename();
             String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
@@ -284,12 +317,30 @@ public class AcademicRecordController extends BaseSecurityController {
             try (InputStream inputStream = new FileInputStream(destFile)) {
                 // 读取文件
                 List<AcademicRecord> list = AcademicRecordExcel.importFromExcel(inputStream);
-                // 计算排名和徽章和学业分
-                List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadgesAndStudyScore(list);
-                DB.saveAll(academicRecords);
+
+                // 使用显式事务处理数据库操作
+                try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
+                    try {
+                        // 计算排名和徽章和学业分
+                        List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadgesAndStudyScore(list,adminMember.orgId);
+                        DB.saveAll(academicRecords);
+
+                        // 提交事务
+                        txn.commit();
+                    } catch (Exception e) {
+                        // 出现异常时回滚事务
+                        txn.rollback();
+                        throw e;
+                    }
+                }
                 return okJSON200();
             } catch (Exception e) {
                 return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+            } finally {
+                // 清理临时文件
+                if (destFile.exists()) {
+                    destFile.delete();
+                }
             }
         });
     }

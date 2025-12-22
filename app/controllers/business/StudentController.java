@@ -41,11 +41,11 @@ public class StudentController extends BaseSecurityController {
     @Inject
     EncodeUtils encodeUtils;
     /**
-     * @api {GET} /v2/p/student_list/   01列表-学生
+     * @api {POST} /v2/p/student_list/   01列表-学生
      * @apiName listStudent
      * @apiGroup STUDENT-CONTROLLER
      * @apiParam {int} page 页码
-     * @apiParam {String} filter 搜索栏()
+     * @apiParam {String} studentName 学生姓名
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} studentNumber 学号
@@ -62,16 +62,25 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
-    public CompletionStage<Result> listStudent(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listStudent(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<Student> expressionList = Student.find.query().where().le("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
-                    .or()
-                    .icontains("filter", filter)
-                    .endOr();               //编写其他条件
+
+            int page = jsonNode.get("page").asInt();
+            String studentName = jsonNode.get("studentName").asText();
+
+
+            ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
+            //if (status > 0) expressionList.eq("status", status);
             //编写其他条件
+            //编写其他条件
+            if(!ValidationUtil.isEmpty(studentName)) expressionList
+                    .or()
+                    .icontains("name", studentName)
+                    .endOr();
+
+
             //编写其他条件
             //编写其他条件
             if (!adminMember.getRules().contains("教导处")){
@@ -136,7 +145,7 @@ public class StudentController extends BaseSecurityController {
             Student student = Student.find.byId(id);
             if (null == student) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (student.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (student.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             ObjectNode result = (ObjectNode) Json.toJson(student);
             result.put(CODE, CODE200);
             return ok(result);
@@ -212,7 +221,7 @@ public class StudentController extends BaseSecurityController {
             Student newStudent = Json.fromJson(jsonNode, Student.class);
             if (null == originalStudent) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (originalStudent.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (originalStudent.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             if (!ValidationUtil.isEmpty(newStudent.studentNumber))
                 originalStudent.setStudentNumber(newStudent.studentNumber);
             if (!ValidationUtil.isEmpty(newStudent.name)) originalStudent.setName(newStudent.name);
@@ -276,53 +285,58 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200){int} 200 成功
      */
     public CompletionStage<Result> studentImport(Http.Request request,Long classId) {
-        Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
-        Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
-        // 获取班级ID参数
-        DynamicForm form = formFactory.form().bindFromRequest(request);
-        //long classId = Long.parseLong(form.get("classId"));
+            Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
+            Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
-        if (filePart == null) {
-            return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
-        }
+            // 获取班级ID参数
+            DynamicForm form = formFactory.form().bindFromRequest(request);
+            //long classId = Long.parseLong(form.get("classId"));
+
+            if (filePart == null) {
+                return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
+            }
 
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
             if (adminMember == null) return unauth403();
 
-            Files.TemporaryFile file = filePart.getRef();
-            String fileName = filePart.getFilename();
-            String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-            String destPath = FILE_DIR_LOCATION + targetFileName;
-
-            // 确保目录存在
-            new File(FILE_DIR_LOCATION).mkdirs();
-
-            file.copyTo(Paths.get(destPath), true);
-            File destFile = new File(destPath);
-
-            try (InputStream inputStream = new FileInputStream(destFile)) {
-                // 读取Excel文件
-                List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
-
-                // 使用事务，导入过程中任意一步出错则整体回滚
-                try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
-                    // 数据验证
-                    StudentImportExcel.validateData(list, classId);
-
-                    // 转换为实体并保存
-                    StudentImportExcel.toEntity(list, classId);
-
-                    // 一切成功后提交事务
-                    txn.commit();
-                }
-
-                return okJSON200();
-            } catch (Exception e) {
-                // 发生异常时事务未提交，Ebean 会自动回滚
-                return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+            if(adminMember.orgId < 1){
+                throw new RuntimeException("机构ID不能为空");
             }
-        });
+
+                Files.TemporaryFile file = filePart.getRef();
+                String fileName = filePart.getFilename();
+                String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+                String destPath = FILE_DIR_LOCATION + targetFileName;
+
+                // 确保目录存在
+                new File(FILE_DIR_LOCATION).mkdirs();
+
+                file.copyTo(Paths.get(destPath), true);
+                File destFile = new File(destPath);
+
+                try (InputStream inputStream = new FileInputStream(destFile)) {
+                    // 读取Excel文件
+                    List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
+
+                    // 使用事务，导入过程中任意一步出错则整体回滚
+                    try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
+                        // 数据验证
+                        StudentImportExcel.validateData(list, classId);
+
+                        // 转换为实体并保存
+                        StudentImportExcel.toEntity(list, classId, adminMember.getOrgId());
+
+                        // 一切成功后提交事务
+                        txn.commit();
+                    }
+
+                    return okJSON200();
+                } catch (Exception e) {
+                    // 发生异常时事务未提交，Ebean 会自动回滚
+                    return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+                }
+            });
     }
 
     /**
@@ -395,7 +409,7 @@ public class StudentController extends BaseSecurityController {
                 }
 
                 // 创建家长学生关系
-                ParentStudentRelation.addRelation(parent.getId(), studentId, relationship);
+                ParentStudentRelation.addRelation(parent.getId(), studentId, relationship,adminMember.orgId);
 
                 return okJSON200();
 
@@ -553,7 +567,7 @@ public class StudentController extends BaseSecurityController {
     public CompletionStage<Result> listStudentClassCurrentUser (Http.Request request, long classId, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<Student> expressionList = Student.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             SchoolClass schoolClass = SchoolClass.find.byId(classId);
 
@@ -572,46 +586,63 @@ public class StudentController extends BaseSecurityController {
      */
     @Transactional
     public CompletionStage<Result> studentImportSchool(Http.Request request) {
-        Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
-        Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
-        // 获取班级ID参数
-        DynamicForm form = formFactory.form().bindFromRequest(request);
-        //long classId = Long.parseLong(form.get("classId"));
+            Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
+            Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
-        if (filePart == null) {
-            return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
-        }
+            // 获取班级ID参数
+            DynamicForm form = formFactory.form().bindFromRequest(request);
+            //long classId = Long.parseLong(form.get("classId"));
 
-        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
-            if (adminMember == null) return unauth403();
-
-            Files.TemporaryFile file = filePart.getRef();
-            String fileName = filePart.getFilename();
-            String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
-            String destPath = FILE_DIR_LOCATION + targetFileName;
-
-            // 确保目录存在
-            new File(FILE_DIR_LOCATION).mkdirs();
-
-            file.copyTo(Paths.get(destPath), true);
-            File destFile = new File(destPath);
-
-            try (InputStream inputStream = new FileInputStream(destFile)) {
-                // 读取Excel文件
-                List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
-
-                // 数据验证
-                StudentImportExcel.validateData(list);
-
-                // 转换为实体并保存
-                StudentImportExcel.toEntity(list);
-
-                return okJSON200();
-            } catch (Exception e) {
-                return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+            if (filePart == null) {
+                return CompletableFuture.completedFuture(okCustomJson(CODE40001, "文件不能为空"));
             }
-        });
+
+            return businessUtils.getUserIdByAuthToken(request).thenApplyAsync(adminMember -> {
+                if (adminMember == null) return unauth403();
+
+                if(adminMember.orgId < 1){
+                    throw new RuntimeException("机构ID不能为空");
+                }
+
+
+                Files.TemporaryFile file = filePart.getRef();
+                String fileName = filePart.getFilename();
+                String targetFileName = UUID.randomUUID() + "." + FilenameUtils.getExtension(fileName);
+                String destPath = FILE_DIR_LOCATION + targetFileName;
+
+                // 确保目录存在
+                new File(FILE_DIR_LOCATION).mkdirs();
+
+                file.copyTo(Paths.get(destPath), true);
+                File destFile = new File(destPath);
+
+                try (InputStream inputStream = new FileInputStream(destFile)) {
+                    // 读取Excel文件
+                    List<StudentImportExcel> list = StudentImportExcel.importFromExcel(inputStream);
+
+                    // 使用显式的事务管理
+                    try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
+                        try {
+                            // 数据验证
+                            StudentImportExcel.validateData(list);
+
+                            // 转换为实体并保存
+                            StudentImportExcel.toEntity(list,adminMember.orgId);
+
+                            // 提交事务
+                            txn.commit();
+                        } catch (Exception e) {
+                            // 回滚事务
+                            txn.rollback();
+                            throw e;
+                        }
+                    }
+                    return okJSON200();
+                } catch (Exception e) {
+                    return okCustomJson(CODE40001, "导入失败：" + e.getMessage());
+                }
+            });
     }
 
 

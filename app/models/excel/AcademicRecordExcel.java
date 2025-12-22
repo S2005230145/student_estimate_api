@@ -137,9 +137,32 @@ public class AcademicRecordExcel {
         if (excel.getMathScore() == null || excel.getMathScore() < 0 || excel.getMathScore() > 100) {
             throw new RuntimeException("数学成绩必须在0-100之间");
         }
-        if (excel.getEnglishScore() == null || excel.getEnglishScore() < 0 || excel.getEnglishScore() > 100) {
-            throw new RuntimeException("英语成绩必须在0-100之间");
+//        if (excel.getEnglishScore() == null || excel.getEnglishScore() < 0 || excel.getEnglishScore() > 100) {
+//            throw new RuntimeException("英语成绩必须在0-100之间");
+//        }
+
+        // 先解析年级
+        int grade = 0;
+        String className = excel.getClassName();
+        if (className != null) {
+            if (className.contains("一年级")) grade = 1;
+            else if (className.contains("二年级")) grade = 2;
+            else if (className.contains("三年级")) grade = 3;
+            else if (className.contains("四年级")) grade = 4;
+            else if (className.contains("五年级")) grade = 5;
+            else if (className.contains("六年级")) grade = 6;
         }
+
+        // 三年级及以上需要英语成绩
+        if (grade >= 3) {
+            Double englishScore = excel.getEnglishScore();
+            if (englishScore == null || englishScore < 0 || englishScore > 100) {
+                throw new RuntimeException("英语成绩必须在0-100之间");
+            }
+        }
+
+
+
         if (excel.getExamType() == null || (!"期中".equals(excel.getExamType()) && !"期末".equals(excel.getExamType()))) {
             throw new RuntimeException("考试类型必须是'期中'或'期末'");
         }
@@ -230,10 +253,19 @@ public class AcademicRecordExcel {
         record.examDate = dateUtils.convertStringToUnixStamp(excel.getExamDate());
         record.chineseScore = excel.getChineseScore();
         record.mathScore = excel.getMathScore();
-        record.englishScore = excel.getEnglishScore();
+
+        // 英语成绩可能为 null，这里做安全处理，空则按 0 分处理
+        Double englishScoreWrapper = excel.getEnglishScore();
+        double englishScore = englishScoreWrapper == null ? 0.0 : englishScoreWrapper;
+        record.englishScore = englishScore;
+
+        // 计算平均分：如果英语成绩不为 null 且是高年级，则计算三科平均分；否则计算两科平均分
+        boolean hasEnglishScore = englishScoreWrapper != null;
+        boolean isHighGrade = student.isHighGrade() && hasEnglishScore;
+
         record.averageScore = Math.round(
-                (student.isHighGrade() ?
-                        (excel.getChineseScore() + excel.getMathScore() + excel.getEnglishScore()) / 3.0 :
+                (isHighGrade ?
+                        (excel.getChineseScore() + excel.getMathScore() + englishScore) / 3.0 :
                         (excel.getChineseScore() + excel.getMathScore()) / 2.0
                 ) * 100.0
         ) / 100.0;

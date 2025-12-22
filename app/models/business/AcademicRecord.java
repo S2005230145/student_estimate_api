@@ -15,10 +15,7 @@ import utils.ValidationUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -124,61 +121,87 @@ public class AcademicRecord extends Model {
 
     /**
      * 一键计算所有排名、获得徽章、获得学业分，并同步到学生表
+     * 按班级导入时，会重新计算同年级所有班级的年级排名
      */
-    public static List<AcademicRecord> batchCalcAllRankingsAndBadgesAndStudyScore(List<AcademicRecord> currentRecords) {
+    public static List<AcademicRecord> batchCalcAllRankingsAndBadgesAndStudyScore(List<AcademicRecord> currentRecords, long orgId) {
         if (currentRecords == null || currentRecords.isEmpty()) {
             return currentRecords;
         }
 
-        List<AcademicRecord> lastRecords = getLastExamRecords(currentRecords);
+        // 1. 计算年级排名（返回同年级所有记录，包括数据库中已有的）
+        List<AcademicRecord> allGradeRecords = batchCalcGradeRanking(currentRecords, orgId);
 
-        // 1. 计算年级排名
-        batchCalcGradeRanking(currentRecords);
+        // 2. 获取导入记录的学生ID集合，用于后续只处理导入的记录
+        Set<Long> importedStudentIds = currentRecords.stream()
+                .map(r -> r.studentId)
+                .collect(Collectors.toSet());
 
-        // 2. 计算班级排名
-        batchCalcClassRanking(currentRecords);
+        // 3. 从所有年级记录中筛选出导入的记录
+        List<AcademicRecord> importedRecords = allGradeRecords.stream()
+                .filter(r -> importedStudentIds.contains(r.studentId))
+                .collect(Collectors.toList());
 
-        // 3. 计算进步排名
+        // 4. 计算班级排名（返回所有更新的班级记录，并更新 allGradeRecords 中对应记录的班级排名）
+        batchCalcClassRanking(allGradeRecords, importedRecords, orgId);
+
+        List<AcademicRecord> allUpdatedRecords = allGradeRecords;
+
+        // 5. 获取上次考试记录（用于计算进步排名和学业分）
+        List<AcademicRecord> lastRecords = getLastExamRecords(importedRecords);
+
+        // 6. 计算进步排名（需要所有年级记录来计算进步排名）
         if (!lastRecords.isEmpty()) {
-            batchCalcProgressData(currentRecords, lastRecords);
+            List<AcademicRecord> allLastGradeRecords = getLastExamRecords(allGradeRecords);
+            if (!allLastGradeRecords.isEmpty()) {
+                batchCalcProgressData(allGradeRecords, allLastGradeRecords);
+            }
         }
 
-        // 4. 计算学业分
-        batchCalcStudyScore(currentRecords, lastRecords);
+        // 7. 计算学业分（覆盖全部年级记录，确保旧记录被重新计算）
+        batchCalcStudyScore(allGradeRecords, lastRecords);
 
-        // 5. 计算徽章
-        batchCalcBadges(currentRecords);
+        // 8. 计算徽章（覆盖全部年级记录，确保旧记录被重新计算）
+        batchCalcBadges(allGradeRecords);
 
-        // 6. 同步到学生表
-        batchSyncToStudent(currentRecords);
+        // 9. 同步到学生表（同步所有更新的记录）
+        batchSyncToStudent(allUpdatedRecords);
 
-        //7. 同步到班级表
-        updateClassAverageScores(currentRecords);
+        // 10. 同步到班级表（同步所有更新的记录）
+        updateClassAverageScores(allUpdatedRecords);
 
-        //结束月统计
-        //timing.cancelMonthTask();
-
-        return currentRecords;
+        return allUpdatedRecords;
     }
 
     /**
      * 批量计算班级排名
+     * 按班级导入时，需要重新计算该班级所有学生的排名
      */
-    public static List<AcademicRecord> batchCalcClassRanking(List<AcademicRecord> academicRecords) {
-        if (academicRecords == null || academicRecords.isEmpty()) {
-            return academicRecords;
+    public static void batchCalcClassRanking(List<AcademicRecord> allGradeRecords, List<AcademicRecord> importedRecords, long orgId) {
+        if (allGradeRecords == null || allGradeRecords.isEmpty()) {
+            return;
         }
 
-        // 1. 按班级分组
-        Map<Long, List<AcademicRecord>> classGroups = new HashMap<>();
-        for (AcademicRecord record : academicRecords) {
+        // 1. 获取所有涉及的班级ID
+        Set<Long> classIds = new HashSet<>();
+        for (AcademicRecord record : allGradeRecords) {
             Student student = Student.find.byId(record.studentId);
-            if (student != null) {
-                classGroups.computeIfAbsent(student.classId, k -> new ArrayList<>()).add(record);
+            if (student != null && student.classId > 0) {
+                classIds.add(student.classId);
             }
         }
 
-        // 2. 对每个班级的成绩按平均分降序排序并设置排名
+        // 2. 按班级分组所有年级记录
+        Map<Long, List<AcademicRecord>> classGroups = allGradeRecords.stream()
+                .filter(record -> {
+                    Student student = Student.find.byId(record.studentId);
+                    return student != null && classIds.contains(student.classId) && student.orgId == orgId;
+                })
+                .collect(Collectors.groupingBy(record -> {
+                    Student student = Student.find.byId(record.studentId);
+                    return student.classId;
+                }));
+
+        // 3. 对每个班级的成绩按平均分降序排序并设置排名
         for (List<AcademicRecord> classRecords : classGroups.values()) {
             classRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
             for (int i = 0; i < classRecords.size(); i++) {
@@ -186,28 +209,90 @@ public class AcademicRecord extends Model {
                 classRecords.get(i).updateTime = System.currentTimeMillis();
             }
         }
-
-        return academicRecords;
     }
 
     /**
      * 批量计算年级排名
+     * 按班级导入时，需要重新计算同年级所有班级的年级排名
      */
-    public static List<AcademicRecord> batchCalcGradeRanking(List<AcademicRecord> academicRecords) {
+    public static List<AcademicRecord> batchCalcGradeRanking(List<AcademicRecord> academicRecords, long orgId) {
         if (academicRecords == null || academicRecords.isEmpty()) {
             return academicRecords;
         }
 
-        // 1. 按平均分降序排序
-        academicRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
+        // 1. 获取导入记录的年级、考试类型和时间
+        int grade = 0;
+        int examType = academicRecords.get(0).examType;
+        long examDate = academicRecords.get(0).examDate;
 
-        // 2. 设置年级排名(三科)
-        for (int i = 0; i < academicRecords.size(); i++) {
-            academicRecords.get(i).gradeRanking = i + 1;
-            academicRecords.get(i).updateTime = System.currentTimeMillis();
+        for (AcademicRecord record : academicRecords) {
+            Student student = Student.find.byId(record.studentId);
+            if (student != null) {
+                grade = student.grade;
+                break;
+            }
         }
 
-        return academicRecords;
+        if (grade == 0) {
+            return academicRecords;
+        }
+
+        // 2. 查询该年级、该考试的所有记录（包括数据库中已有的）
+        // 用 LinkedHashMap 去重，确保同一学生在同一场考试只保留一条记录
+        Map<Long, AcademicRecord> recordMap = new LinkedHashMap<>();
+
+        List<Student> studentsInGrade = Student.find.query()
+                .where()
+                .eq("grade", grade)
+                .findList();
+
+        if (!studentsInGrade.isEmpty()) {
+            List<Long> studentIds = studentsInGrade.stream()
+                    .map(s -> s.id)
+                    .collect(Collectors.toList());
+
+            List<AcademicRecord> gradeRecords = AcademicRecord.find.query()
+                    .where()
+                    .eq("exam_type", examType)
+                    .eq("exam_date", examDate)
+                    .eq("org_id", orgId)
+                    .in("student_id", studentIds)
+                    .findList();
+
+            for (AcademicRecord r : gradeRecords) {
+                recordMap.put(r.studentId, r); // 后查到的会覆盖先前重复的
+            }
+        }
+
+        // 3. 合并导入的记录（更新或新增）
+        for (AcademicRecord importedRecord : academicRecords) {
+            AcademicRecord existing = recordMap.get(importedRecord.studentId);
+            if (existing != null) {
+                existing.averageScore = importedRecord.averageScore;
+                existing.chineseScore = importedRecord.chineseScore;
+                existing.mathScore = importedRecord.mathScore;
+                existing.englishScore = importedRecord.englishScore;
+                existing.orgId = orgId;
+            } else {
+                importedRecord.orgId = orgId;
+                recordMap.put(importedRecord.studentId, importedRecord);
+            }
+        }
+
+        List<AcademicRecord> allGradeRecords = new ArrayList<>(recordMap.values());
+
+        // 4. 按平均分降序排序
+        allGradeRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
+
+        // 5. 设置年级排名
+        for (int i = 0; i < allGradeRecords.size(); i++) {
+            System.out.println("i="+i);
+            allGradeRecords.get(i).setGradeRanking(i+1);
+            allGradeRecords.get(i).setUpdateTime(System.currentTimeMillis());
+            allGradeRecords.get(i).markAsDirty();
+        }
+
+        return allGradeRecords;
     }
 
     /**

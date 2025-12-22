@@ -43,7 +43,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
     public CompletionStage<Result> listSpecialtyAward(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<SpecialtyAward> expressionList = SpecialtyAward.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
