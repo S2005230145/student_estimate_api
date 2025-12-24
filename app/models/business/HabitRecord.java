@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -191,26 +192,27 @@ public class HabitRecord  extends Model {
     }
 
     /**
-     * 重新计算单个学生的习惯得分
+     * 重新计算单个学生的习惯积分
      */
-    public static void recalculateStudentHabitScore(Long studentId) {
+    public static void recalculateStudentHabitScore(HabitRecord habitRecord) {
         // 获取该学生所有教师和班主任的评价记录
         List<HabitRecord> records = find.query()
                 .where()
-                .eq("student_id", studentId)
-                .in("evaluator_type", "teacher", "head_teacher")
+                .eq("student_id", habitRecord.studentId)
+                .eq("month_end_time",habitRecord.monthEndTime)
+                .eq("status", STATUS_UNSETTLED)
+                .in("evaluator_type", "科任教师", "班主任")
                 .findList();
 
-        // 重新计算习惯得分
-        calculateStudentTotalHabitScore(studentId, records);
-
+        // 重新计算习惯积分
+        calculateStudentTotalPoints(habitRecord.studentId, records);
     }
 
 
     /**
-     * 计算学生总习惯得分
+     * 计算学生总习惯积分与总习惯分
      */
-    private static void calculateStudentTotalHabitScore(Long studentId, List<HabitRecord> records) {
+    private static void calculateStudentTotalPoints(Long studentId, List<HabitRecord> records) {
         Student student = Student.find.byId(studentId);
         if (student == null) {
             return;
@@ -221,14 +223,26 @@ public class HabitRecord  extends Model {
                 .mapToDouble(r -> r.scoreChange)
                 .sum();
 
-        // 计算新的习惯得分
-        double newHabitScore = BASE_SCORE + totalScoreChange;
+        // 计算新的习惯积分
+        double newPoints = BASE_SCORE + totalScoreChange;
 
         // 确保得分在合理范围内
-        newHabitScore = Math.max(MIN_SCORE, Math.min(newHabitScore, MAX_SCORE));
+        newPoints = Math.max(MIN_SCORE, Math.min(newPoints, MAX_SCORE));
 
-        // 更新学生习惯得分
-        student.setHabitScore(newHabitScore);
+        // 更新学生习惯积分
+        student.setPoints(newPoints);
+
+        //统计records存在已经评价过相同的习惯类型，统计相同的个数
+        //1.获取指标ids
+        List<Integer> badgeIds = Badge.find.query().where().eq("active",true).findIds();
+        //2.筛选出在badgeIds相同的类型，并统计个数，比如 ids=[1,2,3,4,5,6,7,8,9,10],records.habitType在这里面有重复的,去掉重复的，返回去重复的list
+        List<Integer> uniqueHabitTypes = records.stream()
+                .filter(r -> badgeIds.contains(r.habitType))
+                .map(HabitRecord::getHabitType)
+                .distinct()  // 去除重复的habitType
+                .toList();
+
+        student.setHabitScore(uniqueHabitTypes.size());
         SchoolClass.recalcSpecialtyTotalScoreById(student.classId);
         student.update();
     }

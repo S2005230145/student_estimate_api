@@ -54,7 +54,6 @@ public class SpecialtyAwardController extends BaseSecurityController {
             //编写其他条件
             //编写其他条件
             //编写其他条件
-
             ObjectNode result = Json.newObject();
             List<SpecialtyAward> list;
             if (page == 0) list = expressionList.findList();

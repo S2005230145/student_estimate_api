@@ -244,8 +244,8 @@ public class UrbanManagementTiming {
             List<SpecialtyAward> awards = SpecialtyAward.find.query()
                     .where()
                     .eq("status", SpecialtyAward.STATUS_APPROVED)
-                    .ge("award_date", lastMonthStartTimestamp)
-                    .le("award_date", lastMonthEndTimestamp)
+                    .ge("createTime", lastMonthStartTimestamp)
+                    .le("createTime", lastMonthEndTimestamp)
                     .findList();
 
             //如果没有奖项记录，则返回

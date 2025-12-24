@@ -23,7 +23,7 @@ public class BadgeController extends BaseSecurityController {
      * @apiGroup BADGE-CONTROLLER
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏
-     * @apiParam {int} status 状态筛选
+     * @apiParam {int} active 状态筛选
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {int} badgeId 所属徽章类型
@@ -32,7 +32,7 @@ public class BadgeController extends BaseSecurityController {
      * @apiSuccess (Success 200) {boolean} active 是否启用
      * @apiSuccess (Success 200) {long} createTime 创建时间
      */
-    public CompletionStage<Result> listBadge(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listBadge(Http.Request request, int page, String filter, int active) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ExpressionList<Badge> expressionList = Badge.find.query().where().eq("org_id", adminMember.getOrgId());
@@ -62,7 +62,6 @@ public class BadgeController extends BaseSecurityController {
             return ok(result);
 
         });
-
     }
 
     /**

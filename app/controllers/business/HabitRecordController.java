@@ -108,7 +108,7 @@ public class HabitRecordController extends BaseSecurityController {
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
-     * @apiParam {int} habitType 习惯类型
+     * @apiParam {int} habitType 习惯类型  对应德智体美劳
      * @apiParam {String} evaluatorType 评价者类型
      * @apiParam {long} evaluatorId 评价者ID
      * @apiParam {double} scoreChange 分数变化
@@ -122,6 +122,8 @@ public class HabitRecordController extends BaseSecurityController {
     public CompletionStage<Result> addHabitRecord(Http.Request request) {
         JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
+
+            //1.保存习惯记录表
             if (null == admin) return unauth403();
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HabitRecord habitRecord = Json.fromJson(jsonNode, HabitRecord.class);
@@ -137,11 +139,11 @@ public class HabitRecordController extends BaseSecurityController {
             boolean isHeadTeacher = ClassTeacherRelation.isHeadTeacherInClass(admin.id, schoolClass.id);
             boolean isParent = ParentStudentRelation.isParentOfStudent(admin.id, student.id);
             try {
-                if (isTeacher) {
-                    habitRecord.validate("科任教师");
-                    habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
-                } else if (isHeadTeacher) {
+                if (isHeadTeacher) {
                     habitRecord.validate("班主任");
+                    habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
+                } else if (isTeacher) {
+                    habitRecord.validate("科任教师");
                     habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
                 } else if (isParent) {
                     habitRecord.validate("家长");
@@ -157,7 +159,7 @@ public class HabitRecordController extends BaseSecurityController {
             habitRecord.setCreateTime(currentTimeBySecond);
             habitRecord.calculateEndMonth();
             habitRecord.save();
-            HabitRecord.recalculateStudentHabitScore(habitRecord.studentId);
+            HabitRecord.recalculateStudentHabitScore(habitRecord);
             return okJSON200();
         });
     }
@@ -320,7 +322,7 @@ public class HabitRecordController extends BaseSecurityController {
     public CompletionStage<Result> listHabitRecordNew(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<HabitRecord> expressionList = HabitRecord.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -363,4 +365,38 @@ public class HabitRecordController extends BaseSecurityController {
             return ok(result);
         });
     }
+
+    /**
+     * @api {POST} /v2/p/habit_record/app/new/   08添加-HabitRecord习惯评价记录（德，智，体，美，劳）
+     * @apiName addHabitRecordApp
+     * @apiDescription 描述
+     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiParam {long} orgId 机构ID
+     * @apiParam {long} id 唯一标识
+     * @apiParam {long} studentId 学生ID
+     * @apiParam {int} habitType 习惯类型
+     * @apiParam {String} evaluatorType 评价者类型
+     * @apiParam {long} evaluatorId 评价者ID
+     * @apiParam {double} scoreChange 分数变化
+     * @apiParam {String} description 行为描述
+     * @apiParam {String} evidenceImage 证据图片
+     * @apiParam {long} recordTime 记录时间
+     * @apiParam {long} createTime 创建时间
+     * @apiSuccess (Success 200){int} code 200
+     */
+    public CompletionStage<Result> addHabitRecordApp(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
+
+            if (null == adminMember) return unauth403();
+            Long id = jsonNode.get("id").asLong();
+            //获取对应的徽章
+            Badge badge = Badge.find.query().where().eq("id", id).eq("org_id", adminMember.getOrgId()).findOne();
+            //查询对应上级指标德智体美劳
+            return null;
+        });
+    }
+
+
+
 }

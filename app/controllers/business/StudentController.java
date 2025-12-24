@@ -550,7 +550,7 @@ public class StudentController extends BaseSecurityController {
      * @api {GET} /v2/p/student_list_class_currentUser/   12列表-当前用户的所在班级的学生列表
      * @apiName listStudent
      * @apiGroup STUDENT-CONTROLLER
-     * @apiParam {int} page 页码
+     * @apiParam {long} classId 班级ID
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} studentNumber 学号
@@ -567,16 +567,16 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
      */
-    public CompletionStage<Result> listStudentClassCurrentUser (Http.Request request, long classId, int status) {
+    public CompletionStage<Result> listStudentClassCurrentUser (Http.Request request, long classId) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ExpressionList<Student> expressionList = Student.find.query().where().eq("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            SchoolClass schoolClass = SchoolClass.find.byId(classId);
-
-            return null ;
+            expressionList.eq("class_id", classId);
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(expressionList.findList()));
+            return ok(result);
         });
-
     }
 
 

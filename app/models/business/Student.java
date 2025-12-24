@@ -95,6 +95,10 @@ public class Student extends Model {
     @DbComment("习惯得分")
     public double habitScore;
 
+    @Column(name = "points")
+    @DbComment("积分")
+    public double points;
+
     @Column(name = "total_score")
     @DbComment("总分")
     public double totalScore;

@@ -279,7 +279,7 @@ public class SchoolClass  extends Model {
     }
 
     /**
-     * 重新计算指定班级的特长总分
+     * 重新计算指定班级的特长积分
      * @param classId 班级ID
      * @return 计算后的特长总分
      */

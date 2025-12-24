@@ -8,8 +8,10 @@ import models.admin.Group;
 import models.admin.GroupUser;
 import models.admin.ShopAdmin;
 import models.business.ClassTeacherRelation;
+import models.business.MonthlyRatingQuota;
 import models.business.SchoolClass;
 import myannotation.Translation;
+import utils.DateUtils;
 import utils.EncodeUtils;
 import utils.ValidationUtil;
 
@@ -38,6 +40,7 @@ public class TeacherImportExcel {
     private String headTeacherClass; // 否 / 班级名
 
     private static final EncodeUtils encodeUtils = new EncodeUtils();
+    private static final DateUtils dateUtils = new DateUtils();
 
     /** 入口：从 Excel 读取并批量导入 */
     public static void batchImport(InputStream inputStream, ShopAdmin currentAdmin) {
@@ -76,7 +79,7 @@ public class TeacherImportExcel {
         }
     }
 
-    /** 导入一名老师：创建/更新账号 + 分配角色 + 班主任 + 班级教师关系 */
+    /** 导入一名老师：创建/更新账号 + 分配角色 + 班主任 + 班级教师关系 + 自动分配月额度 */
     private static void importOneTeacher(TeacherImportExcel excel, ShopAdmin currentAdmin) {
         // 1. 找或建 ShopAdmin 账号（老师账号）
         ShopAdmin teacher = ShopAdmin.find.query()
@@ -113,6 +116,8 @@ public class TeacherImportExcel {
         
         // 3. 为每个教学职责创建班级教师关系
         boolean hasHeadTeacher = false; // 标记是否是班主任
+        List<ClassTeacherRelation> createdRelations = new ArrayList<>(); // 记录新创建的关系
+        
         for (TeachingDuty duty : duties) {
             SchoolClass schoolClass = SchoolClass.find.query()
                     .where().eq("class_name", duty.getClassName().trim())
@@ -142,6 +147,7 @@ public class TeacherImportExcel {
                 relation.setCreateTime(now);
                 relation.setUpdateTime(now);
                 relation.save();
+                createdRelations.add(relation);
             }
 
             // 4. 如果是班主任，同步到 SchoolClass.headTeacherId
@@ -163,6 +169,34 @@ public class TeacherImportExcel {
             String rules = String.join(",", rulesList);
             teacher.setRules(rules);
             teacher.update();
+        }
+        
+        // 6. 为新创建的关系自动分配每月评分额度
+        long currentTimeBySecond = System.currentTimeMillis();
+        String monthKey = dateUtils.getCurrentMonth();
+        for (ClassTeacherRelation relation : createdRelations) {
+            MonthlyRatingQuota monthlyRatingQuota = new MonthlyRatingQuota();
+            monthlyRatingQuota.setOrgId(currentAdmin.getOrgId());
+            monthlyRatingQuota.setClassId(relation.getClassId());
+            monthlyRatingQuota.setEvaluatorId(relation.getTeacherId());
+            monthlyRatingQuota.setRoleType(teacher.getRules());
+            monthlyRatingQuota.setMonthKey(monthKey);
+            
+            // 根据是否是班主任和科目来设置额度
+            if (relation.isHeadTeacher) {
+                monthlyRatingQuota.setRatingAmount(300);
+            } else if (relation.getSubject().equals("语文") || relation.getSubject().equals("数学") || relation.getSubject().equals("英语")) {
+                monthlyRatingQuota.setRatingAmount(200);
+            } else if (relation.getSubject().equals("美术") || relation.getSubject().equals("音乐") || relation.getSubject().equals("体育")) {
+                monthlyRatingQuota.setRatingAmount(50);
+            } else {
+                // 其他科目默认额度
+                monthlyRatingQuota.setRatingAmount(50);
+            }
+            
+            monthlyRatingQuota.setCreateTime(currentTimeBySecond);
+            monthlyRatingQuota.setUpdateTime(currentTimeBySecond);
+            monthlyRatingQuota.save();
         }
     }
 

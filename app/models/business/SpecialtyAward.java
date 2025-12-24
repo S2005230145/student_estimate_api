@@ -161,7 +161,6 @@ public class SpecialtyAward extends Model {
     }
 
 
-
     /**
      * 计算学生的特长总分（所有审核通过的奖项得分总和）
      */

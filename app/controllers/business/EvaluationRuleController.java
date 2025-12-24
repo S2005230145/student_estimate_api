@@ -41,13 +41,12 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (null == adminMember) return unauth403();
             ExpressionList<EvaluationRule> expressionList = EvaluationRule.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
-//            if (!ValidationUtil.isEmpty(filter)) expressionList
-//                    .or()
-//                    .icontains("filter", filter)
-//                    .endOr();               //编写其他条件
-//            //编写其他条件
-//            //编写其他条件
-//            //编写其他条件
+            if (!ValidationUtil.isEmpty(filter)) {
+                expressionList.or()
+                        .icontains("name", filter)
+                        .icontains("description", filter)
+                        .endOr();
+            }
 
             ObjectNode result = Json.newObject();
             List<EvaluationRule> list;
@@ -65,10 +64,14 @@ public class EvaluationRuleController extends BaseSecurityController {
             
             // 为每个 EvaluationRule 查询关联的 Badge 列表（一对多）
             for (EvaluationRule rule : list) {
-                List<Badge> badges = getBadgesByRule(rule, adminMember.getOrgId());
+                // badge_id 对应 EvaluationRule 的 id
+                List<Badge> badges = Badge.find.query().where()
+                        .eq("org_id", adminMember.getOrgId())
+                        .eq("badge_id", rule.id)
+                        .findList();
                 rule.badges = badges;
             }
-            
+
             // 构建返回结果，包含 Badge 列表
             com.fasterxml.jackson.databind.node.ArrayNode listNode = Json.newArray();
             for (EvaluationRule rule : list) {
@@ -80,7 +83,6 @@ public class EvaluationRuleController extends BaseSecurityController {
             result.put(CODE, CODE200);
             result.set("list", listNode);
             return ok(result);
-
         });
 
     }
@@ -109,7 +111,11 @@ public class EvaluationRuleController extends BaseSecurityController {
             if (evaluationRule.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             
             // 查询关联的 Badge 列表（一对多）
-            List<Badge> badges = getBadgesByRule(evaluationRule, adminMember.getOrgId());
+            // badge_id 对应 EvaluationRule 的 id
+            List<Badge> badges = Badge.find.query().where()
+                    .eq("org_id", adminMember.getOrgId())
+                    .eq("badge_id", (int) evaluationRule.id)
+                    .findList();
             evaluationRule.badges = badges;
             
             ObjectNode result = (ObjectNode) Json.toJson(evaluationRule);
@@ -213,31 +219,4 @@ public class EvaluationRuleController extends BaseSecurityController {
         });
     }
 
-    /**
-     * 根据 EvaluationRule 查询关联的 Badge 列表（一对多关系）
-     * @param rule EvaluationRule 对象
-     * @param orgId 机构ID
-     * @return Badge 列表
-     */
-    private List<Badge> getBadgesByRule(EvaluationRule rule, long orgId) {
-        if (ValidationUtil.isEmpty(rule.badgeType)) {
-            return java.util.Collections.emptyList();
-        }
-        
-        try {
-            // 假设 badgeType 是字符串形式的 badgeId，转换为 int
-            int badgeId = Integer.parseInt(rule.badgeType);
-            return Badge.find.query().where()
-                    .eq("org_id", orgId)
-                    .eq("badge_id", badgeId)
-                    .findList();
-        } catch (NumberFormatException e) {
-            // 如果 badgeType 不是数字，可能是类型名称，尝试按名称匹配
-            // 这里可以根据实际业务逻辑调整
-            return Badge.find.query().where()
-                    .eq("org_id", orgId)
-                    .icontains("badge_name", rule.badgeType)
-                    .findList();
-        }
-    }
 }
