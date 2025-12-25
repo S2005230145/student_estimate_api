@@ -88,7 +88,7 @@ public class AcademicRecord extends Model {
     public double calculatedScore;
 
     @Column(name = "badge_awarded")
-    @DbComment("授予徽章") // 星辰徽章/星火徽章
+    @DbComment("授予徽章") // 敏行徽章/力行徽章
     @JsonDeserialize(using = EscapeHtmlAuthoritySerializer.class)
     public String badgeAwarded;
 
@@ -103,6 +103,18 @@ public class AcademicRecord extends Model {
     @Column(name = "update_time")
     @DbComment("更新时间")
     public long updateTime;
+
+    @Transient
+    @DbComment("班级名称")
+    public String className;
+
+    @Transient
+    @DbComment("年级")
+    public int grade;
+
+    @Transient
+    @DbComment("班级")
+    public int classId;
 
     public static Finder<Long, AcademicRecord> find = new Finder<>(AcademicRecord.class);
 
@@ -194,9 +206,11 @@ public class AcademicRecord extends Model {
         // 3. 对每个班级的成绩按平均分降序排序并设置排名
         for (List<AcademicRecord> classRecords : classGroups.values()) {
             classRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
-            for (int i = 0; i < classRecords.size(); i++) {
-                classRecords.get(i).classRanking = i + 1;
-                classRecords.get(i).updateTime = System.currentTimeMillis();
+            int i = 0;
+            for(AcademicRecord academicRecord:classRecords){
+               academicRecord.setClassRanking(i+1);
+               academicRecord.setUpdateTime(System.currentTimeMillis());
+               i++;
             }
         }
     }
@@ -258,13 +272,20 @@ public class AcademicRecord extends Model {
         for (AcademicRecord importedRecord : academicRecords) {
             AcademicRecord existing = recordMap.get(importedRecord.studentId);
             if (existing != null) {
-                existing.averageScore = importedRecord.averageScore;
-                existing.chineseScore = importedRecord.chineseScore;
-                existing.mathScore = importedRecord.mathScore;
-                existing.englishScore = importedRecord.englishScore;
-                existing.orgId = orgId;
+                // 更新已有记录（从数据库查询出来的记录）
+                existing.setAverageScore(importedRecord.averageScore);
+                existing.setChineseScore(importedRecord.chineseScore);
+                existing.setMathScore(importedRecord.mathScore);
+                existing.setEnglishScore(importedRecord.englishScore);
+                existing.setOrgId(orgId);
+                existing.setUpdateTime(System.currentTimeMillis());
             } else {
+                // 新增记录或更新已有记录（importedRecord 可能已经有 id，如果 findOrCreateRecord 找到了）
                 importedRecord.orgId = orgId;
+                if (importedRecord.createTime <= 0) {
+                    importedRecord.createTime = System.currentTimeMillis();
+                }
+                importedRecord.updateTime = System.currentTimeMillis();
                 recordMap.put(importedRecord.studentId, importedRecord);
             }
         }
@@ -275,11 +296,11 @@ public class AcademicRecord extends Model {
         allGradeRecords.sort((a, b) -> Double.compare(b.averageScore, a.averageScore));
 
         // 5. 设置年级排名
-        for (int i = 0; i < allGradeRecords.size(); i++) {
-            System.out.println("i="+i);
-            allGradeRecords.get(i).setGradeRanking(i+1);
-            allGradeRecords.get(i).setUpdateTime(System.currentTimeMillis());
-            allGradeRecords.get(i).markAsDirty();
+        int i = 0;
+        for(AcademicRecord academicRecord: allGradeRecords){
+            academicRecord.setGradeRanking(i+1);
+            academicRecord.setUpdateTime(System.currentTimeMillis());
+            i++;
         }
 
         return allGradeRecords;
@@ -317,7 +338,6 @@ public class AcademicRecord extends Model {
             currentRecords.get(i).progressRanking = i + 1;
             currentRecords.get(i).updateTime = System.currentTimeMillis();
         }
-
         return currentRecords;
     }
 

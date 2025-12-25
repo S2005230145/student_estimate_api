@@ -7,8 +7,10 @@ import controllers.BaseSecurityController;
 import io.ebean.DB;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import io.ebean.Transaction;
 import io.ebean.annotation.Transactional;
 import models.business.AcademicRecord;
+import models.business.SchoolClass;
 import models.business.Student;
 import models.excel.AcademicRecordExcel;
 import org.apache.commons.io.FilenameUtils;
@@ -24,10 +26,15 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import static io.ebean.DB.beginTransaction;
 
 public class AcademicRecordController extends BaseSecurityController {
 
@@ -54,6 +61,7 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} examDate 考试时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
+     * @apiSuccess (Success 200) {String} className 班级名称
      */
     public CompletionStage<Result> listAcademicRecord(Http.Request request) {
         JsonNode jsonNode = request.body().asJson();
@@ -109,6 +117,55 @@ public class AcademicRecordController extends BaseSecurityController {
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }
+
+            // 批量查询学生和班级信息，填充 className
+            if (!list.isEmpty()) {
+                // 1. 获取所有学生ID
+                List<Long> studentIds = list.stream()
+                        .map(record -> record.studentId)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                // 2. 批量查询学生信息
+                Map<Long, Student> studentMap = Student.find.query()
+                        .where()
+                        .in("id", studentIds)
+                        .findList()
+                        .stream()
+                        .collect(Collectors.toMap(s -> s.id, s -> s));
+
+                // 3. 获取所有班级ID
+                List<Long> classIds = studentMap.values().stream()
+                        .map(student -> student.classId)
+                        .filter(classId -> classId > 0)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                // 4. 批量查询班级信息
+                Map<Long, SchoolClass> classMap = new HashMap<>();
+                if (!classIds.isEmpty()) {
+                    classMap = SchoolClass.find.query()
+                            .where()
+                            .in("id", classIds)
+                            .findList()
+                            .stream()
+                            .collect(Collectors.toMap(c -> c.id, c -> c));
+                }
+
+                // 5. 为每个记录设置 className
+                for (AcademicRecord record : list) {
+                    Student student = studentMap.get(record.studentId);
+                    if (student != null && student.classId > 0) {
+                        SchoolClass schoolClass = classMap.get(student.classId);
+                        if (schoolClass != null) {
+                            record.className = schoolClass.className;
+                            record.grade = schoolClass.grade;
+                            record.classId = schoolClass.classId;
+                        }
+                    }
+                }
+            }
+
             result.put(CODE, CODE200);
             result.set("list", Json.toJson(list));
             return ok(result);
@@ -319,10 +376,12 @@ public class AcademicRecordController extends BaseSecurityController {
                 List<AcademicRecord> list = AcademicRecordExcel.importFromExcel(inputStream);
 
                 // 使用显式事务处理数据库操作
-                try (io.ebean.Transaction txn = io.ebean.DB.beginTransaction()) {
+                try (Transaction txn = DB.beginTransaction()) {
                     try {
                         // 计算排名和徽章和学业分
                         List<AcademicRecord> academicRecords = AcademicRecord.batchCalcAllRankingsAndBadgesAndStudyScore(list,adminMember.orgId);
+                        
+                        // 使用 saveAll，现在所有记录都是"新"对象（即使是更新也使用了 importedRecord 对象），Ebean 能正确检测
                         DB.saveAll(academicRecords);
 
                         // 提交事务

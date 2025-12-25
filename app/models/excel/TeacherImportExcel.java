@@ -71,9 +71,9 @@ public class TeacherImportExcel {
         if (ValidationUtil.isEmpty(excel.getPhoneNumber())) {
             throw new RuntimeException("第" + rowNum + "行: 联系电话不能为空");
         }
-        if (!excel.getPhoneNumber().matches("^1[3-9]\\d{9}$")) {
-            throw new RuntimeException("第" + rowNum + "行: 联系电话格式不正确");
-        }
+//        if (!excel.getPhoneNumber().matches("^1[3-9]\\d{9}$")) {
+//            throw new RuntimeException("第" + rowNum + "行: 联系电话格式不正确");
+//        }
         if (ValidationUtil.isEmpty(excel.getTeachingDuties())) {
             throw new RuntimeException("第" + rowNum + "行: 教学职责不能为空");
         }

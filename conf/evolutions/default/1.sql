@@ -121,15 +121,6 @@ create table v1_badge_record (
   constraint pk_v1_badge_record primary key (id)
 ) comment='徽章授予记录';
 
-create table v1_badge_student_habit (
-  id                            bigint auto_increment not null comment '唯一标识',
-  org_id                        bigint not null comment '机构ID',
-  student_id                    bigint not null comment '学生ID',
-  badge_id                      bigint not null comment '徽章ID',
-  status                        integer not null comment '状态',
-  constraint pk_v1_badge_student_habit primary key (id)
-) comment='学生指标记录表';
-
 create table v1_class_config (
   id                            varchar(255) not null comment 'id',
   class_name                    varchar(255) comment '班级名称',
@@ -518,8 +509,6 @@ drop table if exists v1_admin_config;
 drop table if exists v1_badge;
 
 drop table if exists v1_badge_record;
-
-drop table if exists v1_badge_student_habit;
 
 drop table if exists v1_class_config;
 

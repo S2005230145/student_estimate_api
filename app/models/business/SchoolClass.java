@@ -9,6 +9,8 @@ import lombok.Data;
 import models.admin.ShopAdmin;
 import myannotation.EscapeHtmlAuthoritySerializer;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Data
@@ -117,7 +119,10 @@ public class SchoolClass  extends Model {
      */
     public double calculateTotalScore() {
         // 按照公式计算总分
-        double calculatedTotal = getAcademicScore()/getStudentNum()* ACADEMIC_WEIGHT + getSpecialtyScore()/getStudentNum() * SPECIALTY_WEIGHT +
+//        double calculatedTotal = getAcademicScore()/getStudentNum()* ACADEMIC_WEIGHT + getSpecialtyScore()/getStudentNum() * SPECIALTY_WEIGHT +
+//                getRoutineScore() * ROUTINE_WEIGHT + getHomeVisitScore() * HOME_VISIT_WEIGHT - getDeductionScore();
+
+        double calculatedTotal = getAcademicScore() + getSpecialtyScore()/getStudentNum() * SPECIALTY_WEIGHT +
                 getRoutineScore() * ROUTINE_WEIGHT + getHomeVisitScore() * HOME_VISIT_WEIGHT - getDeductionScore();
 
         this.setTotalScore(calculatedTotal);
@@ -143,32 +148,50 @@ public class SchoolClass  extends Model {
      * @return 计算后的学业总分
      */
     public double recalcAcademicTotalScore() {
-        List<Student> students = Student.find.query()
+//        List<Student> students = Student.find.query()
+//                .where()
+//                .eq("class_id", this.getId())
+//                .findList();
+//
+//        if (students == null || students.isEmpty()) {
+//            this.setAcademicScore(0);
+//            return 0;
+//        }
+//
+//        double totalAcademicScore = 0;
+//        int validCount = 0;
+//
+//        for (Student student : students) {
+//            if (student.getAcademicScore() >= 0) {
+//                totalAcademicScore += student.getAcademicScore();
+//                validCount++;
+//            }
+//        }
+//
+//        if (validCount == 0) {
+//            this.setAcademicScore(0);
+//            return 0;
+//        }
+//        this.setAcademicScore(totalAcademicScore);
+//        return this.getAcademicScore();
+
+        Student student = Student.find.query()
                 .where()
                 .eq("class_id", this.getId())
-                .findList();
+                .orderBy("academic_score desc")
+                .setMaxRows(1)
+                .findOne();
 
-        if (students == null || students.isEmpty()) {
+        if (student == null) {
             this.setAcademicScore(0);
             return 0;
         }
 
-        double totalAcademicScore = 0;
-        int validCount = 0;
-
-        for (Student student : students) {
-            if (student.getAcademicScore() >= 0) {
-                totalAcademicScore += student.getAcademicScore();
-                validCount++;
-            }
-        }
-
-        if (validCount == 0) {
-            this.setAcademicScore(0);
-            return 0;
-        }
-
-        this.setAcademicScore(totalAcademicScore);
+        // 使用 BigDecimal 进行精确计算
+        BigDecimal classAverageScore = BigDecimal.valueOf(student.getClassAverageScore());
+        BigDecimal weight = BigDecimal.valueOf(ACADEMIC_WEIGHT);
+        BigDecimal result = classAverageScore.multiply(weight).setScale(2, RoundingMode.HALF_UP);
+        this.setAcademicScore(result.doubleValue());
         return this.getAcademicScore();
     }
 

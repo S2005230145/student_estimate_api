@@ -152,7 +152,7 @@ public class ClassRoutineController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassRoutine classRoutine = Json.fromJson(jsonNode, ClassRoutine.class);
 
-            classRoutine.setOrgId(0);
+            classRoutine.setOrgId(admin.orgId);
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             classRoutine.setEvaluatorId(admin.getId());
             classRoutine.setEvaluatorName(admin.getRealName());

@@ -5,6 +5,7 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 import models.admin.ShopAdmin;
+import models.business.HabitRecord;
 import models.business.ParentStudentRelation;
 import models.business.SchoolClass;
 import models.business.Student;
@@ -273,6 +274,7 @@ public class StudentImportExcel {
             student.setClassHg(schoolClass.classId);
         }
         student.setOrgId(orgId);
+        student.setHabitScore(HabitRecord.BASE_SCORE);//设置初始分
         student.setCreateTime(System.currentTimeMillis());
         student.setUpdateTime(System.currentTimeMillis());
         student.save();
@@ -323,13 +325,13 @@ public class StudentImportExcel {
             return null;
         }
 
-        name = name.trim();
+        //name = name.trim();
         phone = phone.trim();
 
         // 验证手机号格式
-        if (!isValidPhone(phone)) {
-            throw new RuntimeException("家长身份： " + name + " 的手机号格式不正确: " + phone);
-        }
+//        if (!isValidPhone(phone)) {
+//            throw new RuntimeException("家长身份： " + name + " 的手机号格式不正确: " + phone);
+//        }
 
         // 查找现有家长（按手机号查找，确保唯一性）
         ShopAdmin parent = ShopAdmin.find.query()
@@ -341,7 +343,7 @@ public class StudentImportExcel {
 //            // 如果找到现有家长，更新姓名（如果姓名不同）
             if (!generateParentRealName(studentName, relationship).equals(parent.getRealName())) {
 
-                if(parent.getRules().contains("家长")){
+                if(parent.getRules().equals("家长")){
                     parent.setUserName(phone);
                     parent.setRealName(generateParentRealName(studentName, relationship));
                     parent.setOrgId(orgId);

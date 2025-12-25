@@ -293,7 +293,7 @@ public class StudentController extends BaseSecurityController {
             Http.MultipartFormData.FilePart<Files.TemporaryFile> filePart = body.getFile("file");
 
             // 获取班级ID参数
-            DynamicForm form = formFactory.form().bindFromRequest(request);
+            //DynamicForm form = formFactory.form().bindFromRequest(request);
             //long classId = Long.parseLong(form.get("classId"));
 
             if (filePart == null) {
@@ -410,12 +410,9 @@ public class StudentController extends BaseSecurityController {
                 if (parent == null) {
                     return okCustomJson(CODE40001, "家长账号创建失败");
                 }
-
                 // 创建家长学生关系
                 ParentStudentRelation.addRelation(parent.getId(), studentId, relationship,adminMember.orgId);
-
                 return okJSON200();
-
             } catch (Exception e) {
                 return okCustomJson(CODE40001, "创建家长关系失败：" + e.getMessage());
             }

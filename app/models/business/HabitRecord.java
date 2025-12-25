@@ -127,23 +127,26 @@ public class HabitRecord  extends Model {
             errors.add("习惯类型无效");
         }
 
-        // 验证分数变化范围
+        // 验证分数变化范围（加/扣分绝对值应在范围内）
         switch (evaluatorRole) {
             case "科任教师" -> {
-                if (this.scoreChange < TEACHER_SCORE_MIN || this.scoreChange > TEACHER_SCORE_MAX) {
-                    errors.add("科任教师评分范围应为" + TEACHER_SCORE_MIN + "~" + TEACHER_SCORE_MAX + "分");
+                double absScoreChange = Math.abs(this.scoreChange);
+                if (absScoreChange < TEACHER_SCORE_MIN || absScoreChange > TEACHER_SCORE_MAX) {
+                    errors.add("科任教师加/扣分范围应为" + TEACHER_SCORE_MIN + "~" + TEACHER_SCORE_MAX + "分");
                 }
                 this.evaluatorType = "teacher";
             }
             case "班主任" -> {
-                if (this.scoreChange < HEAD_TEACHER_SCORE_MIN || this.scoreChange > HEAD_TEACHER_SCORE_MAX) {
-                    errors.add("班主任评分范围应为" + HEAD_TEACHER_SCORE_MIN + "~" + HEAD_TEACHER_SCORE_MAX + "分");
+                double absScoreChange = Math.abs(this.scoreChange);
+                if (absScoreChange < HEAD_TEACHER_SCORE_MIN || absScoreChange > HEAD_TEACHER_SCORE_MAX) {
+                    errors.add("班主任加/扣分范围应为" + HEAD_TEACHER_SCORE_MIN + "~" + HEAD_TEACHER_SCORE_MAX + "分");
                 }
                 this.evaluatorType = "head_teacher";
             }
             case "家长" -> {
-                if (this.scoreChange < PARENT_SCORE_MIN || this.scoreChange > PARENT_SCORE_MAX) {
-                    errors.add("家长评分范围应为" + PARENT_SCORE_MIN + "~" + PARENT_SCORE_MAX + "分");
+                double absScoreChange = Math.abs(this.scoreChange);
+                if (absScoreChange < PARENT_SCORE_MIN || absScoreChange > PARENT_SCORE_MAX) {
+                    errors.add("家长加/扣分范围应为" + PARENT_SCORE_MIN + "~" + PARENT_SCORE_MAX + "分");
                 }
                 this.evaluatorType = "parent";
             }
@@ -201,18 +204,18 @@ public class HabitRecord  extends Model {
                 .eq("student_id", habitRecord.studentId)
                 .eq("month_end_time",habitRecord.monthEndTime)
                 .eq("status", STATUS_UNSETTLED)
-                .in("evaluator_type", "科任教师", "班主任")
+                .in("evaluator_type", "teacher", "header_teacher")
                 .findList();
 
         // 重新计算习惯积分
-        calculateStudentTotalPoints(habitRecord.studentId, records);
+        calculateStudentTotalPoints(habitRecord.studentId, habitRecord.habitType,records);
     }
 
 
     /**
      * 计算学生总习惯积分与总习惯分
      */
-    private static void calculateStudentTotalPoints(Long studentId, List<HabitRecord> records) {
+    private static void calculateStudentTotalPoints(Long studentId,int habitType, List<HabitRecord> records) {
         Student student = Student.find.byId(studentId);
         if (student == null) {
             return;
@@ -234,15 +237,27 @@ public class HabitRecord  extends Model {
 
         //统计records存在已经评价过相同的习惯类型，统计相同的个数
         //1.获取指标ids
-        List<Integer> badgeIds = Badge.find.query().where().eq("active",true).findIds();
-        //2.筛选出在badgeIds相同的类型，并统计个数，比如 ids=[1,2,3,4,5,6,7,8,9,10],records.habitType在这里面有重复的,去掉重复的，返回去重复的list
-        List<Integer> uniqueHabitTypes = records.stream()
-                .filter(r -> badgeIds.contains(r.habitType))
-                .map(HabitRecord::getHabitType)
-                .distinct()  // 去除重复的habitType
+        //List<Integer> badgeIds = Badge.find.query().where().eq("active",true).findIds();
+
+        List<HabitRecord> uniqueHabitTypes = new ArrayList<>();
+        //2.查询record记录中是否有相同的习惯类型记录
+        HabitRecord record = records.stream()
+                .filter(r -> r.habitType == habitType)
+                .findFirst()
+                .orElse(null);
+
+        //3.去重复的habitType,返回list
+        List<Integer> habitTypes = records.stream()
+                .map(r -> r.habitType)
+                .distinct()
                 .toList();
 
-        student.setHabitScore(uniqueHabitTypes.size());
+        if(record != null){
+            student.setHabitScore(HabitRecord.BASE_SCORE+habitTypes.size());
+        }else{
+            //3.
+            student.setHabitScore(student.getHabitScore()+1);
+        }
         SchoolClass.recalcSpecialtyTotalScoreById(student.classId);
         student.update();
     }
@@ -256,7 +271,7 @@ public class HabitRecord  extends Model {
 
         MonthlyRatingQuota quota = MonthlyRatingQuota.find.query()
                 .where()
-                .eq("teacher_id", evaluatorId)
+                .eq("evaluator_id", evaluatorId)
                 .eq("class_id", classId)
                 .findOne();
 
@@ -292,5 +307,59 @@ public class HabitRecord  extends Model {
                 .toInstant()
                 .toEpochMilli();;
     }
+
+    /**
+     * 计算月份截至时间
+     */
+    public void calculateEndMonthNew(){
+        // 验证 createTime 是否有效
+        if (this.createTime <= 0) {
+            throw new IllegalArgumentException("createTime 不能为 0 或负数");
+        }
+
+        // MySQL DATETIME 范围: 1000-01-01 到 9999-12-31
+        // 对应的时间戳范围
+        long minValidTime = LocalDate.of(1000, 1, 1).atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long maxValidTime = LocalDate.of(9999, 12, 31).atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        if (this.createTime < minValidTime || this.createTime > maxValidTime) {
+            throw new IllegalArgumentException("createTime 超出 MySQL 日期范围 (1000-9999年): " +
+                    Instant.ofEpochMilli(this.createTime)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate());
+        }
+
+        try {
+            LocalDate date = Instant.ofEpochMilli(this.createTime)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+
+            YearMonth yearMonth = YearMonth.from(date);
+            LocalDate lastDay = yearMonth.atEndOfMonth();
+
+            // 计算月末时间戳
+            long endOfMonthTime = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+
+            // 验证计算结果是否在有效范围内
+            if (endOfMonthTime < minValidTime || endOfMonthTime > maxValidTime) {
+                throw new IllegalArgumentException("计算出的 monthEndTime 超出 MySQL 日期范围: " +
+                        Instant.ofEpochMilli(endOfMonthTime)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate());
+            }
+
+            this.monthEndTime = endOfMonthTime;
+        } catch (Exception e) {
+            throw new RuntimeException("计算 monthEndTime 时出错 - createTime: " + this.createTime +
+                    ", 错误: " + e.getMessage(), e);
+        }
+    }
+
+
 
 }

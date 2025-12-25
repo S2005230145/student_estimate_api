@@ -195,7 +195,7 @@ public class UrbanManagementTiming {
                 snapshots.add(snapshot);
 
                 // 重置学生的specialtyScore为0
-                student.setHabitScore(0.0);
+                student.setHabitScore(HabitRecord.BASE_SCORE);
             }
 
             // 保存所有快照记录

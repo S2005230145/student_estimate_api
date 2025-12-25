@@ -36,7 +36,7 @@ public class BadgeController extends BaseSecurityController {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ExpressionList<Badge> expressionList = Badge.find.query().where().eq("org_id", adminMember.getOrgId());
-            
+            if (active > 0) expressionList.eq("active", active);
             if (!ValidationUtil.isEmpty(filter)) {
                 expressionList.or()
                         .icontains("badge_name", filter)

@@ -157,7 +157,8 @@ public class HabitRecordController extends BaseSecurityController {
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             habitRecord.setEvaluatorId(admin.id);
             habitRecord.setCreateTime(currentTimeBySecond);
-            habitRecord.calculateEndMonth();
+            habitRecord.setStatus(HabitRecord.STATUS_UNSETTLED);
+            habitRecord.calculateEndMonthNew();
             habitRecord.save();
             HabitRecord.recalculateStudentHabitScore(habitRecord);
             return okJSON200();
