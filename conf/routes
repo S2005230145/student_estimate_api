@@ -7,6 +7,7 @@ POST        /v2/p/upload/                                     controllers.basic.
 POST        /v2/p/upload2/                                    controllers.basic.UploaderManager.upload2(request: Request)
 POST        /v2/p/upload_base64/                              controllers.basic.UploaderManager.uploadBase64(request: Request)
 +nocsrf
+#文件上传(通用)
 POST        /v2/p/file/upload_image/                           controllers.basic.FileController.uploadImage(request: Request)
 #ADMIN MODULE
 
@@ -78,21 +79,6 @@ GET        /v2/p/member_menu/                                 controllers.basic.
 
 GET        /v2/p/operation_logs/                              controllers.basic.SystemManager.listOperationLog(request: Request,page:Int?=1,adminName:String?="",adminId:Long?=0 )
 
-POST        /v2/p/academic_record/new/                        controllers.business.AcademicRecordController.addAcademicRecord(request: Request)
-GET        /v2/p/academic_record/:id/                         controllers.business.AcademicRecordController.getAcademicRecord(request: Request,id:Long)
-POST        /v2/p/academic_record/:id/                        controllers.business.AcademicRecordController.updateAcademicRecord(request: Request,id:Long)
-POST        /v2/p/academic_record/                            controllers.business.AcademicRecordController.deleteAcademicRecord(request: Request)
-POST        /v2/p/academic_record_list/                       controllers.business.AcademicRecordController.listAcademicRecord(request: Request)
-POST        /v2/p/academic_record_excel/                      controllers.business.AcademicRecordController.academicRecordImport(request: Request)
-GET        /v2/p/academic_record_excel_template/              controllers.business.AcademicRecordController.exportAcTemplate(request: Request)
-
-
-POST        /v2/p/badge_record/new/                           controllers.business.BadgeRecordController.addBadgeRecord(request: Request)
-GET        /v2/p/badge_record/:id/                            controllers.business.BadgeRecordController.getBadgeRecord(request: Request,id:Long)
-POST        /v2/p/badge_record/:id/                           controllers.business.BadgeRecordController.updateBadgeRecord(request: Request,id:Long)
-POST        /v2/p/badge_record/                               controllers.business.BadgeRecordController.deleteBadgeRecord(request: Request)
-GET        /v2/p/badge_record_list/                           controllers.business.BadgeRecordController.listBadgeRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-
 POST        /v2/p/class_routine/new/                          controllers.business.ClassRoutineController.addClassRoutine(request: Request)
 GET        /v2/p/class_routine/:id/                           controllers.business.ClassRoutineController.getClassRoutine(request: Request,id:Long)
 POST        /v2/p/class_routine/:id/                          controllers.business.ClassRoutineController.updateClassRoutine(request: Request,id:Long)
@@ -105,74 +91,104 @@ POST        /v2/p/evaluation_rule/:id/                        controllers.busine
 POST        /v2/p/evaluation_rule/                            controllers.business.EvaluationRuleController.deleteEvaluationRule(request: Request)
 GET        /v2/p/evaluation_rule_list/                        controllers.business.EvaluationRuleController.listEvaluationRule(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
-POST        /v2/p/habit_record/new/                           controllers.business.HabitRecordController.addHabitRecord(request: Request)
-GET        /v2/p/habit_record/:id/                            controllers.business.HabitRecordController.getHabitRecord(request: Request,id:Long)
-POST        /v2/p/habit_record/:id/                           controllers.business.HabitRecordController.updateHabitRecord(request: Request,id:Long)
-POST        /v2/p/habit_record/                               controllers.business.HabitRecordController.deleteHabitRecord(request: Request)
-GET        /v2/p/habit_record_list/                           controllers.business.HabitRecordController.listHabitRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+#学生模块
+POST        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request)
+GET        /v2/p/student/:id/                                 controllers.business.StudentController.getStudent(request: Request,id:Long)
+POST        /v2/p/student/new/                                controllers.business.StudentController.addStudent(request: Request)
+POST        /v2/p/student/:id/                                controllers.business.StudentController.updateStudent(request: Request,id:Long)
+POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
+#学生-班级导入
+POST        /v2/p/student_excel/                              controllers.business.StudentController.studentImport(request: Request,classId:Long)
+GET        /v2/p/student_excel_template/                      controllers.business.StudentController.exportStudentTemplate(request: Request)
+#学生-家长
+POST        /v2/p/student_parent/                             controllers.business.StudentController.createStudentParent(request: play.mvc.Http.Request)
+GET        /v2/p/student/:id/parents/                         controllers.business.StudentController.getStudentParents(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/student_parent/:id/                         controllers.business.StudentController.deleteStudentParent(request: play.mvc.Http.Request, id: Long)
+POST        /v2/p/student_batch_assign/                       controllers.business.StudentController.batchAssignStudents(request: play.mvc.Http.Request)
+GET   /v2/p/student_list_class_currentUser/                   controllers.business.StudentController.listStudentClassCurrentUser(request:Request,classId:Long)
+#学生-全校导入
+POST     /v2/p/student_excel_school/                          controllers.business.StudentController.studentImportSchool(request: Request)
 
-POST        /v2/p/home_visit/new/                             controllers.business.HomeVisitController.addHomeVisit(request: Request)
-GET        /v2/p/home_visit/:id/                              controllers.business.HomeVisitController.getHomeVisit(request: Request,id:Long)
-POST        /v2/p/home_visit/:id/                             controllers.business.HomeVisitController.updateHomeVisit(request: Request,id:Long)
-POST        /v2/p/home_visit/                                 controllers.business.HomeVisitController.deleteHomeVisit(request: Request)
-GET        /v2/p/home_visit_list/                             controllers.business.HomeVisitController.listHomeVisit(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-POST       /v2/p/home_visit/:id/review/                       controllers.business.HomeVisitController.reviewHomeVisit(request: Request,id:Long)
+#学生-家长模块
+GET        /v2/p/parent_student_relation_list/                controllers.business.ParentStudentRelationController.listParentStudentRelation(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/parent_student_relation/new/                controllers.business.ParentStudentRelationController.addParentStudentRelation(request: Request)
+GET        /v2/p/parent_student_relation/:id/                 controllers.business.ParentStudentRelationController.getParentStudentRelation(request: Request,id:Long)
+POST        /v2/p/parent_student_relation/:id/                controllers.business.ParentStudentRelationController.updateParentStudentRelation(request: Request,id:Long)
+POST        /v2/p/parent_student_relation/                    controllers.business.ParentStudentRelationController.deleteParentStudentRelation(request: Request)
+POST       /v2/p/parent_student/                              controllers.business.ParentStudentRelationController.parentStudentList(request:Request)
+POST       /v2/p/parent_student/habit_record/                 controllers.business.ParentStudentRelationController.parentStudentHabitList(request:Request)
+POST      /v2/p/parent_student/award_record/                  controllers.business.ParentStudentRelationController.parentStudentAwardList(request:Request)
 
-POST        /v2/p/school_class/new/                           controllers.business.SchoolClassController.addSchoolClass(request: Request)
+#班级模块
+GET        /v2/p/school_class_list/                           controllers.business.SchoolClassController.listSchoolClass(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 GET        /v2/p/school_class/:id/                            controllers.business.SchoolClassController.getSchoolClass(request: Request,id:Long)
+POST        /v2/p/school_class/new/                           controllers.business.SchoolClassController.addSchoolClass(request: Request)
 POST        /v2/p/school_class/:id/                           controllers.business.SchoolClassController.updateSchoolClass(request: Request,id:Long)
 POST        /v2/p/school_class/                               controllers.business.SchoolClassController.deleteSchoolClass(request: Request)
-GET        /v2/p/school_class_list/                           controllers.business.SchoolClassController.listSchoolClass(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-
 POST        /v2/p/school_class/:id/set_head_teacher/          controllers.business.SchoolClassController.setHeadTeacher(request: play.mvc.Http.Request, id: Long)
 POST        /v2/p/school_class/:id/add_teacher/               controllers.business.SchoolClassController.addClassTeacher(request: play.mvc.Http.Request, id: Long)
 POST        /v2/p/school_class/:id/remove_teacher/            controllers.business.SchoolClassController.removeClassTeacher(request: play.mvc.Http.Request, id: Long)
 GET        /v2/p/school_class/:id/teachers/                   controllers.business.SchoolClassController.getClassTeachers(request: play.mvc.Http.Request, id: Long)
 GET        /v2/p/school_class/:id/head_teacher/               controllers.business.SchoolClassController.getHeadTeacher(request: play.mvc.Http.Request, id: Long)
 
-POST        /v2/p/specialty_award/new/                        controllers.business.SpecialtyAwardController.addSpecialtyAward(request: Request)
-GET        /v2/p/specialty_award/:id/                         controllers.business.SpecialtyAwardController.getSpecialtyAward(request: Request,id:Long)
-POST        /v2/p/specialty_award/:id/                        controllers.business.SpecialtyAwardController.updateSpecialtyAward(request: Request,id:Long)
-POST        /v2/p/specialty_award/                            controllers.business.SpecialtyAwardController.deleteSpecialtyAward(request: Request)
-GET        /v2/p/specialty_award_list/                        controllers.business.SpecialtyAwardController.listSpecialtyAward(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-POST        /v2/p/specialty_award_judge/                      controllers.business.SpecialtyAwardController.judgeSpecialtyAward(request: Request)
-
-POST        /v2/p/student/new/                                controllers.business.StudentController.addStudent(request: Request)
-GET        /v2/p/student/:id/                                 controllers.business.StudentController.getStudent(request: Request,id:Long)
-POST        /v2/p/student/:id/                                controllers.business.StudentController.updateStudent(request: Request,id:Long)
-POST        /v2/p/student/                                    controllers.business.StudentController.deleteStudent(request: Request)
-POST        /v2/p/student_list/                                controllers.business.StudentController.listStudent(request: Request)
-
-POST        /v2/p/student_parent/                             controllers.business.StudentController.createStudentParent(request: play.mvc.Http.Request)
-GET        /v2/p/student/:id/parents/                         controllers.business.StudentController.getStudentParents(request: play.mvc.Http.Request, id: Long)
-POST        /v2/p/student_parent/:id/                         controllers.business.StudentController.deleteStudentParent(request: play.mvc.Http.Request, id: Long)
-POST        /v2/p/student_batch_assign/                       controllers.business.StudentController.batchAssignStudents(request: play.mvc.Http.Request)
-
-POST        /v2/p/parent_student_relation/new/                controllers.business.ParentStudentRelationController.addParentStudentRelation(request: Request)
-GET        /v2/p/parent_student_relation/:id/                 controllers.business.ParentStudentRelationController.getParentStudentRelation(request: Request,id:Long)
-POST        /v2/p/parent_student_relation/:id/                controllers.business.ParentStudentRelationController.updateParentStudentRelation(request: Request,id:Long)
-POST        /v2/p/parent_student_relation/                    controllers.business.ParentStudentRelationController.deleteParentStudentRelation(request: Request)
-GET        /v2/p/parent_student_relation_list/                controllers.business.ParentStudentRelationController.listParentStudentRelation(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-
+#班级-教师模块
+GET      /v2/p/header_teacher_class/                          controllers.business.ClassTeacherRelationController.headerTeacherClass(request: Request)
+GET     /v2/p/teacher_class/                                  controllers.business.ClassTeacherRelationController.teacherClass(request:Request)
 POST        /v2/p/class_teacher_relation/new/                 controllers.business.ClassTeacherRelationController.addClassTeacherRelation(request: Request)
 GET        /v2/p/class_teacher_relation/:id/                  controllers.business.ClassTeacherRelationController.getClassTeacherRelation(request: Request,id:Long)
 POST        /v2/p/class_teacher_relation/:id/                 controllers.business.ClassTeacherRelationController.updateClassTeacherRelation(request: Request,id:Long)
 POST        /v2/p/class_teacher_relation/                     controllers.business.ClassTeacherRelationController.deleteClassTeacherRelation(request: Request)
 POST        /v2/p/class_teacher_relation_list/                controllers.business.ClassTeacherRelationController.listClassTeacherRelation(request: Request)
-POST        /v2/p/class_teacher_relation_list/new/             controllers.business.ClassTeacherRelationController.listClassTeacherRelationNew(request: Request)
+POST        /v2/p/class_teacher_relation_list/new/            controllers.business.ClassTeacherRelationController.listClassTeacherRelationNew(request: Request)
 
-POST        /v2/p/student_excel/                              controllers.business.StudentController.studentImport(request: Request,classId:Long)
-GET        /v2/p/student_excel_template/                      controllers.business.StudentController.exportStudentTemplate(request: Request)
+#教师模块
+POST      /v2/p/teacher_import/                               controllers.basic.ShopAdminController.importTeachers(request: Request)
 
-GET        /v2/p/head_teacher/                                controllers.basic.GroupUserController.listHeadTeachers(request: Request)
+#学业模块
+POST        /v2/p/academic_record_list/                       controllers.business.AcademicRecordController.listAcademicRecord(request: Request)
+GET        /v2/p/academic_record/:id/                         controllers.business.AcademicRecordController.getAcademicRecord(request: Request,id:Long)
+POST        /v2/p/academic_record/new/                        controllers.business.AcademicRecordController.addAcademicRecord(request: Request)
+POST        /v2/p/academic_record/:id/                        controllers.business.AcademicRecordController.updateAcademicRecord(request: Request,id:Long)
+POST        /v2/p/academic_record/                            controllers.business.AcademicRecordController.deleteAcademicRecord(request: Request)
+POST        /v2/p/academic_record_excel/                      controllers.business.AcademicRecordController.academicRecordImport(request: Request)
+GET        /v2/p/academic_record_excel_template/              controllers.business.AcademicRecordController.exportAcTemplate(request: Request)
+
+#特长获奖
+GET        /v2/p/specialty_award_list/                        controllers.business.SpecialtyAwardController.listSpecialtyAward(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/specialty_award/new/                        controllers.business.SpecialtyAwardController.addSpecialtyAward(request: Request)
+GET        /v2/p/specialty_award/:id/                         controllers.business.SpecialtyAwardController.getSpecialtyAward(request: Request,id:Long)
+POST        /v2/p/specialty_award/:id/                        controllers.business.SpecialtyAwardController.updateSpecialtyAward(request: Request,id:Long)
+POST        /v2/p/specialty_award/                            controllers.business.SpecialtyAwardController.deleteSpecialtyAward(request: Request)
+POST        /v2/p/specialty_award_judge/                      controllers.business.SpecialtyAwardController.judgeSpecialtyAward(request: Request)
+
+#徽章授予记录
+GET        /v2/p/badge_record_list/                           controllers.business.BadgeRecordController.listBadgeRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/badge_record/new/                           controllers.business.BadgeRecordController.addBadgeRecord(request: Request)
+GET        /v2/p/badge_record/:id/                            controllers.business.BadgeRecordController.getBadgeRecord(request: Request,id:Long)
+POST        /v2/p/badge_record/:id/                           controllers.business.BadgeRecordController.updateBadgeRecord(request: Request,id:Long)
+POST        /v2/p/badge_record/                               controllers.business.BadgeRecordController.deleteBadgeRecord(request: Request)
+
+#家访工作记录
+GET        /v2/p/home_visit_list/                             controllers.business.HomeVisitController.listHomeVisit(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+POST        /v2/p/home_visit/new/                             controllers.business.HomeVisitController.addHomeVisit(request: Request)
+GET        /v2/p/home_visit/:id/                              controllers.business.HomeVisitController.getHomeVisit(request: Request,id:Long)
+POST        /v2/p/home_visit/:id/                             controllers.business.HomeVisitController.updateHomeVisit(request: Request,id:Long)
+POST        /v2/p/home_visit/                                 controllers.business.HomeVisitController.deleteHomeVisit(request: Request)
+POST       /v2/p/home_visit/:id/review/                       controllers.business.HomeVisitController.reviewHomeVisit(request: Request,id:Long)
+
+#习惯评价-生活素养
+GET        /v2/p/habit_record_list/                           controllers.business.HabitRecordController.listHabitRecord(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
+GET        /v2/p/habit_record/:id/                            controllers.business.HabitRecordController.getHabitRecord(request: Request,id:Long)
+POST        /v2/p/habit_record/new/                           controllers.business.HabitRecordController.addHabitRecord(request: Request)
+POST        /v2/p/habit_record/:id/                           controllers.business.HabitRecordController.updateHabitRecord(request: Request,id:Long)
+POST        /v2/p/habit_record/                               controllers.business.HabitRecordController.deleteHabitRecord(request: Request)
+
 GET       /v2/p/habit_record_list_currentUser/                controllers.business.HabitRecordController.listHabitRecordCurrentUser(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 GET        /v2/p/teacher_members/                             controllers.basic.ShopAdminController.listTeacherMembers(request: Request)
-POST      /v2/p/teacher_import/                               controllers.basic.ShopAdminController.importTeachers(request: Request)
 GET       /v2/p/class_config/                                 controllers.business.ClassConfigController.listClassConfig(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 
-GET      /v2/p/header_teacher_class/                          controllers.business.ClassTeacherRelationController.headerTeacherClass(request: Request)
+
 GET      /v2/p/habit_record_list_new/                         controllers.business.HabitRecordController.listHabitRecordNew(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-POST     /v2/p/student_excel_school/                          controllers.business.StudentController.studentImportSchool(request: Request)
 
 #前台登录接口
 POST     /V2/p/front/login/noauth/                            controllers.basic.LoginController.loginFront(request:Request)
@@ -183,11 +199,5 @@ GET     /v2/p/badge/:id/                                      controllers.busine
 POST    /v2/p/badge/new/                                      controllers.business.BadgeController.addBadge(request: Request)
 POST    /v2/p/badge/:id/                                      controllers.business.BadgeController.updateBadge(request: Request,id:Long)
 POST    /v2/p/badge/                                          controllers.business.BadgeController.deleteBadge(request:Request)
-
-GET     /v2/p/teacher_class/                                  controllers.business.ClassTeacherRelationController.teacherClass(request:Request)
-GET   /v2/p/student_list_class_currentUser/                   controllers.business.StudentController.listStudentClassCurrentUser(request:Request,classId:Long)
-
-#app的新增习惯评价（德，智，体，美，劳）
-POST   /v2/p/habit_record/app/new/                            controllers.business.HabitRecordController.addHabitRecordApp(request:Request)
 
 GET        /*file                                             controllers.Assets.versioned(path="/public", file: Asset)

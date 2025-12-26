@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 public class StudentController extends BaseSecurityController {
     @Inject
@@ -41,11 +42,16 @@ public class StudentController extends BaseSecurityController {
     @Inject
     EncodeUtils encodeUtils;
     /**
-     * @api {POST} /v2/p/student_list/   01列表-学生
+     * @api {POST} /v2/p/student_list/   01列表-学生（系统会根据登录的对应账号返回对应的学生列表）前后台
      * @apiName listStudent
-     * @apiGroup STUDENT-CONTROLLER
-     * @apiParam {int} page 页码
+     * @apiGroup 学生模块
+     * @apiParam {int} page 页码  //0-全查  1-分页
      * @apiParam {String} studentName 学生姓名
+     * @apiParamExample  {json} 请求示例:
+     * {
+     *     "page":1,
+     *     "studentName":"张三"
+     * }
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {String} studentNumber 学号
@@ -61,6 +67,64 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200) {String} badges 获得徽章
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
+     * @apiSuccessExample {json} 响应示例:
+     * {
+     *     "pages": 108,
+     *     "hasNest": true,
+     *     "code": 200,
+     *     "list": [
+     *         {
+     *             "orgId": 1,
+     *             "id": 2174,
+     *             "studentNumber": "20200754",
+     *             "name": "严欣瑶",
+     *             "classId": 47,
+     *             "grade": 6,
+     *             "classHg": 7,
+     *             "evaluationScheme": 0,
+     *             "classAverageScore": 0.0,
+     *             "academicScore": 0.0,
+     *             "specialtyScore": 0.0,
+     *             "habitScore": 15.0,
+     *             "points": 0.0,
+     *             "totalScore": 0.0,
+     *             "badges": null,
+     *             "rewardRankGrade": 0,
+     *             "rewardRankSchool": 0,
+     *             "createTime": 1766649180731,
+     *             "updateTime": 1766649180731,
+     *             "className": "六年级七班",
+     *             "overAverage": false,
+     *             "highGrade": true,
+     *             "pass": false
+     *         },
+     *         {
+     *             "orgId": 1,
+     *             "id": 2173,
+     *             "studentNumber": "20200753",
+     *             "name": "庄芯媛",
+     *             "classId": 47,
+     *             "grade": 6,
+     *             "classHg": 7,
+     *             "evaluationScheme": 0,
+     *             "classAverageScore": 0.0,
+     *             "academicScore": 0.0,
+     *             "specialtyScore": 0.0,
+     *             "habitScore": 15.0,
+     *             "points": 0.0,
+     *             "totalScore": 0.0,
+     *             "badges": null,
+     *             "rewardRankGrade": 0,
+     *             "rewardRankSchool": 0,
+     *             "createTime": 1766649180707,
+     *             "updateTime": 1766649180707,
+     *             "className": "六年级七班",
+     *             "overAverage": false,
+     *             "highGrade": true,
+     *             "pass": false
+     *         },
+     *        ]
+     * }
      */
     public CompletionStage<Result> listStudent(Http.Request request) {
         JsonNode jsonNode = request.body().asJson();
@@ -121,9 +185,9 @@ public class StudentController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/student/:id/  02详情-Student学生
+     * @api {GET} /v2/p/student/:id/  02详情-Student学生（前后台）
      * @apiName getStudent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -141,6 +205,8 @@ public class StudentController extends BaseSecurityController {
      * @apiSuccess (Success 200) {String} badges 获得徽章
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
+     * }
+     *
      */
     public CompletionStage<Result> getStudent(Http.Request request, long id) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
@@ -153,14 +219,13 @@ public class StudentController extends BaseSecurityController {
             result.put(CODE, CODE200);
             return ok(result);
         });
-
     }
 
     /**
-     * @api {POST} /v2/p/student/new/   01添加-Student学生
+     * @api {POST} /v2/p/student/new/   03添加-Student学生
      * @apiName addStudent
      * @apiDescription 描述
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} studentNumber 学号
@@ -198,7 +263,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student/:id/  04更新-Student学生
      * @apiName updateStudent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} studentNumber 学号
@@ -259,7 +324,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student/   05删除-学生
      * @apiName deleteStudent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -282,7 +347,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student_excel/   06导入学生文件(按班的)
      * @apiName studentImport
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {file} file 学生文件
      * @apiParam {long} classId 班级ID
      * @apiSuccess (Success 200){int} 200 成功
@@ -345,7 +410,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/student_excel_template/ 07导出学生导入模板
      * @apiName exportStudentTemplate
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiSuccess (Success 200){file} Excel文件 导入模板文件
      */
     public CompletionStage<Result> exportStudentTemplate(Http.Request request) {
@@ -371,7 +436,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student_parent/   08创建学生家长关系
      * @apiName createStudentParent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} studentId 学生ID
      * @apiParam {String} parentName 家长姓名
      * @apiParam {String} parentPhone 家长手机号
@@ -422,7 +487,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/student/:id/parents/   09获取学生家长列表
      * @apiName getStudentParents
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} id 学生ID
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {Array} parents 家长列表
@@ -467,7 +532,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student_parent/:id/   10删除学生家长关系
      * @apiName deleteStudentParent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {long} id 家长关系ID
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -496,7 +561,7 @@ public class StudentController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/student_batch_assign/   11批量分配学生到班级
      * @apiName batchAssignStudents
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiGroup 学生模块
      * @apiParam {Array} studentIds 学生ID数组
      * @apiParam {long} classId 目标班级ID
      * @apiSuccess (Success 200){int} 200 成功
@@ -545,8 +610,8 @@ public class StudentController extends BaseSecurityController {
 
     /**
      * @api {GET} /v2/p/student_list_class_currentUser/   12列表-当前用户的所在班级的学生列表
-     * @apiName listStudent
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiName listStudentCurrentUser
+     * @apiGroup 学生模块
      * @apiParam {long} classId 班级ID
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -579,8 +644,8 @@ public class StudentController extends BaseSecurityController {
 
     /**
      * @api {POST} /v2/p/student_excel_school/   13导入学生文件(全校)
-     * @apiName studentImport
-     * @apiGroup STUDENT-CONTROLLER
+     * @apiName studentImportSchool
+     * @apiGroup 学生模块
      * @apiParam {file} file 学生文件
      * @apiSuccess (Success 200){int} 200 成功
      */

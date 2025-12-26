@@ -1,5 +1,6 @@
 package models.business;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.DB;
 import io.ebean.Finder;
@@ -125,6 +126,9 @@ public class Student extends Model {
     @DbComment("更新时间")
     @WhenModified
     public long updateTime;
+
+    @Transient
+    public String className;
 
     public static Finder<Long, Student> find = new Finder<>(Student.class);
 

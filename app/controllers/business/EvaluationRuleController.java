@@ -22,7 +22,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/evaluation_rule_list/   01列表-评价规则配置
      * @apiName listEvaluationRule
-     * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiGroup 评价规则配置模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiParam {String} name 指标名称
@@ -35,6 +35,479 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @apiSuccess (Success 200) {String} description 描述
      * @apiSuccess (Success 200) {boolean} active 是否启用
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccessExample {json} 响应示例:
+     * {
+     *     "pages": 1,
+     *     "hasNest": false,
+     *     "code": 200,
+     *     "list": [
+     *         {
+     *             "orgId": 1,
+     *             "id": 5,
+     *             "name": "生活素养",
+     *             "scoreBasic": 3.0,
+     *             "scoreMax": 7.0,
+     *             "badgeType": "劳",
+     *             "description": "",
+     *             "active": true,
+     *             "createTime": 1766463839123,
+     *             "badges": [
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 35,
+     *                     "badgeId": 5,
+     *                     "badgeName": "自理能力",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465112834
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 36,
+     *                     "badgeId": 5,
+     *                     "badgeName": "物品归位",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465120764
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 37,
+     *                     "badgeId": 5,
+     *                     "badgeName": "家务分担",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465128379
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 38,
+     *                     "badgeId": 5,
+     *                     "badgeName": "值日负责",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465138269
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 39,
+     *                     "badgeId": 5,
+     *                     "badgeName": "生命教育",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465147973
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 40,
+     *                     "badgeId": 5,
+     *                     "badgeName": "合作意识",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465156953
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "orgId": 1,
+     *             "id": 4,
+     *             "name": "生活素养",
+     *             "scoreBasic": 3.0,
+     *             "scoreMax": 7.0,
+     *             "badgeType": "美",
+     *             "description": "",
+     *             "active": true,
+     *             "createTime": 1766463812306,
+     *             "badges": [
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 32,
+     *                     "badgeId": 4,
+     *                     "badgeName": "经典诵读",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465068581
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 33,
+     *                     "badgeId": 4,
+     *                     "badgeName": "艺术培养",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465082651
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 34,
+     *                     "badgeId": 4,
+     *                     "badgeName": "舞台展示",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465089492
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "orgId": 1,
+     *             "id": 3,
+     *             "name": "生活素养",
+     *             "scoreBasic": 3.0,
+     *             "scoreMax": 7.0,
+     *             "badgeType": "体",
+     *             "description": "",
+     *             "active": true,
+     *             "createTime": 1766463785608,
+     *             "badges": [
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 26,
+     *                     "badgeId": 3,
+     *                     "badgeName": "规律作息",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465002690
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 27,
+     *                     "badgeId": 3,
+     *                     "badgeName": "用眼卫生",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465016336
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 28,
+     *                     "badgeId": 3,
+     *                     "badgeName": "个人卫生",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465026984
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 29,
+     *                     "badgeId": 3,
+     *                     "badgeName": "日常锻炼",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465033092
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 30,
+     *                     "badgeId": 3,
+     *                     "badgeName": "饮食健康",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465041255
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 31,
+     *                     "badgeId": 3,
+     *                     "badgeName": "运动安全",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766465050019
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "orgId": 1,
+     *             "id": 2,
+     *             "name": "生活素养",
+     *             "scoreBasic": 3.0,
+     *             "scoreMax": 9.0,
+     *             "badgeType": "智",
+     *             "description": "",
+     *             "active": true,
+     *             "createTime": 1766463764929,
+     *             "badges": [
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 15,
+     *                     "badgeId": 2,
+     *                     "badgeName": "课堂专注",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464810944
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 16,
+     *                     "badgeId": 2,
+     *                     "badgeName": "规范书写",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464818350
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 17,
+     *                     "badgeId": 2,
+     *                     "badgeName": "积极发言",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464828244
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 18,
+     *                     "badgeId": 2,
+     *                     "badgeName": "作业规范",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464836113
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 19,
+     *                     "badgeId": 2,
+     *                     "badgeName": "电子管理",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464865563
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 20,
+     *                     "badgeId": 2,
+     *                     "badgeName": "每日阅读",
+     *                     "badgeImage": null,
+     *                     "description": "坚持每天自主读20-30分钟课外书，读完能把内容讲出来；高年级学生可以尝试写读后感，制作思维导图等。（校长作业）",
+     *                     "active": true,
+     *                     "createTime": 1766464899469
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 21,
+     *                     "badgeId": 2,
+     *                     "badgeName": "物品整理",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464922457
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 22,
+     *                     "badgeId": 2,
+     *                     "badgeName": "时间管理",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464958219
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 23,
+     *                     "badgeId": 2,
+     *                     "badgeName": "问题解决",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464969957
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 24,
+     *                     "badgeId": 2,
+     *                     "badgeName": "复习习惯",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464976107
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 25,
+     *                     "badgeId": 2,
+     *                     "badgeName": "考试规划",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464982989
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "orgId": 1,
+     *             "id": 1,
+     *             "name": "生活素养",
+     *             "scoreBasic": 3.0,
+     *             "scoreMax": 12.0,
+     *             "badgeType": "德",
+     *             "description": "",
+     *             "active": true,
+     *             "createTime": 1766461919467,
+     *             "badges": [
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 1,
+     *                     "badgeId": 1,
+     *                     "badgeName": "升旗礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464656430
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 2,
+     *                     "badgeId": 1,
+     *                     "badgeName": "见面礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464664323
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 3,
+     *                     "badgeId": 1,
+     *                     "badgeName": "交往礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464673365
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 4,
+     *                     "badgeId": 1,
+     *                     "badgeName": "交谈礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464681526
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 5,
+     *                     "badgeId": 1,
+     *                     "badgeName": "倾听礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464697282
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 6,
+     *                     "badgeId": 1,
+     *                     "badgeName": "会客礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464703948
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 7,
+     *                     "badgeId": 1,
+     *                     "badgeName": "访客礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464712176
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 8,
+     *                     "badgeId": 1,
+     *                     "badgeName": "外出礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464718170
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 9,
+     *                     "badgeId": 1,
+     *                     "badgeName": "行走礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464729539
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 10,
+     *                     "badgeId": 1,
+     *                     "badgeName": "仪表礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464739948
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 11,
+     *                     "badgeId": 1,
+     *                     "badgeName": "就餐礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464753823
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 12,
+     *                     "badgeId": 1,
+     *                     "badgeName": "公共礼仪",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464761472
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 13,
+     *                     "badgeId": 1,
+     *                     "badgeName": "责任担当",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464769958
+     *                 },
+     *                 {
+     *                     "orgId": 1,
+     *                     "id": 14,
+     *                     "badgeId": 1,
+     *                     "badgeName": "情绪管理",
+     *                     "badgeImage": null,
+     *                     "description": "",
+     *                     "active": true,
+     *                     "createTime": 1766464783716
+     *                 }
+     *             ]
+     *         }
+     *     ]
+     * }
      */
     public CompletionStage<Result> listEvaluationRule(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
@@ -90,7 +563,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/evaluation_rule/:id/  02详情-EvaluationRule评价规则配置
      * @apiName getEvaluationRule
-     * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiGroup 评价规则配置模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -130,7 +603,7 @@ public class EvaluationRuleController extends BaseSecurityController {
      * @api {POST} /v2/p/evaluation_rule/new/   01添加-EvaluationRule评价规则配置
      * @apiName addEvaluationRule
      * @apiDescription 描述
-     * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiGroup 评价规则配置模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {double} scoreBasic 类型基础分
@@ -160,7 +633,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/evaluation_rule/:id/  04更新-EvaluationRule评价规则配置
      * @apiName updateEvaluationRule
-     * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiGroup 评价规则配置模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
 
@@ -198,7 +671,7 @@ public class EvaluationRuleController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/evaluation_rule/   05删除-评价规则配置
      * @apiName deleteEvaluationRule
-     * @apiGroup EVALUATION-RULE-CONTROLLER
+     * @apiGroup 评价规则配置模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

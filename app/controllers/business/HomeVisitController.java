@@ -20,7 +20,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit_list/   01列表-家访工作记录
      * @apiName listHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -78,7 +78,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit/:id/  02详情-HomeVisit家访工作记录
      * @apiName getHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -114,10 +114,10 @@ public class HomeVisitController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/home_visit/new/   01添加-HomeVisit家访工作记录
+     * @api {POST} /v2/p/home_visit/new/   03添加-HomeVisit家访工作记录
      * @apiName addHomeVisit
      * @apiDescription 描述
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
@@ -156,7 +156,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/:id/  04更新-HomeVisit家访工作记录
      * @apiName updateHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
@@ -211,7 +211,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/   05删除-家访工作记录
      * @apiName deleteHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -234,7 +234,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/:id/review/   06评审打分
      * @apiName reviewHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiParam {String} caseLevel  优秀 优秀、良好、一般、不合格
      * @apiParam {String} videoLevel 优秀、良好、一般、不合格

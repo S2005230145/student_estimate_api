@@ -20,7 +20,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record_list/   01列表-习惯评价记录
      * @apiName listHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -71,7 +71,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record/:id/  02详情-HabitRecord习惯评价记录
      * @apiName getHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -101,14 +101,14 @@ public class HabitRecordController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/habit_record/new/   01添加-HabitRecord习惯评价记录
+     * @api {POST} /v2/p/habit_record/new/   03添加-HabitRecord习惯评价记录
      * @apiName addHabitRecord
      * @apiDescription 描述
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
-     * @apiParam {int} habitType 习惯类型  对应德智体美劳
+     * @apiParam {int} habitType 习惯类型  对应德智体美劳  badge的id
      * @apiParam {String} evaluatorType 评价者类型
      * @apiParam {long} evaluatorId 评价者ID
      * @apiParam {double} scoreChange 分数变化
@@ -168,7 +168,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/habit_record/:id/  04更新-HabitRecord习惯评价记录
      * @apiName updateHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
@@ -211,7 +211,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/habit_record/   05删除-习惯评价记录
      * @apiName deleteHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -235,7 +235,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record_list_currentUser/   06列表-当前用户习惯评价记录
      * @apiName listHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -303,7 +303,7 @@ public class HabitRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/habit_record_list_new/   07列表-习惯评价记录
      * @apiName listHabitRecord
-     * @apiGroup HABIT-RECORD-CONTROLLER
+     * @apiGroup 习惯评价
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -366,38 +366,5 @@ public class HabitRecordController extends BaseSecurityController {
             return ok(result);
         });
     }
-
-    /**
-     * @api {POST} /v2/p/habit_record/app/new/   08添加-HabitRecord习惯评价记录（德，智，体，美，劳）
-     * @apiName addHabitRecordApp
-     * @apiDescription 描述
-     * @apiGroup HABIT-RECORD-CONTROLLER
-     * @apiParam {long} orgId 机构ID
-     * @apiParam {long} id 唯一标识
-     * @apiParam {long} studentId 学生ID
-     * @apiParam {int} habitType 习惯类型
-     * @apiParam {String} evaluatorType 评价者类型
-     * @apiParam {long} evaluatorId 评价者ID
-     * @apiParam {double} scoreChange 分数变化
-     * @apiParam {String} description 行为描述
-     * @apiParam {String} evidenceImage 证据图片
-     * @apiParam {long} recordTime 记录时间
-     * @apiParam {long} createTime 创建时间
-     * @apiSuccess (Success 200){int} code 200
-     */
-    public CompletionStage<Result> addHabitRecordApp(Http.Request request) {
-        JsonNode jsonNode = request.body().asJson();
-        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
-
-            if (null == adminMember) return unauth403();
-            Long id = jsonNode.get("id").asLong();
-            //获取对应的徽章
-            Badge badge = Badge.find.query().where().eq("id", id).eq("org_id", adminMember.getOrgId()).findOne();
-            //查询对应上级指标德智体美劳
-            return null;
-        });
-    }
-
-
 
 }

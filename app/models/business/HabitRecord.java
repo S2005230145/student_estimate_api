@@ -1,5 +1,6 @@
 package models.business;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.DB;
 import io.ebean.Finder;
@@ -107,6 +108,9 @@ public class HabitRecord  extends Model {
     @Column(name = "status")
     @DbComment("状态")
     public Integer status;
+
+    @Transient
+    public String studentName;
 
     public static Finder<Long, HabitRecord> find = new Finder<>(HabitRecord.class);
 
