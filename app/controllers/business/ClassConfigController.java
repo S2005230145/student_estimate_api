@@ -30,8 +30,8 @@ public class ClassConfigController extends BaseSecurityController {
 
     /**
      * @api {GET} /v2/p/class_config/   01列表-班级配置信息
-     * @apiName listSchoolClass
-     * @apiGroup CLASS-CONFIG
+     * @apiName listSchoolClassConfig
+     * @apiGroup 班级基础配置模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSusccess (Success 200) {long} id 唯一标识

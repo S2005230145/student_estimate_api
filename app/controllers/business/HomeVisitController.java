@@ -20,7 +20,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit_list/   01列表-家访工作记录
      * @apiName listHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -44,7 +44,7 @@ public class HomeVisitController extends BaseSecurityController {
     public CompletionStage<Result> listHomeVisit(Http.Request request, int page, String filter, int status) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<HomeVisit> expressionList = HomeVisit.find.query().where().le("org_id", adminMember.getOrgId());
+            ExpressionList<HomeVisit> expressionList = HomeVisit.find.query().where().eq("org_id", adminMember.getOrgId());
             if (status > 0) expressionList.eq("status", status);
             if (!ValidationUtil.isEmpty(filter)) expressionList
                     .or()
@@ -78,7 +78,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/home_visit/:id/  02详情-HomeVisit家访工作记录
      * @apiName getHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -114,10 +114,10 @@ public class HomeVisitController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/home_visit/new/   01添加-HomeVisit家访工作记录
+     * @api {POST} /v2/p/home_visit/new/   03添加-HomeVisit家访工作记录
      * @apiName addHomeVisit
      * @apiDescription 描述
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
@@ -145,7 +145,7 @@ public class HomeVisitController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             HomeVisit homeVisit = Json.fromJson(jsonNode, HomeVisit.class);
             // 数据sass化
-            homeVisit.setOrgId(0);
+            homeVisit.setOrgId(admin.getOrgId());
             long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             homeVisit.setCreateTime(currentTimeBySecond);
             homeVisit.save();
@@ -156,7 +156,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/:id/  04更新-HomeVisit家访工作记录
      * @apiName updateHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} teacherId 教师ID
@@ -211,7 +211,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/   05删除-家访工作记录
      * @apiName deleteHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -226,7 +226,7 @@ public class HomeVisitController extends BaseSecurityController {
             HomeVisit deleteModel = HomeVisit.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验
-            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
@@ -234,7 +234,7 @@ public class HomeVisitController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/home_visit/:id/review/   06评审打分
      * @apiName reviewHomeVisit
-     * @apiGroup HOME-VISIT-CONTROLLER
+     * @apiGroup 家访模块
      * @apiParam {long} id id
      * @apiParam {String} caseLevel  优秀 优秀、良好、一般、不合格
      * @apiParam {String} videoLevel 优秀、良好、一般、不合格

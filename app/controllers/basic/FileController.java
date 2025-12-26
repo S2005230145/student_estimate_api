@@ -25,10 +25,11 @@ public class FileController extends BaseController {
     private static final String[] ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "bmp", "webp"};
 
     /**
-     * @api {POST} /v2/p/file/upload_image/ 上传图片
+     * @api {POST} /v2/p/file/upload_image/ 上传图片（通用，服务器）
      * @apiName uploadImage
-     * @apiGroup FILE-CONTROLLER
+     * @apiGroup 文件上传模块
      * @apiParam {file} file 图片文件
+     * @apiParam {String} style 文件模块类型  徽章：badge 奖项：award  习惯评价：habit
      * @apiSuccess (Success 200) {int} code 200
      * @apiSuccess (Success 200) {String} url 图片访问路径
      * @apiSuccess (Error 40001) {int} code 40001 参数错误
@@ -92,6 +93,10 @@ public class FileController extends BaseController {
             }
         });
     }
+
+
+
+
 
     /**
      * 检查文件扩展名是否允许

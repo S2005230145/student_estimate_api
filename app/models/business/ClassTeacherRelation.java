@@ -49,6 +49,8 @@ public class ClassTeacherRelation extends Model {
     @DbComment("更新时间")
     public long updateTime;
 
+
+
     public static Finder<Long, ClassTeacherRelation> find = new Finder<>(ClassTeacherRelation.class);
 
     /**

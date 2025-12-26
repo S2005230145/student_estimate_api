@@ -18,11 +18,10 @@ import java.util.concurrent.CompletionStage;
 public class BadgeController extends BaseSecurityController {
 
     /**
-     * @api {GET} /v2/p/badge_list/   01列表-徽章配置
+     * @api {POST} /v2/p/badge_list/   01列表-徽章配置
      * @apiName listBadge
-     * @apiGroup BADGE-CONTROLLER
+     * @apiGroup 徽章配置模块
      * @apiParam {int} page 页码
-     * @apiParam {String} filter 搜索栏
      * @apiParam {int} active 状态筛选
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
@@ -31,17 +30,24 @@ public class BadgeController extends BaseSecurityController {
      * @apiSuccess (Success 200) {String} description 描述
      * @apiSuccess (Success 200) {boolean} active 是否启用
      * @apiSuccess (Success 200) {long} createTime 创建时间
+     * @apiSuccess (Success 200) {int} isParent 是否家长
      */
-    public CompletionStage<Result> listBadge(Http.Request request, int page, String filter, int active) {
+    public CompletionStage<Result> listBadge(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
             ExpressionList<Badge> expressionList = Badge.find.query().where().eq("org_id", adminMember.getOrgId());
-            if (active > 0) expressionList.eq("active", active);
-            if (!ValidationUtil.isEmpty(filter)) {
-                expressionList.or()
-                        .icontains("badge_name", filter)
-                        .icontains("description", filter)
-                        .endOr();
+
+            Integer page = jsonNode.get("page") != null ? jsonNode.get("page").asInt() : null;
+            Integer active = jsonNode.get("active") != null ? jsonNode.get("active").asInt() : null;
+            Integer isParent = jsonNode.get("isParent") != null ? jsonNode.get("isParent").asInt() : null;
+
+            if(active != null){
+                expressionList.eq("active", active);
+            }
+
+            if(isParent != null){
+                expressionList.eq("is_parent", isParent);
             }
 
             ObjectNode result = Json.newObject();
@@ -67,7 +73,7 @@ public class BadgeController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/badge/:id/  02详情-徽章配置
      * @apiName getBadge
-     * @apiGroup BADGE-CONTROLLER
+     * @apiGroup 徽章配置模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -96,7 +102,7 @@ public class BadgeController extends BaseSecurityController {
      * @api {POST} /v2/p/badge/new/   01添加-徽章配置
      * @apiName addBadge
      * @apiDescription 添加徽章配置
-     * @apiGroup BADGE-CONTROLLER
+     * @apiGroup 徽章配置模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {int} badgeId 所属徽章类型
      * @apiParam {String} badgeName 徽章名称
@@ -122,7 +128,7 @@ public class BadgeController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/badge/:id/  04更新-徽章配置
      * @apiName updateBadge
-     * @apiGroup BADGE-CONTROLLER
+     * @apiGroup 徽章配置模块
      * @apiParam {long} id 唯一标识
      * @apiParam {int} badgeId 所属徽章类型
      * @apiParam {String} badgeName 徽章名称
@@ -159,7 +165,7 @@ public class BadgeController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/badge/   05删除-徽章配置
      * @apiName deleteBadge
-     * @apiGroup BADGE-CONTROLLER
+     * @apiGroup 徽章配置模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功

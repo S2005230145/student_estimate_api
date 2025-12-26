@@ -21,9 +21,9 @@ import java.util.concurrent.CompletionStage;
 public class SchoolClassController extends BaseSecurityController {
 
     /**
-     * @api {GET} /v2/p/school_class_list/   01列表-班级信息
+     * @api {POST} /v2/p/school_class_list/   01列表-班级信息
      * @apiName listSchoolClass
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -44,18 +44,20 @@ public class SchoolClassController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {ShopAdmin} teachers
      */
-    public CompletionStage<Result> listSchoolClass(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listSchoolClass(Http.Request request) {
+        JsonNode json = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where().eq("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
+            ExpressionList<SchoolClass> expressionList = SchoolClass.find.query().where()
+                    .eq("org_id", adminMember.getOrgId());
+
+            Integer page = json.get("page") != null ? json.get("page").asInt() : null;
+            String className = json.get("className") != null ? json.get("className").asText() : null;
+
+            if (!ValidationUtil.isEmpty(className)) expressionList
                     .or()
-                    .icontains("filter", filter)
-                    .endOr();               //编写其他条件  
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
+                    .icontains("class_name", className)
+                    .endOr();
 
             ObjectNode result = Json.newObject();
             List<SchoolClass> list;
@@ -80,7 +82,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/school_class/:id/  02详情-SchoolClass班级信息
      * @apiName getSchoolClass
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -116,10 +118,10 @@ public class SchoolClassController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/school_class/new/   01添加-SchoolClass班级信息
+     * @api {POST} /v2/p/school_class/new/   03添加-SchoolClass班级信息
      * @apiName addSchoolClass
      * @apiDescription 描述
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
@@ -168,7 +170,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/:id/  04更新-SchoolClass班级信息
      * @apiName updateSchoolClass
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {String} className 班级名称
@@ -223,7 +225,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/   05删除-班级信息
      * @apiName deleteSchoolClass
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -248,7 +250,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/:id/set_head_teacher/   06设置班主任
      * @apiName setHeadTeacher
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id 班级ID
      * @apiParam {String} subject 任教科目（可选）
      * @apiParam {long} teacherId 教师ID
@@ -290,7 +292,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/:id/add_teacher/   07添加科任教师
      * @apiName addClassTeacher
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id 班级ID
      * @apiParam {long} teacherId 教师ID
      * @apiParam {String} subject 任教科目
@@ -341,7 +343,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/school_class/:id/remove_teacher/   08移除班级教师
      * @apiName removeClassTeacher
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id 班级ID
      * @apiParam {long} teacherId 教师ID
      * @apiSuccess (Success 200){int} 200 成功
@@ -375,7 +377,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/school_class/:id/teachers/   09获取班级教师列表
      * @apiName getClassTeachers
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id 班级ID
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {Array} teachers 教师列表
@@ -432,7 +434,7 @@ public class SchoolClassController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/school_class/:id/head_teacher/   10获取班主任信息
      * @apiName getHeadTeacher
-     * @apiGroup SCHOOL-CLASS-CONTROLLER
+     * @apiGroup 班级模块
      * @apiParam {long} id 班级ID
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {Object} headTeacher 班主任信息

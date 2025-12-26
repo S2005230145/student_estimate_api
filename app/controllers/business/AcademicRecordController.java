@@ -41,7 +41,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record_list/   01列表-学业成绩记录
      * @apiName listAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -177,7 +177,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record/:id/  02详情-AcademicRecord学业成绩记录
      * @apiName getAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -213,10 +213,10 @@ public class AcademicRecordController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/academic_record/new/   01添加-AcademicRecord学业成绩记录
+     * @api {POST} /v2/p/academic_record/new/   03添加-AcademicRecord学业成绩记录
      * @apiName addAcademicRecord
      * @apiDescription 描述
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
@@ -260,7 +260,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record/:id/  04更新-AcademicRecord学业成绩记录
      * @apiName updateAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} studentId 学生ID
@@ -322,7 +322,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record/   05删除-学业成绩记录
      * @apiName deleteAcademicRecord
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -337,7 +337,7 @@ public class AcademicRecordController extends BaseSecurityController {
             AcademicRecord deleteModel = AcademicRecord.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });
@@ -345,7 +345,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/academic_record_excel/   06导入学生成绩文件
      * @apiName academicRecordImport
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiParam {file} file 成绩文件
      * @apiSuccess (Success 200){int} 200 成功
      */
@@ -407,7 +407,7 @@ public class AcademicRecordController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/academic_record_excel_template/ 07导出学业成绩导入模板
      * @apiName exportAcTemplate
-     * @apiGroup ACADEMIC-RECORD-CONTROLLER
+     * @apiGroup 学业模块
      * @apiSuccess (Success 200){file} Excel文件 导入模板文件
      */
     public CompletionStage<Result> exportAcTemplate(Http.Request request) {

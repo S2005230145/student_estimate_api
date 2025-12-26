@@ -7,11 +7,13 @@ import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import models.business.ClassRoutine;
+import models.business.SchoolClass;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -19,11 +21,11 @@ public class ClassRoutineController extends BaseSecurityController {
 
 
     /**
-     * @api {GET} /v2/p/class_routine_list/   01列表-班级常规评比
+     * @api {POST} /v2/p/class_routine_list/   01列表-班级常规评比
      * @apiName listClassRoutine
      * @apiGroup CLASS-ROUTINE-CONTROLLER
      * @apiParam {int} page 页码
-     * @apiParam {String} filter 搜索栏()
+     * @apiParam {String} className 班级名称
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} classId 班级ID
@@ -43,25 +45,32 @@ public class ClassRoutineController extends BaseSecurityController {
      * @apiSuccess (Success 200) {long} recordTime 记录时间
      * @apiSuccess (Success 200) {long} createTime 创建时间
      * @apiSuccess (Success 200) {long} updateTime 更新时间
+     * @apiSuccess (Success 200) {String} className 班级名称
      */
-    public CompletionStage<Result> listClassRoutine(Http.Request request, int page, String filter, int status) {
+    public CompletionStage<Result> listClassRoutine(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
             if (null == adminMember) return unauth403();
-            ExpressionList<ClassRoutine> expressionList = ClassRoutine.find.query().where().le("org_id", adminMember.getOrgId());
-            if (status > 0) expressionList.eq("status", status);
-            if (!ValidationUtil.isEmpty(filter)) expressionList
-                    .or()
-                    .icontains("filter", filter)
-                    .endOr();
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
-            //编写其他条件
+            ExpressionList<ClassRoutine> expressionList = ClassRoutine.find.query().where().eq("org_id", adminMember.getOrgId());
+
+            Integer page = jsonNode.get("page") != null ? jsonNode.get("page").asInt() : null;
+            String className = jsonNode.get("className") != null ? jsonNode.get("className").asText() : null;
+
+            List<Integer> classIds;
+            if (!ValidationUtil.isEmpty(className)) {
+                classIds = SchoolClass.find.query().where().
+                        eq("org_id", adminMember.getOrgId())
+                        .icontains("className", className)
+                        .findIds();
+
+                expressionList.in("class_id", classIds);
+            }
 
             ObjectNode result = Json.newObject();
             List<ClassRoutine> list;
-            if (page == 0) list = expressionList.findList();
-            else {
+            if (page == 0) {
+                list = expressionList.findList();
+            } else {
                 PagedList<ClassRoutine> pagedList = expressionList
                         .order().desc("id")
                         .setFirstRow((page - 1) * BusinessConstant.PAGE_SIZE_10)
@@ -71,13 +80,21 @@ public class ClassRoutineController extends BaseSecurityController {
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }
+
+            // 为每个 ClassRoutine 设置班级名称
+            for (ClassRoutine classRoutine : list) {
+                SchoolClass schoolClass = SchoolClass.find.byId(classRoutine.classId);
+                if (schoolClass != null) {
+                    classRoutine.setClassName(schoolClass.getClassName());
+                }
+            }
+
             result.put(CODE, CODE200);
             result.set("list", Json.toJson(list));
             return ok(result);
-
         });
-
     }
+
 
     /**
      * @api {GET} /v2/p/class_routine/:id/  02详情-ClassRoutine班级常规评比
@@ -241,7 +258,7 @@ public class ClassRoutineController extends BaseSecurityController {
             ClassRoutine deleteModel = ClassRoutine.find.byId(id);
             if (null == deleteModel) return okCustomJson(CODE40001, "数据不存在");
             //sass数据校验  
-            if (deleteModel.orgId > adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
+            if (deleteModel.orgId != adminMember.getOrgId()) return okCustomJson(CODE40001, "数据不存在");
             deleteModel.delete();
             return okJSON200();
         });

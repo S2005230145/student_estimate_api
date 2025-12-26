@@ -9,6 +9,8 @@ import myannotation.Translation;
 
 import java.util.List;
 
+import static models.business.HabitRecord.MOUTH_PARENT_MAX_SCORE;
+
 @Data
 @Entity
 @Table(name = "v1_parent_student_relation")
@@ -44,6 +46,14 @@ public class ParentStudentRelation extends Model {
     @Column(name = "update_time")
     @DbComment("更新时间")
     public long updateTime;
+
+    @Column(name = "mouth_max_limit")
+    @DbComment("月习惯最大额度")
+    public Double mouthMaxLimit;
+
+    @Column(name = "mouth_remain_limit")
+    @DbComment("月习惯剩余额度")
+    public Double mouthRemainLimit;
 
     public static Finder<Long, ParentStudentRelation> find = new Finder<>(ParentStudentRelation.class);
 
@@ -105,6 +115,8 @@ public class ParentStudentRelation extends Model {
         relation.studentId = studentId;
         relation.relationship = relationship;
         relation.orgId = orgId;
+        relation.mouthMaxLimit = MOUTH_PARENT_MAX_SCORE;
+        relation.mouthRemainLimit = MOUTH_PARENT_MAX_SCORE;
         relation.createTime = System.currentTimeMillis();
         relation.updateTime = System.currentTimeMillis();
         relation.save();

@@ -28,7 +28,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation_list/   01列表-班级教师关系表
      * @apiName listClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -113,7 +113,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/class_teacher_relation/:id/  02详情-ClassTeacherRelation班级教师关系表
      * @apiName getClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {long} id id
      * @apiSuccess (Success 200){int} code 200
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -140,10 +140,10 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/class_teacher_relation/new/   01添加-ClassTeacherRelation班级教师关系表
+     * @api {POST} /v2/p/class_teacher_relation/new/   03添加-ClassTeacherRelation班级教师关系表
      * @apiName addClassTeacherRelation
      * @apiDescription 描述
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} classId 班级ID
@@ -204,7 +204,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation/:id/  04更新-ClassTeacherRelation班级教师关系表
      * @apiName updateClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {long} orgId 机构ID
      * @apiParam {long} id 唯一标识
      * @apiParam {long} classId 班级ID
@@ -245,7 +245,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation/   05删除-班级教师关系表
      * @apiName deleteClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {long} id id
      * @apiParam {String} operation del时删除
      * @apiSuccess (Success 200){int} 200 成功
@@ -269,7 +269,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_teacher_relation_list/new/   06列表-班级教师关系列表
      * @apiName listClassTeacherRelation
-     * @apiGroup CLASS-TEACHER-RELATION-CONTROLLER
+     * @apiGroup 班级教师模块
      * @apiParam {int} page 页码
      * @apiParam {String} filter 搜索栏()
      * @apiSuccess (Success 200) {long} orgId 机构ID
@@ -373,7 +373,36 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     /**
      * @api {GET} /v2/p/header_teacher_class/   07列表-获取当前班主任所在的班级
      * @apiName headerTeacherClass
-     * @apiGroup no-Bing-Class
+     * @apiGroup 班级教师模块
+     * @apiSuccessExample {json} 响应示例:
+     *{
+     *     "code": 200,
+     *     "list": [
+     *         {
+     *             "orgId": 1,
+     *             "id": 1,
+     *             "className": "一年级一班",
+     *             "grade": 1,
+     *             "classId": 1,
+     *             "headTeacherId": 2168,
+     *             "headTeacher": null,
+     *             "studentNum": 39,
+     *             "academicScore": 0.0,
+     *             "specialtyScore": 0.0,
+     *             "routineScore": 0.0,
+     *             "homeVisitScore": 0.0,
+     *             "totalScore": 0.0,
+     *             "disqualified": false,
+     *             "deductionScore": 0.0,
+     *             "honorTitle": "",
+     *             "createTime": 1766132506197,
+     *             "teachers": null,
+     *             "highGrade": false,
+     *             "academicRankInGrade": 1,
+     *             "specialtyRankInGrade": 1
+     *         }
+     *     ]
+     * }
      */
     public CompletionStage<Result> headerTeacherClass(Http.Request request) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {
@@ -400,9 +429,38 @@ public class ClassTeacherRelationController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/p/teacher_class/   07列表-获取当前教师所在的班级
+     * @api {GET} /v2/p/teacher_class/   08列表-获取当前教师所在的班级
      * @apiName teacherClass
-     * @apiGroup no-Bing-Class
+     * @apiGroup 班级教师模块
+     * @apiSuccessExample {json} 响应示例:
+     *{
+     *     "code": 200,
+     *     "list": [
+     *         {
+     *             "orgId": 1,
+     *             "id": 1,
+     *             "className": "一年级一班",
+     *             "grade": 1,
+     *             "classId": 1,
+     *             "headTeacherId": 2168,
+     *             "headTeacher": null,
+     *             "studentNum": 39,
+     *             "academicScore": 0.0,
+     *             "specialtyScore": 0.0,
+     *             "routineScore": 0.0,
+     *             "homeVisitScore": 0.0,
+     *             "totalScore": 0.0,
+     *             "disqualified": false,
+     *             "deductionScore": 0.0,
+     *             "honorTitle": "",
+     *             "createTime": 1766132506197,
+     *             "teachers": null,
+     *             "highGrade": false,
+     *             "academicRankInGrade": 1,
+     *             "specialtyRankInGrade": 1
+     *         }
+     *     ]
+     * }
      */
     public  CompletionStage<Result> teacherClass(Http.Request request) {
         return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((adminMember) -> {

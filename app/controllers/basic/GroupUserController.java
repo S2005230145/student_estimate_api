@@ -114,27 +114,4 @@ public class GroupUserController extends BaseSecurityController {
         });
     }
 
-    /**
-     * @api {GET} /v2/s/head_teacher/ 05获取所有班主任
-     * @apiName listHeadTeachers
-     * @apiGroup Admin-GROUP-USER
-     * @apiSuccess {jsonArray} list
-     * @apiSuccess {int} orgId 组的id
-     * @apiSuccess {boolean} isAdmin 是否是班主任
-     * @apiSuccess (Success 200) {int} code 200 请求成功
-     */
-    public CompletionStage<Result> listHeadTeachers(Http.Request request) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<ShopAdmin> headTeachers = ShopAdmin.find.query().where()
-                    .eq("orgId", 2)
-                    .eq("isAdmin", true)
-                    .eq("status", 1)
-                    .findList();
-            ObjectNode node = Json.newObject();
-            node.put(CODE, CODE200);
-            node.set("list", Json.toJson(headTeachers));
-            return ok(node);
-        });
-    }
-
 }

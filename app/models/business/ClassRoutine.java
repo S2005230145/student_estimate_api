@@ -95,6 +95,9 @@ public class ClassRoutine  extends Model {
     @DbComment("更新时间")
     public long updateTime;
 
+    @Transient
+    public String className;
+
     public static Finder<Long, ClassRoutine> find = new Finder<>(ClassRoutine.class);
 
     /**
@@ -157,6 +160,5 @@ public class ClassRoutine  extends Model {
 
         return total / monthlyRecords.size();
     }
-
 
 }

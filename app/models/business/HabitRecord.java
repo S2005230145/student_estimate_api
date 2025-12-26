@@ -1,5 +1,6 @@
 package models.business;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.DB;
 import io.ebean.Finder;
@@ -107,6 +108,12 @@ public class HabitRecord  extends Model {
     @Column(name = "status")
     @DbComment("状态")
     public Integer status;
+
+    @Transient
+    public String studentName;
+
+    @Transient
+    public String evaluatorName;
 
     public static Finder<Long, HabitRecord> find = new Finder<>(HabitRecord.class);
 
@@ -264,7 +271,7 @@ public class HabitRecord  extends Model {
 
     /**
      * 数据验证
-     * 每月当前评级人所在的这个班级是否有评价额度
+     * 每月当前教师评级所在的这个班级是否有评价额度
      */
     public void validate(Long evaluatorId,Long classId,Double scoreChange) {
         List<String> errors = new ArrayList<>();
@@ -290,6 +297,32 @@ public class HabitRecord  extends Model {
         }
 
     }
+
+    /**
+     * 数据验证
+     * 每月学生家长是否有评价额度
+     */
+    public void validate(Long evaluatorId,Double scoreChange){
+        List<String> errors = new ArrayList<>();
+
+        List<ParentStudentRelation> relations = ParentStudentRelation.findByParentId(evaluatorId);
+
+        if(relations == null || relations.isEmpty()) {
+            errors.add("当前家长没有学生关系");
+            return;
+        }
+
+        for (ParentStudentRelation relation : relations){
+            if(relation.mouthRemainLimit-scoreChange<0){
+                errors.add("当前家长没有评价额度");
+                return;
+            }
+        }
+    }
+
+
+
+
 
     /**
      * 计算月份截至时间

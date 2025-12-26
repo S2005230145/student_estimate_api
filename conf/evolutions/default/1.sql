@@ -106,6 +106,7 @@ create table v1_badge (
   description                   varchar(255) comment '描述',
   active                        tinyint(1) default 0 not null comment '是否启用',
   create_time                   bigint not null comment '创建时间',
+  is_parent                     tinyint(1) default 0 not null comment '是否家长',
   constraint pk_v1_badge primary key (id)
 ) comment='徽章表';
 
@@ -398,6 +399,8 @@ create table v1_parent_student_relation (
   relationship                  varchar(255) comment '关系类型',
   create_time                   bigint not null comment '创建时间',
   update_time                   bigint not null comment '更新时间',
+  mouth_max_limit               double comment '月习惯最大额度',
+  mouth_remain_limit            double comment '月习惯剩余额度',
   constraint pk_v1_parent_student_relation primary key (id)
 ) comment='家长学生关系表';
 
@@ -479,10 +482,24 @@ create table v1_student (
   badges                        varchar(255) comment '获得徽章',
   reward_rank_grade             integer not null comment '奖项年级排名',
   reward_rank_school            integer not null comment '奖项学校排名',
+  mouth_habit_score             double not null comment '月习惯得分',
+  mouth_habit_rank              integer not null comment '月习惯排名',
   create_time                   bigint not null comment '创建时间',
   update_time                   bigint not null comment '更新时间',
   constraint pk_v1_student primary key (id)
 ) comment='学生';
+
+create table v1_student_group (
+  id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint not null comment '机构ID',
+  student_id                    bigint not null comment '学生ID',
+  class_id                      bigint not null comment '班级ID',
+  group_name                    varchar(255) comment '分组名称',
+  create_time                   bigint not null comment '创建时间',
+  update_time                   bigint not null comment '更新时间',
+  status                        integer not null comment '状态',
+  constraint pk_v1_student_group primary key (id)
+) comment='学生分组';
 
 create table v1_suggestion (
   id                            bigint auto_increment not null,
@@ -555,6 +572,8 @@ drop table if exists v1_shop_admin;
 drop table if exists v1_specialty_award;
 
 drop table if exists v1_student;
+
+drop table if exists v1_student_group;
 
 drop table if exists v1_suggestion;
 

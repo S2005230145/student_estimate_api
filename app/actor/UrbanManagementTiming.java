@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ebean.DB;
 import io.ebean.Transaction;
 import models.business.HabitRecord;
+import models.business.ParentStudentRelation;
 import models.business.SpecialtyAward;
 import models.business.Student;
 import models.mouth.MonthlyPerformanceSnapshot;
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 public class UrbanManagementTiming {
@@ -161,11 +163,6 @@ public class UrbanManagementTiming {
                     .le("award_date", lastMonthEndTimestamp)
                     .findList();
 
-            // 按学生ID分组，统计每个学生的奖项分数总和
-//            Map<Long, Double> studentHabitScores = new HashMap<>();
-//            for (HabitRecord habitRecord : habitRecordList) {
-//                studentHabitScores.merge(habitRecord.getStudentId(), habitRecord.scoreChange, Double::sum);
-//            }
 
             // 获取所有学生
             List<Student> allStudents = Student.find.all();
@@ -176,6 +173,37 @@ public class UrbanManagementTiming {
 
             //如果没有习惯记录，则返回
             if (habitRecordList.isEmpty()) return;
+
+
+            //统计月生活素养达到40分+家长的月习惯记录分数，按年级Student的grade去习惯记录表进行排名
+            //1.将所有学生按年级进行分组
+            Map<Integer, List<Student>> studentsByGrade = allStudents.stream()
+                    .filter(student -> student.getHabitScore() == 40.0)
+                    .collect(Collectors.groupingBy(Student::getGrade));
+
+            //2.在studentsByGrade中，去计算每个学生的实际月习惯分
+            for (Map.Entry<Integer, List<Student>> entry : studentsByGrade.entrySet()){
+                List<Student> students = entry.getValue();
+                for (Student student : students){
+                    //获取该学生上个月的实际习惯分总和（如果没有记录则为0）
+                    Double monthlyHabitScore = student.habitScore + habitRecordList.stream()
+                            .filter(habitRecord -> habitRecord.evaluatorType.equals("parent"))
+                            .mapToDouble(HabitRecord::getScoreChange)
+                            .sum();
+
+                    student.setMouthHabitScore(monthlyHabitScore);
+                }
+
+                //根据students的monthHabitScore进行降序,排行
+                students.sort(Comparator.comparingDouble(Student::getMouthHabitScore).reversed());
+                students.forEach(student -> {
+                    student.setMouthHabitRank(students.indexOf(student) + 1);
+                    if(student.getMouthHabitRank()>0 && student.getMouthHabitRank()<=80){
+                        student.setBadges("求真徽章");
+                    }
+                });
+            }
+            DB.saveAll(allStudents);
 
             // 为每个学生创建快照记录并重置specialtyScore
             for (Student student : allStudents) {
@@ -194,8 +222,15 @@ public class UrbanManagementTiming {
                 snapshot.setType("Habit"); // 设置类型为习惯
                 snapshots.add(snapshot);
 
-                // 重置学生的specialtyScore为0
+                // 重置学生的specialtyScore为15.0
                 student.setHabitScore(HabitRecord.BASE_SCORE);
+                //重置学生的家长得分额度
+                List<ParentStudentRelation> parentStudentRelations = ParentStudentRelation.findByStudentId(student.getId());
+                for (ParentStudentRelation parentStudentRelation : parentStudentRelations) {
+                    parentStudentRelation.setMouthMaxLimit(HabitRecord.MOUTH_PARENT_MAX_SCORE);
+                    parentStudentRelation.setMouthRemainLimit(HabitRecord.MOUTH_PARENT_MAX_SCORE);
+                }
+                DB.saveAll(parentStudentRelations);
             }
 
             // 保存所有快照记录

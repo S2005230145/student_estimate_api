@@ -557,9 +557,9 @@ public class ShopAdminController extends BaseSecurityController {
     }
 
     /**
-     * @api {GET} /v2/s/teacher_members/ 10获取老师列表
-     * @apiName listShopMembers
-     * @apiGroup SHOP-ADMIN
+     * @api {GET} /v2/s/teacher_members/ 01获取老师列表
+     * @apiName listTeacherMembers
+     * @apiGroup 教师模块
      * @apiSuccess (Success 200) {int} code 200 请求成功
      * @apiSuccess {json} list
      * @apiSuccess {int} id 用户id
@@ -599,9 +599,9 @@ public class ShopAdminController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/teacher_import/   06导入老师文件
-     * @apiName studentImport
-     * @apiGroup STUDENT-CONTROLLER
+     * @api {POST} /v2/p/teacher_import/   02导入教师信息数据
+     * @apiName 导入教师信息数据（初始数据）
+     * @apiGroup 教师模块
      * @apiParam {file} file 老师文件
      * @apiSuccess (Success 200){int} 200 成功
      */

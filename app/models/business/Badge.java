@@ -46,5 +46,9 @@ public class Badge extends Model {
     @DbComment("创建时间")
     public long createTime;
 
+    @Column(name = "is_parent")
+    @DbComment("是否家长")
+    public boolean isParent;
+
     public static Finder<Long, Badge> find = new Finder<>(Badge.class);
 }

@@ -349,7 +349,7 @@ public class StudentImportExcel {
                     parent.setOrgId(orgId);
                     parent.update();
                 }
-                else if(parent.getRules().contains("科任教师")){
+                else if(parent.getRules().contains("科任教师") && !parent.getRules().contains("家长")){
                     parent.setUserName(phone);
                     //parent.setRealName(generateParentRealName(studentName, relationship));
                     //parent.rulers 后面追加,家长

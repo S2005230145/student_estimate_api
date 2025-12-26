@@ -40,13 +40,17 @@ public class LoginController extends BaseController {
 
 
     /**
-     * @api {POST} /v2/s/login/noauth/ 01登录
+     * @api {POST} /v2/p/login/noauth/ 01 后台用户登录（学校端）
      * @apiName login
-     * @apiGroup Admin-Authority
-     * @apiParam {jsonObject} data json串格式
-     * @apiParam {string} username 用户名.
+     * @apiGroup 后台登录
+     * @apiParam {string} username 用户名（就是手机号码）
      * @apiParam {string} password 密码, 6位至20位
-     * @apiParam {string} vcode 手机验证码
+     * @apiParamExample  {json} 请求示例:
+     * {
+     *     username: '',
+     *     password: '',
+     *     vcode: '',
+     * }
      * @apiSuccess (Success 200){String}  userName 用户名
      * @apiSuccess (Success 200){String}  realName 真名
      * @apiSuccess (Success 200){String}  lastLoginTimeForShow 最后登录时间
@@ -56,6 +60,32 @@ public class LoginController extends BaseController {
      * @apiSuccess (Success 200){String} groupName 所在组名
      * @apiSuccess (Error 40001) {int} code 40001  参数错误
      * @apiSuccess (Error 40003) {int} code 40003 用户名或密码错误
+     * @apiSuccessExample {json} 响应示例:
+     * {
+     *     "id": 2,
+     *     "userName": "13625063671",
+     *     "realName": "13625063671",
+     *     "avatar": null,
+     *     "createdTime": 1766211144978,
+     *     "lastLoginTime": 1766211144978,
+     *     "lastLoginIP": null,
+     *     "phoneNumber": "13625063671",
+     *     "isAdmin": false,
+     *     "orgId": 1,
+     *     "orgName": null,
+     *     "shopId": 0,
+     *     "shopName": null,
+     *     "rules": "管理员",
+     *     "pinyinAbbr": null,
+     *     "status": 1,
+     *     "bgImgUrl": null,
+     *     "groupIdList": [],
+     *     "groupUserList": [],
+     *     "groupName": null,
+     *     "admin": false,
+     *     "code": 200,
+     *     "token": "4c854b3a-e0fd-4d89-a89e-02624086d364"
+     * }
      */
     @BodyParser.Of(BodyParser.Json.class)
     public CompletionStage<Result> login(Http.Request request) {
@@ -366,11 +396,18 @@ public class LoginController extends BaseController {
     /**
      * @api {POST} /V2/p/front/login/noauth/   前台app登录模块
      * @apiName login
-     * @apiGroup Admin-Authority
+     * @apiGroup 手机端登录模块
      * @apiParam {jsonObject} data json串格式
      * @apiParam {string} username 用户名
      * @apiParam {string} password 密码, 6位至20位
      * @apiParam {string} loginRules 登录规则 0-家长登录  1-非家长登录
+     * @apiParamExample {json} 请求参数：
+     * {
+     *     "username": "",
+     *     "password": "",
+     *     "loginRules": 0  // 0-家长登录  1-非家长登录
+     * }
+     *
      * @apiParam {string} vcode 手机验证码
      * @apiSuccess (Success 200){String}  userName 用户名
      * @apiSuccess (Success 200){String}  realName 真名
@@ -381,6 +418,32 @@ public class LoginController extends BaseController {
      * @apiSuccess (Success 200){String} groupName 所在组名
      * @apiSuccess (Error 40001) {int} code 40001  参数错误
      * @apiSuccess (Error 40003) {int} code 40003 用户名或密码错误
+     * @apiSuccessExample {json} 响应示例:
+     * {
+     *     "id": 2,
+     *     "userName": "13625063671",//账号（手机号码）
+     *     "realName": "李**",//真实姓名
+     *     "avatar": null,
+     *     "createdTime": 1766211144978,
+     *     "lastLoginTime": 1766211144978,
+     *     "lastLoginIP": null,
+     *     "phoneNumber": "13625063671",
+     *     "isAdmin": false,
+     *     "orgId": 1,
+     *     "orgName": null,
+     *     "shopId": 0,
+     *     "shopName": null,
+     *     "rules": "科任教师",
+     *     "pinyinAbbr": null,
+     *     "status": 1,
+     *     "bgImgUrl": null,
+     *     "groupIdList": [],
+     *     "groupUserList": [],
+     *     "groupName": null,
+     *     "admin": false,
+     *     "code": 200,
+     *     "token": "4c854b3a-e0fd-4d89-a89e-02624086d364"
+     * }
      */
     public CompletionStage<Result> loginFront(Http.Request request) {
         JsonNode jsonNode = request.body().asJson();
