@@ -6,13 +6,17 @@ import constants.BusinessConstant;
 import controllers.BaseSecurityController;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
+import models.admin.ShopAdmin;
 import models.business.HomeVisit;
+import models.business.SchoolClass;
+import models.business.Student;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 public class HomeVisitController extends BaseSecurityController {
@@ -64,6 +68,13 @@ public class HomeVisitController extends BaseSecurityController {
                         .setMaxRows(BusinessConstant.PAGE_SIZE_10)
                         .findPagedList();
                 list = pagedList.getList();
+
+                list.forEach(homeVisit -> {
+                    homeVisit.setTeacherName(Objects.requireNonNull(ShopAdmin.find.byId(homeVisit.teacherId)).realName);
+                    homeVisit.setClassName(Objects.requireNonNull(SchoolClass.find.byId(homeVisit.classId)).getClassName());
+                    homeVisit.setStudentNumber(Objects.requireNonNull(Student.find.byId(homeVisit.studentId)).getStudentNumber());
+                });
+
                 result.put("pages", pagedList.getTotalPageCount());
                 result.put("hasNest", pagedList.hasNext());
             }

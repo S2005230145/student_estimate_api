@@ -95,6 +95,15 @@ public class HomeVisit  extends Model {
     @DbComment("创建时间")
     public long createTime;
 
+    @Transient
+    public String teacherName;
+
+    @Transient
+    public String className;
+
+    @Transient
+    public String studentNumber;
+
     public static Finder<Long, HomeVisit> find = new Finder<>(HomeVisit.class);
 
     public void calcBonusScore() {

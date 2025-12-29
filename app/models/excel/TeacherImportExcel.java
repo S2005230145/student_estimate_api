@@ -135,9 +135,17 @@ public class TeacherImportExcel {
                 hasHeadTeacher = true;
             }
 
-            // 插入 ClassTeacherRelation 记录（避免重复）
-            if (!ClassTeacherRelation.isTeacherInClass(teacher.getId(), schoolClass.getId())) {
-                ClassTeacherRelation relation = new ClassTeacherRelation();
+            // 插入或更新 ClassTeacherRelation 记录
+            ClassTeacherRelation relation = ClassTeacherRelation.find.query()
+                    .where()
+                    .eq("teacher_id", teacher.getId())
+                    .eq("class_id", schoolClass.getId())
+                    .setMaxRows(1)
+                    .findOne();
+            
+            if (relation == null) {
+                // 不存在则创建新记录
+                relation = new ClassTeacherRelation();
                 relation.setOrgId(currentAdmin.getOrgId());
                 relation.setClassId(schoolClass.getId());
                 relation.setTeacherId(teacher.getId());
@@ -148,6 +156,37 @@ public class TeacherImportExcel {
                 relation.setUpdateTime(now);
                 relation.save();
                 createdRelations.add(relation);
+            } else {
+                // 已存在则追加学科（如果新学科不在原有学科中）
+                String existingSubject = relation.getSubject();
+                String newSubject = duty.getSubject();
+                
+                if (existingSubject == null || existingSubject.trim().isEmpty()) {
+                    relation.setSubject(newSubject);
+                } else {
+                    // 检查新学科是否已存在
+                    String[] existingSubjects = existingSubject.split("[,，]");
+                    boolean subjectExists = false;
+                    for (String sub : existingSubjects) {
+                        if (sub.trim().equals(newSubject.trim())) {
+                            subjectExists = true;
+                            break;
+                        }
+                    }
+                    // 如果新学科不存在，则追加
+                    if (!subjectExists) {
+                        relation.setSubject(existingSubject + "," + newSubject);
+                    }
+                }
+                
+                // 如果是班主任，更新 isHeadTeacher 标志
+                if (isHead) {
+                    relation.setHeadTeacher(true);
+                }
+                
+                long now = System.currentTimeMillis();
+                relation.setUpdateTime(now);
+                relation.update();
             }
 
             // 4. 如果是班主任，同步到 SchoolClass.headTeacherId
@@ -185,9 +224,9 @@ public class TeacherImportExcel {
             // 根据是否是班主任和科目来设置额度
             if (relation.isHeadTeacher) {
                 monthlyRatingQuota.setCapValue(300);
-            } else if (relation.getSubject().equals("语文") || relation.getSubject().equals("数学") || relation.getSubject().equals("英语")) {
+            } else if (relation.getSubject().contains("语文") || relation.getSubject().contains("数学") || relation.getSubject().contains("英语")) {
                 monthlyRatingQuota.setCapValue(200);
-            } else if (relation.getSubject().equals("美术") || relation.getSubject().equals("音乐") || relation.getSubject().equals("体育")) {
+            } else if (relation.getSubject().contains("美术") || relation.getSubject().contains("音乐") || relation.getSubject().contains("体育")) {
                 monthlyRatingQuota.setCapValue(50);
             } else {
                 // 其他科目默认额度

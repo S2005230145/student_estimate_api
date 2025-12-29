@@ -339,7 +339,7 @@ create table cp_menu (
 );
 
 create table monthly_performance_snapshot (
-  record_id                     bigint auto_increment not null,
+  id                            bigint auto_increment not null comment '唯一标识',
   student_id                    bigint,
   year                          varchar(255),
   mouth                         varchar(255),
@@ -347,7 +347,7 @@ create table monthly_performance_snapshot (
   settle_state                  bigint,
   settle_time                   bigint,
   type                          varchar(255),
-  constraint pk_monthly_performance_snapshot primary key (record_id)
+  constraint pk_monthly_performance_snapshot primary key (id)
 );
 
 create table v1_monthly_rating_quota (

@@ -263,7 +263,7 @@ public class LoginController extends BaseController {
     }
 
     /**
-     * @api {GET} /v2/s/admin_member/info/ 08查看自己详情信息
+     * @api {GET} /v2/p/admin_member/info/ 08查看自己详情信息
      * @apiName getAdminMemberInfo
      * @apiGroup Admin-Authority
      * @apiSuccess (Success 200) {int} code 200 请求成功

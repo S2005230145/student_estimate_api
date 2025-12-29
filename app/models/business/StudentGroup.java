@@ -34,6 +34,12 @@ public class StudentGroup extends Model {
     @DbComment("更新时间")
     private Long updateTime;
 
+    @Transient
+    private String studentName;
+
+    @Transient
+    private String studentNumber;
+
     public static Finder<String, StudentGroup> find = new Finder<>(StudentGroup.class);
 
 }

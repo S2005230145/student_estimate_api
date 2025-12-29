@@ -52,7 +52,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
 
             if (!ValidationUtil.isEmpty(subject)) expressionList
                     .or()
-                    .eq("subject", subject)
+                    .icontains("subject", subject)
                     .endOr();               //编写其他条件  
 
             if (jsonNode.has("classId") && !jsonNode.get("classId").isNull()) {
@@ -162,12 +162,47 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             if (null == jsonNode) return okCustomJson(CODE40001, "参数错误");
             ClassTeacherRelation classTeacherRelation = Json.fromJson(jsonNode, ClassTeacherRelation.class);
 
-            boolean isAlreadyAdd = ClassTeacherRelation.isTeacherInClass(classTeacherRelation.getTeacherId(), classTeacherRelation.getClassId());
-            if (isAlreadyAdd) return okCustomJson(CODE40001, "该老师已经添加过该班级");
+            // 检查是否已经存在该教师-班级关系
+            ClassTeacherRelation existingRelation = ClassTeacherRelation.find.query()
+                    .where()
+                    .eq("teacher_id", classTeacherRelation.getTeacherId())
+                    .eq("class_id", classTeacherRelation.getClassId())
+                    .setMaxRows(1)
+                    .findOne();
+
+            long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+            
+            if (existingRelation != null) {
+                // 如果已存在关系，检查新科目是否已经在现有科目中
+                String existingSubject = existingRelation.getSubject();
+                String newSubject = classTeacherRelation.getSubject();
+                
+                if (existingSubject != null && !existingSubject.isEmpty() && newSubject != null && !newSubject.isEmpty()) {
+                    // 检查新科目是否已经存在（使用contains检查，支持部分匹配）
+                    if (!existingSubject.contains(newSubject)) {
+                        // 如果不存在，追加新科目
+                        existingRelation.setSubject(existingSubject + "," + newSubject);
+                        existingRelation.setUpdateTime(currentTimeBySecond);
+                        existingRelation.save();
+                        return okJSON200();
+                    } else {
+                        // 如果科目已存在，返回提示
+                        return okCustomJson(CODE40001, "该老师已经在该班级教授该科目");
+                    }
+                } else {
+                    // 如果现有科目为空，直接设置新科目
+                    if (newSubject != null && !newSubject.isEmpty()) {
+                        existingRelation.setSubject(newSubject);
+                        existingRelation.setUpdateTime(currentTimeBySecond);
+                        existingRelation.save();
+                        return okJSON200();
+                    }
+                }
+                return okCustomJson(CODE40001, "该老师已经添加过该班级");
+            }
 
 // 数据sass化
             classTeacherRelation.setOrgId(admin.getOrgId());
-            long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
             classTeacherRelation.setCreateTime(currentTimeBySecond);
             classTeacherRelation.setUpdateTime(currentTimeBySecond);
             classTeacherRelation.save();
@@ -188,9 +223,9 @@ public class ClassTeacherRelationController extends BaseSecurityController {
                 // 根据是否是班主任来设置额度
                 if (classTeacherRelation.isHeadTeacher) {
                     monthlyRatingQuota.setCapValue(300);
-                } else if(classTeacherRelation.getSubject().equals("语文") || classTeacherRelation.getSubject().equals("数学") || classTeacherRelation.getSubject().equals("英语")) {
+                } else if(classTeacherRelation.getSubject().contains("语文") || classTeacherRelation.getSubject().contains("数学") || classTeacherRelation.getSubject().contains("英语")) {
                     monthlyRatingQuota.setCapValue(200);
-                }else if(classTeacherRelation.getSubject().equals("美术") || classTeacherRelation.getSubject().equals("音乐") || classTeacherRelation.getSubject().equals("体育")){
+                }else if(classTeacherRelation.getSubject().contains("美术") || classTeacherRelation.getSubject().contains("音乐") || classTeacherRelation.getSubject().contains("体育")){
                     monthlyRatingQuota.setCapValue(50);
                 }
                 monthlyRatingQuota.setCreateTime(currentTimeBySecond);
@@ -297,7 +332,7 @@ public class ClassTeacherRelationController extends BaseSecurityController {
             if (jsonNode.has("subject") && !jsonNode.get("subject").isNull()) {
                 String subject = jsonNode.get("subject").asText();
                 if (!ValidationUtil.isEmpty(subject)) {
-                    expressionList.eq("subject", subject);
+                    expressionList.icontains("subject", subject);
                 }
             }
 

@@ -189,7 +189,8 @@ GET       /v2/p/habit_record_list_currentUser/                controllers.busine
 GET        /v2/p/teacher_members/                             controllers.basic.ShopAdminController.listTeacherMembers(request: Request)
 GET       /v2/p/class_config/                                 controllers.business.ClassConfigController.listClassConfig(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
 GET      /v2/p/habit_record_list_new/                         controllers.business.HabitRecordController.listHabitRecordNew(request: Request,page:Int?=1,filter:String?="",status:Int?=0)
-
+POST    /v2/p/habit_record/month/list/                        controllers.business.HabitRecordController.listHabitRecordCurrentUserMonth(request:Request)
+GET    /v2/p/habit_record/month/statistics/                   controllers.business.HabitRecordController.listHabitRecordCurrentUserMonthBadgeStatistics(request: Request,classId:Long)
 #前台登录接口
 POST     /V2/p/front/login/noauth/                            controllers.basic.LoginController.loginFront(request:Request)
 

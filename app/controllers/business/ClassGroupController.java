@@ -45,42 +45,449 @@ public class ClassGroupController extends BaseSecurityController {
      *     "code": 200,
      *     "list": [
      *         {
+     *             "id": 8,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101K组",
+     *             "createTime": 1767063985555,
+     *             "updateTime": 1767063985555,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 36,
+     *                     "groupId": 8,
+     *                     "studentId": 35,
+     *                     "createTime": 1767064055026,
+     *                     "updateTime": 1767064055026,
+     *                     "studentName": "邹锦浩",
+     *                     "studentNumber": "20250135"
+     *                 },
+     *                 {
+     *                     "id": 37,
+     *                     "groupId": 8,
+     *                     "studentId": 37,
+     *                     "createTime": 1767064055026,
+     *                     "updateTime": 1767064055026,
+     *                     "studentName": "ZHENGBENJAMIN",
+     *                     "studentNumber": "20250137"
+     *                 },
+     *                 {
+     *                     "id": 38,
+     *                     "groupId": 8,
+     *                     "studentId": 38,
+     *                     "createTime": 1767064055026,
+     *                     "updateTime": 1767064055026,
+     *                     "studentName": "翁嘉盛",
+     *                     "studentNumber": "20250138"
+     *                 },
+     *                 {
+     *                     "id": 39,
+     *                     "groupId": 8,
+     *                     "studentId": 39,
+     *                     "createTime": 1767064055026,
+     *                     "updateTime": 1767064055026,
+     *                     "studentName": "CHENLIMATEO",
+     *                     "studentNumber": "20250139"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 7,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101J组",
+     *             "createTime": 1767063972705,
+     *             "updateTime": 1767063972705,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 31,
+     *                     "groupId": 7,
+     *                     "studentId": 32,
+     *                     "createTime": 1767064048443,
+     *                     "updateTime": 1767064048443,
+     *                     "studentName": "林梓昱",
+     *                     "studentNumber": "20250132"
+     *                 },
+     *                 {
+     *                     "id": 32,
+     *                     "groupId": 7,
+     *                     "studentId": 33,
+     *                     "createTime": 1767064048443,
+     *                     "updateTime": 1767064048443,
+     *                     "studentName": "姚凯彬",
+     *                     "studentNumber": "20250133"
+     *                 },
+     *                 {
+     *                     "id": 33,
+     *                     "groupId": 7,
+     *                     "studentId": 34,
+     *                     "createTime": 1767064048443,
+     *                     "updateTime": 1767064048443,
+     *                     "studentName": "李诗琪",
+     *                     "studentNumber": "20250134"
+     *                 },
+     *                 {
+     *                     "id": 34,
+     *                     "groupId": 7,
+     *                     "studentId": 36,
+     *                     "createTime": 1767064048443,
+     *                     "updateTime": 1767064048443,
+     *                     "studentName": "YANEVELYNANGELICA",
+     *                     "studentNumber": "20250136"
+     *                 },
+     *                 {
+     *                     "id": 35,
+     *                     "groupId": 7,
+     *                     "studentId": 31,
+     *                     "createTime": 1767064048443,
+     *                     "updateTime": 1767064048443,
+     *                     "studentName": "黄以安",
+     *                     "studentNumber": "20250131"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 6,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101F组",
+     *             "createTime": 1767063962227,
+     *             "updateTime": 1767063962227,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 26,
+     *                     "groupId": 6,
+     *                     "studentId": 26,
+     *                     "createTime": 1767064039140,
+     *                     "updateTime": 1767064039140,
+     *                     "studentName": "陈悦纳",
+     *                     "studentNumber": "20250126"
+     *                 },
+     *                 {
+     *                     "id": 27,
+     *                     "groupId": 6,
+     *                     "studentId": 27,
+     *                     "createTime": 1767064039140,
+     *                     "updateTime": 1767064039140,
+     *                     "studentName": "庄沐恩",
+     *                     "studentNumber": "20250127"
+     *                 },
+     *                 {
+     *                     "id": 28,
+     *                     "groupId": 6,
+     *                     "studentId": 28,
+     *                     "createTime": 1767064039140,
+     *                     "updateTime": 1767064039140,
+     *                     "studentName": "詹蓁蓁",
+     *                     "studentNumber": "20250128"
+     *                 },
+     *                 {
+     *                     "id": 29,
+     *                     "groupId": 6,
+     *                     "studentId": 29,
+     *                     "createTime": 1767064039140,
+     *                     "updateTime": 1767064039140,
+     *                     "studentName": "陈炫宇",
+     *                     "studentNumber": "20250129"
+     *                 },
+     *                 {
+     *                     "id": 30,
+     *                     "groupId": 6,
+     *                     "studentId": 30,
+     *                     "createTime": 1767064039140,
+     *                     "updateTime": 1767064039140,
+     *                     "studentName": "许梓轩",
+     *                     "studentNumber": "20250130"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 5,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101E组",
+     *             "createTime": 1767063954363,
+     *             "updateTime": 1767063954363,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 21,
+     *                     "groupId": 5,
+     *                     "studentId": 21,
+     *                     "createTime": 1767064032222,
+     *                     "updateTime": 1767064032222,
+     *                     "studentName": "林恩多",
+     *                     "studentNumber": "20250121"
+     *                 },
+     *                 {
+     *                     "id": 22,
+     *                     "groupId": 5,
+     *                     "studentId": 22,
+     *                     "createTime": 1767064032222,
+     *                     "updateTime": 1767064032222,
+     *                     "studentName": "黄昱翎",
+     *                     "studentNumber": "20250122"
+     *                 },
+     *                 {
+     *                     "id": 23,
+     *                     "groupId": 5,
+     *                     "studentId": 23,
+     *                     "createTime": 1767064032222,
+     *                     "updateTime": 1767064032222,
+     *                     "studentName": "薛逸菲",
+     *                     "studentNumber": "20250123"
+     *                 },
+     *                 {
+     *                     "id": 24,
+     *                     "groupId": 5,
+     *                     "studentId": 24,
+     *                     "createTime": 1767064032222,
+     *                     "updateTime": 1767064032222,
+     *                     "studentName": "庄景皓",
+     *                     "studentNumber": "20250124"
+     *                 },
+     *                 {
+     *                     "id": 25,
+     *                     "groupId": 5,
+     *                     "studentId": 25,
+     *                     "createTime": 1767064032222,
+     *                     "updateTime": 1767064032222,
+     *                     "studentName": "林璟怡",
+     *                     "studentNumber": "20250125"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 4,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101D组",
+     *             "createTime": 1767063945907,
+     *             "updateTime": 1767063945907,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 16,
+     *                     "groupId": 4,
+     *                     "studentId": 16,
+     *                     "createTime": 1767064024795,
+     *                     "updateTime": 1767064024795,
+     *                     "studentName": "余天鑫",
+     *                     "studentNumber": "20250116"
+     *                 },
+     *                 {
+     *                     "id": 17,
+     *                     "groupId": 4,
+     *                     "studentId": 17,
+     *                     "createTime": 1767064024795,
+     *                     "updateTime": 1767064024795,
+     *                     "studentName": "何宥辰",
+     *                     "studentNumber": "20250117"
+     *                 },
+     *                 {
+     *                     "id": 18,
+     *                     "groupId": 4,
+     *                     "studentId": 18,
+     *                     "createTime": 1767064024795,
+     *                     "updateTime": 1767064024795,
+     *                     "studentName": "林昊宸",
+     *                     "studentNumber": "20250118"
+     *                 },
+     *                 {
+     *                     "id": 19,
+     *                     "groupId": 4,
+     *                     "studentId": 19,
+     *                     "createTime": 1767064024795,
+     *                     "updateTime": 1767064024795,
+     *                     "studentName": "严凌宇",
+     *                     "studentNumber": "20250119"
+     *                 },
+     *                 {
+     *                     "id": 20,
+     *                     "groupId": 4,
+     *                     "studentId": 20,
+     *                     "createTime": 1767064024795,
+     *                     "updateTime": 1767064024795,
+     *                     "studentName": "杨欣妍",
+     *                     "studentNumber": "20250120"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 3,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101C组",
+     *             "createTime": 1767063937576,
+     *             "updateTime": 1767063937576,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 11,
+     *                     "groupId": 3,
+     *                     "studentId": 11,
+     *                     "createTime": 1767064016362,
+     *                     "updateTime": 1767064016362,
+     *                     "studentName": "洪煜飞",
+     *                     "studentNumber": "20250111"
+     *                 },
+     *                 {
+     *                     "id": 12,
+     *                     "groupId": 3,
+     *                     "studentId": 12,
+     *                     "createTime": 1767064016362,
+     *                     "updateTime": 1767064016362,
+     *                     "studentName": "林睿豪",
+     *                     "studentNumber": "20250112"
+     *                 },
+     *                 {
+     *                     "id": 13,
+     *                     "groupId": 3,
+     *                     "studentId": 13,
+     *                     "createTime": 1767064016362,
+     *                     "updateTime": 1767064016362,
+     *                     "studentName": "胡佳恩",
+     *                     "studentNumber": "20250113"
+     *                 },
+     *                 {
+     *                     "id": 14,
+     *                     "groupId": 3,
+     *                     "studentId": 14,
+     *                     "createTime": 1767064016362,
+     *                     "updateTime": 1767064016362,
+     *                     "studentName": "何欣钥",
+     *                     "studentNumber": "20250114"
+     *                 },
+     *                 {
+     *                     "id": 15,
+     *                     "groupId": 3,
+     *                     "studentId": 15,
+     *                     "createTime": 1767064016362,
+     *                     "updateTime": 1767064016362,
+     *                     "studentName": "林哲锐",
+     *                     "studentNumber": "20250115"
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "id": 2,
+     *             "orgId": 1,
+     *             "classId": 1,
+     *             "teacherId": 5,
+     *             "groupName": "0101B组",
+     *             "createTime": 1767063928081,
+     *             "updateTime": 1767063928081,
+     *             "className": "一年级一班",
+     *             "studentGroups": [
+     *                 {
+     *                     "id": 6,
+     *                     "groupId": 2,
+     *                     "studentId": 6,
+     *                     "createTime": 1767064006979,
+     *                     "updateTime": 1767064006979,
+     *                     "studentName": "庄鹏博",
+     *                     "studentNumber": "20250106"
+     *                 },
+     *                 {
+     *                     "id": 7,
+     *                     "groupId": 2,
+     *                     "studentId": 7,
+     *                     "createTime": 1767064006979,
+     *                     "updateTime": 1767064006979,
+     *                     "studentName": "林嘉韵",
+     *                     "studentNumber": "20250107"
+     *                 },
+     *                 {
+     *                     "id": 8,
+     *                     "groupId": 2,
+     *                     "studentId": 8,
+     *                     "createTime": 1767064006979,
+     *                     "updateTime": 1767064006979,
+     *                     "studentName": "何安桐",
+     *                     "studentNumber": "20250108"
+     *                 },
+     *                 {
+     *                     "id": 9,
+     *                     "groupId": 2,
+     *                     "studentId": 9,
+     *                     "createTime": 1767064006979,
+     *                     "updateTime": 1767064006979,
+     *                     "studentName": "周芯宥",
+     *                     "studentNumber": "20250109"
+     *                 },
+     *                 {
+     *                     "id": 10,
+     *                     "groupId": 2,
+     *                     "studentId": 10,
+     *                     "createTime": 1767064006979,
+     *                     "updateTime": 1767064006979,
+     *                     "studentName": "余亦航",
+     *                     "studentNumber": "20250110"
+     *                 }
+     *             ]
+     *         },
+     *         {
      *             "id": 1,
      *             "orgId": 1,
      *             "classId": 1,
      *             "teacherId": 5,
      *             "groupName": "0101A组",
-     *             "createTime": 1766977915841,
-     *             "updateTime": 1766977915841,
+     *             "createTime": 1767063912039,
+     *             "updateTime": 1767063912039,
      *             "className": "一年级一班",
      *             "studentGroups": [
      *                 {
-     *                     "id": 1766977817128,
+     *                     "id": 1,
      *                     "groupId": 1,
      *                     "studentId": 1,
-     *                     "createTime": 1766977923025,
-     *                     "updateTime": 1766977923025
+     *                     "createTime": 1767063996010,
+     *                     "updateTime": 1767063996010,
+     *                     "studentName": "王欣瑶",
+     *                     "studentNumber": "20250101"
      *                 },
      *                 {
-     *                     "id": 1766977817129,
+     *                     "id": 2,
      *                     "groupId": 1,
      *                     "studentId": 2,
-     *                     "createTime": 1766977923025,
-     *                     "updateTime": 1766977923025
+     *                     "createTime": 1767063996010,
+     *                     "updateTime": 1767063996010,
+     *                     "studentName": "邓安妮",
+     *                     "studentNumber": "20250102"
      *                 },
      *                 {
-     *                     "id": 1766977817130,
+     *                     "id": 3,
      *                     "groupId": 1,
      *                     "studentId": 3,
-     *                     "createTime": 1766977923025,
-     *                     "updateTime": 1766977923025
+     *                     "createTime": 1767063996010,
+     *                     "updateTime": 1767063996010,
+     *                     "studentName": "翁煜宸",
+     *                     "studentNumber": "20250103"
      *                 },
      *                 {
-     *                     "id": 1766977817131,
+     *                     "id": 4,
      *                     "groupId": 1,
      *                     "studentId": 4,
-     *                     "createTime": 1766977923025,
-     *                     "updateTime": 1766977923025
+     *                     "createTime": 1767063996010,
+     *                     "updateTime": 1767063996010,
+     *                     "studentName": "魏博辉",
+     *                     "studentNumber": "20250104"
+     *                 },
+     *                 {
+     *                     "id": 5,
+     *                     "groupId": 1,
+     *                     "studentId": 5,
+     *                     "createTime": 1767063996010,
+     *                     "updateTime": 1767063996010,
+     *                     "studentName": "郑嘉诺",
+     *                     "studentNumber": "20250105"
      *                 }
      *             ]
      *         }
@@ -118,6 +525,13 @@ public class ClassGroupController extends BaseSecurityController {
 
             list = list.stream().peek(classGroup -> {
                 List<StudentGroup> studentGroups = StudentGroup.find.query().where().eq("group_id", classGroup.getId()).findList();
+                studentGroups.stream().peek(studentGroup -> {
+                    Student student = Student.find.byId(studentGroup.getStudentId());
+                    if (student != null) {
+                        studentGroup.setStudentName(student.getName());
+                        studentGroup.setStudentNumber(student.getStudentNumber());
+                    }
+                }).toList();
                 String className = SchoolClass.find.byId(classGroup.getClassId())!= null ? SchoolClass.find.byId(classGroup.getClassId()).getClassName() : null;
                 classGroup.setStudentGroups(studentGroups);
                 classGroup.setClassName(className);

@@ -161,9 +161,9 @@ public class HabitRecord  extends Model {
         }
 
         // 验证描述不能为空
-        if (this.description == null || this.description.trim().isEmpty()) {
-            errors.add("行为描述不能为空");
-        }
+//        if (this.description == null || this.description.trim().isEmpty()) {
+//            errors.add("行为描述不能为空");
+//        }
 
         // 验证记录时间
         if (this.recordTime <= 0) {

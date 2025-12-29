@@ -211,7 +211,6 @@ public class UrbanManagementTiming {
 
                 // 创建快照记录
                 MonthlyPerformanceSnapshot snapshot = new MonthlyPerformanceSnapshot();
-                snapshot.setRecordId(IdGenerator.getId());
                 snapshot.setStudentId(student.getId());
                 snapshot.setYear(year);
                 snapshot.setMouth(month);
@@ -305,7 +304,6 @@ public class UrbanManagementTiming {
 
                 // 创建快照记录
                 MonthlyPerformanceSnapshot snapshot = new MonthlyPerformanceSnapshot();
-                snapshot.setRecordId(IdGenerator.getId());
                 snapshot.setStudentId(student.getId());
                 snapshot.setYear(year);
                 snapshot.setMouth(month);

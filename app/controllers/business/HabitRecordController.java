@@ -15,10 +15,15 @@ import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 public class HabitRecordController extends BaseSecurityController {
     /**
@@ -541,6 +546,142 @@ public class HabitRecordController extends BaseSecurityController {
             return okJSON200();
         });
     }
+
+    /**
+     * @api {POST} /v2/p/habit_record/month/list/   10查询该学生当月的所有习惯评价记录
+     * @apiName listHabitRecordCurrentUserMonth
+     */
+    public CompletionStage<Result> listHabitRecordCurrentUserMonth(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
+            if (admin == null) return unauth403();
+            if (jsonNode == null) return okCustomJson(CODE40001, "参数错误");
+
+            long studentId = jsonNode.findPath("studentId").asLong();
+            if (studentId <= 0) return okCustomJson(CODE40001, "学生ID不能为空");
+
+            // 获取当月月底时间（与 HabitRecord.calculateEndMonthNew 逻辑保持一致的月末时间戳）
+            LocalDate today = LocalDate.now();
+            YearMonth currentMonth = YearMonth.from(today);
+            LocalDate lastDay = currentMonth.atEndOfMonth();
+            long currentMonthEndTimestamp = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+
+            List<HabitRecord> habitRecordList = HabitRecord.find.query()
+                    .where()
+                    .eq("org_id", admin.getOrgId())
+                    .eq("student_id", studentId)
+                    .eq("status", HabitRecord.STATUS_UNSETTLED)
+                    .eq("month_end_time", currentMonthEndTimestamp)
+                    .findList();
+
+            // 为记录补充学生姓名和评价人姓名
+            for (HabitRecord record : habitRecordList) {
+                Student student = Student.find.byId(record.studentId);
+                if (student != null) {
+                    record.setStudentName(student.name);
+                }
+                ShopAdmin teacher = ShopAdmin.find.byId(record.evaluatorId);
+                if (teacher != null) {
+                    record.setEvaluatorName(teacher.realName);
+                }
+            }
+
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", Json.toJson(habitRecordList));
+            return ok(result);
+        });
+    }
+
+    /**
+     * @api {GET} /v2/p/habit_record/month/statistics/   11统计当前用户的所在班级的学生当月的所有习惯评价徽章种类*个数
+     * @apiName listHabitRecordCurrentUserMonth
+     */
+    public CompletionStage<Result> listHabitRecordCurrentUserMonthBadgeStatistics(Http.Request request, long classId) {
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
+
+            if (admin == null) return unauth403();
+            if (classId <= 0) return okCustomJson(CODE40001, "班级ID不能为空");
+
+            List<Student> studentList = Student.find.query().where()
+                    .eq("org_id", admin.getOrgId())
+                    .eq("class_id", classId)
+                    .findList();
+
+            // 获取当月月底时间（与 HabitRecord.calculateEndMonthNew 逻辑保持一致的月末时间戳）
+            LocalDate today = LocalDate.now();
+            YearMonth currentMonth = YearMonth.from(today);
+            LocalDate lastDay = currentMonth.atEndOfMonth();
+            long currentMonthEndTimestamp = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+
+            // 查询所有徽章（用于后续匹配）
+            List<Badge> allBadges = Badge.find.query()
+                    .where()
+                    .eq("org_id", admin.getOrgId())
+                    .eq("active", true)
+                    .findList();
+            // habitType 与 Badge.id 对应，使用 Badge.id 作为 key
+            Map<Integer, Badge> badgeMap = allBadges.stream()
+                    .collect(Collectors.toMap(b -> Math.toIntExact(b.id), b -> b,
+                            (existing, replacement) -> existing));
+
+            // 为每个学生统计当月的习惯评价徽章种类*个数
+            ArrayNode listNode = Json.newArray();
+            for (Student student : studentList) {
+                List<HabitRecord> habitRecordList = HabitRecord.find.query()
+                        .where()
+                        .eq("org_id", admin.getOrgId())
+                        .eq("student_id", student.id)
+                        .eq("status", HabitRecord.STATUS_UNSETTLED)
+                        .eq("month_end_time", currentMonthEndTimestamp)
+                        .findList();
+
+                // 统计 HabitRecord.habitType 相同种类的个数
+                Map<Integer, Long> typeCountMap = habitRecordList.stream()
+                        .collect(Collectors.groupingBy(r -> r.habitType, Collectors.counting()));
+
+                // 组装该学生的徽章统计列表
+                ArrayNode badgeListNode = Json.newArray();
+                for (Map.Entry<Integer, Long> entry : typeCountMap.entrySet()) {
+                    int habitType = entry.getKey();
+                    Long count = entry.getValue();
+                    Badge badge = badgeMap.get(habitType);
+
+                    if (badge != null) {
+                        ObjectNode badgeNode = Json.newObject();
+                        badgeNode.put("habitType", habitType);
+                        badgeNode.put("badgeId", badge.badgeId);
+                        badgeNode.put("badgeName", badge.badgeName != null ? badge.badgeName : "");
+                        badgeNode.put("badgeImage", badge.badgeImage != null ? badge.badgeImage : "");
+                        badgeNode.put("description", badge.description != null ? badge.description : "");
+                        badgeNode.put("count", count);
+                        badgeListNode.add(badgeNode);
+                    }
+                }
+
+                // 组装学生信息 + 徽章统计列表
+                ObjectNode studentNode = Json.newObject();
+                studentNode.put("studentId", student.id);
+                studentNode.put("studentNumber", student.studentNumber != null ? student.studentNumber : "");
+                studentNode.put("studentName", student.name != null ? student.name : "");
+                studentNode.set("badges", badgeListNode);
+                listNode.add(studentNode);
+            }
+
+            ObjectNode result = Json.newObject();
+            result.put(CODE, CODE200);
+            result.set("list", listNode);
+            return ok(result);
+        });
+    }
+
+
 
 
 }

@@ -3,10 +3,8 @@ package models.mouth;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.Finder;
 import io.ebean.Model;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import io.ebean.annotation.DbComment;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,8 +18,10 @@ import myannotation.EscapeHtmlSerializer;
 public class MonthlyPerformanceSnapshot extends Model {
 
     @Id
-    @Column(name = "record_id")
-    private Long recordId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    @DbComment("唯一标识")
+    private Long Id;
     @Column(name = "student_id")
     private Long studentId;
     @Column(name = "year")
