@@ -203,10 +203,13 @@ POST    /v2/p/badge/:id/                                      controllers.busine
 POST    /v2/p/badge/                                          controllers.business.BadgeController.deleteBadge(request:Request)
 
 #学生分组模块
-POST        /v2/p/student_group_list/                          controllers.business.StudentGroupController.listStudentGroup(request: Request)
-GET        /v2/p/student_group/:id/                           controllers.business.StudentGroupController.getStudentGroup(request: Request,id:Long)
-POST        /v2/p/student_group/new/                          controllers.business.StudentGroupController.addStudentGroup(request: Request)
-POST        /v2/p/student_group/:id/                          controllers.business.StudentGroupController.updateStudentGroup(request: Request,id:Long)
-POST        /v2/p/student_group/                              controllers.business.StudentGroupController.deleteStudentGroup(request: Request)
+POST       /v2/p/class_group_list/                            controllers.business.ClassGroupController.listClassGroup(request: Request)
+GET        /v2/p/class_group/:id/                             controllers.business.ClassGroupController.getClassGroup(request: Request,id:Long)
+POST       /v2/p/class_group/new/                             controllers.business.ClassGroupController.addClassGroup(request: Request)
+POST       /v2/p/class_group/:id/                             controllers.business.ClassGroupController.updateClassGroup(request: Request,id:Long)
+POST       /v2/p/class_group/                                 controllers.business.ClassGroupController.deleteClassGroup(request: Request)
+GET        /v2/p/class_group/students/:id/                    controllers.business.ClassGroupController.getGroupStudents(request: Request,id:Long)
+POST       /v2/p/class_group/manage_students/:id/              controllers.business.ClassGroupController.manageGroupStudents(request: Request,id:Long)
+
 
 GET        /*file                                             controllers.Assets.versioned(path="/public", file: Asset)

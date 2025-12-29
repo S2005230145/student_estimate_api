@@ -353,5 +353,4 @@ public class SchoolClass  extends Model {
         return -1;
     }
 
-
 }

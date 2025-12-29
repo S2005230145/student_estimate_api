@@ -130,6 +130,17 @@ create table v1_class_config (
   constraint pk_v1_class_config primary key (id)
 ) comment='班级配置表';
 
+create table v1_class_group (
+  id                            bigint auto_increment not null comment '唯一标识',
+  org_id                        bigint comment '机构id',
+  class_id                      bigint comment '班级id',
+  teacher_id                    bigint comment '老师id',
+  group_name                    varchar(255) comment '分组名称',
+  create_time                   bigint comment '创建时间',
+  update_time                   bigint comment '更新时间',
+  constraint pk_v1_class_group primary key (id)
+) comment='班级分组';
+
 create table v1_class_routine (
   id                            bigint auto_increment not null comment '唯一标识',
   org_id                        bigint not null comment '机构ID',
@@ -489,17 +500,14 @@ create table v1_student (
   constraint pk_v1_student primary key (id)
 ) comment='学生';
 
-create table v1_student_group (
+create table v1_group_student (
   id                            bigint auto_increment not null comment '唯一标识',
-  org_id                        bigint not null comment '机构ID',
-  student_id                    bigint not null comment '学生ID',
-  class_id                      bigint not null comment '班级ID',
-  group_name                    varchar(255) comment '分组名称',
-  create_time                   bigint not null comment '创建时间',
-  update_time                   bigint not null comment '更新时间',
-  status                        integer not null comment '状态',
-  constraint pk_v1_student_group primary key (id)
-) comment='学生分组';
+  group_id                      bigint comment '分组id',
+  student_id                    bigint comment '学生id',
+  create_time                   bigint comment '创建时间',
+  update_time                   bigint comment '更新时间',
+  constraint pk_v1_group_student primary key (id)
+) comment='教师分组学生';
 
 create table v1_suggestion (
   id                            bigint auto_increment not null,
@@ -528,6 +536,8 @@ drop table if exists v1_badge;
 drop table if exists v1_badge_record;
 
 drop table if exists v1_class_config;
+
+drop table if exists v1_class_group;
 
 drop table if exists v1_class_routine;
 
@@ -573,7 +583,7 @@ drop table if exists v1_specialty_award;
 
 drop table if exists v1_student;
 
-drop table if exists v1_student_group;
+drop table if exists v1_group_student;
 
 drop table if exists v1_suggestion;
 
