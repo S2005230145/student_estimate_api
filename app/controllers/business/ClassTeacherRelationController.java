@@ -187,11 +187,11 @@ public class ClassTeacherRelationController extends BaseSecurityController {
                 
                 // 根据是否是班主任来设置额度
                 if (classTeacherRelation.isHeadTeacher) {
-                    monthlyRatingQuota.setRatingAmount(300);
+                    monthlyRatingQuota.setCapValue(300);
                 } else if(classTeacherRelation.getSubject().equals("语文") || classTeacherRelation.getSubject().equals("数学") || classTeacherRelation.getSubject().equals("英语")) {
-                    monthlyRatingQuota.setRatingAmount(200);
+                    monthlyRatingQuota.setCapValue(200);
                 }else if(classTeacherRelation.getSubject().equals("美术") || classTeacherRelation.getSubject().equals("音乐") || classTeacherRelation.getSubject().equals("体育")){
-                    monthlyRatingQuota.setRatingAmount(50);
+                    monthlyRatingQuota.setCapValue(50);
                 }
                 monthlyRatingQuota.setCreateTime(currentTimeBySecond);
                 monthlyRatingQuota.setUpdateTime(currentTimeBySecond);

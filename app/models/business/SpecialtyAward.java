@@ -106,6 +106,10 @@ public class SpecialtyAward extends Model {
     @DbComment("更新时间")
     public long updateTime;
 
+    @Column(name = "month_end_time")
+    @DbComment("审核月结束时间")
+    public long monthEndTime;
+
     @Transient
     public String studentName;
 
@@ -263,6 +267,58 @@ public class SpecialtyAward extends Model {
         return true;
     }
 
+
+    /**
+     * 计算月份截至时间
+     */
+    public void calculateEndMonthNew(){
+        // 验证 createTime 是否有效
+        if (this.createTime <= 0) {
+            throw new IllegalArgumentException("createTime 不能为 0 或负数");
+        }
+
+        // MySQL DATETIME 范围: 1000-01-01 到 9999-12-31
+        // 对应的时间戳范围
+        long minValidTime = LocalDate.of(1000, 1, 1).atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long maxValidTime = LocalDate.of(9999, 12, 31).atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        if (this.createTime < minValidTime || this.createTime > maxValidTime) {
+            throw new IllegalArgumentException("createTime 超出 MySQL 日期范围 (1000-9999年): " +
+                    Instant.ofEpochMilli(this.createTime)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate());
+        }
+
+        try {
+            LocalDate date = Instant.ofEpochMilli(this.createTime)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+
+            YearMonth yearMonth = YearMonth.from(date);
+            LocalDate lastDay = yearMonth.atEndOfMonth();
+
+            // 计算月末时间戳
+            long endOfMonthTime = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+
+            // 验证计算结果是否在有效范围内
+            if (endOfMonthTime < minValidTime || endOfMonthTime > maxValidTime) {
+                throw new IllegalArgumentException("计算出的 monthEndTime 超出 MySQL 日期范围: " +
+                        Instant.ofEpochMilli(endOfMonthTime)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate());
+            }
+
+            this.monthEndTime = endOfMonthTime;
+        } catch (Exception e) {
+            throw new RuntimeException("计算 monthEndTime 时出错 - createTime: " + this.createTime +
+                    ", 错误: " + e.getMessage(), e);
+        }
+    }
 
 
 }

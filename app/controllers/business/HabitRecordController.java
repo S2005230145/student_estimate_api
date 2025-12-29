@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import constants.BusinessConstant;
 import controllers.BaseSecurityController;
+import io.ebean.DB;
 import io.ebean.ExpressionList;
 import io.ebean.PagedList;
 import models.admin.ShopAdmin;
@@ -14,7 +15,9 @@ import play.mvc.Http;
 import play.mvc.Result;
 import utils.ValidationUtil;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 public class HabitRecordController extends BaseSecurityController {
@@ -102,7 +105,7 @@ public class HabitRecordController extends BaseSecurityController {
     }
 
     /**
-     * @api {POST} /v2/p/habit_record/new/   03添加-HabitRecord习惯评价记录（教师）
+     * @api {POST} /v2/p/habit_record/new/   03添加-HabitRecord习惯评价记录
      * @apiName addHabitRecord
      * @apiDescription 描述
      * @apiGroup 习惯评价
@@ -161,6 +164,20 @@ public class HabitRecordController extends BaseSecurityController {
             habitRecord.setStatus(HabitRecord.STATUS_UNSETTLED);
             habitRecord.calculateEndMonthNew();
             habitRecord.save();
+
+            //记录保存了，更新月额度表
+            MonthlyRatingQuota quota = MonthlyRatingQuota.find.query()
+                    .where()
+                    .eq("evaluator_id", admin.id)
+                    .eq("class_id", classId)
+                    .findOne();
+
+            if(quota != null){
+                double absScoreChange = Math.abs(habitRecord.scoreChange);
+                quota.setCapValue(quota.getCapValue() - absScoreChange);
+                quota.setRatingAmount(quota.getRatingAmount() + absScoreChange);
+                quota.update();
+            }
             HabitRecord.recalculateStudentHabitScore(habitRecord);
             return okJSON200();
         });
@@ -414,7 +431,115 @@ public class HabitRecordController extends BaseSecurityController {
             result.set("list", Json.toJson(list));  // 将列表设置为 "list" 字段
             return ok(result);
         });
+    }
 
+    /**
+     * @api {POST} /v2/p/habit_record/group/new/   09按班级小组批量添加学生习惯评价记录
+     * @apiName addHabitRecordByGroup
+     * @apiDescription 描述
+     * @apiGroup 习惯评价
+     * @apiParam {long} orgId 机构ID
+     * @apiParam {long} id 唯一标识
+     * @apiParam {long} groupId 小组ID
+     * @apiParam {int} habitType 习惯类型  对应德智体美劳  evaluationRule下的badge下的id
+     * @apiParam {String} evaluatorType 评价者类型
+     * @apiParam {long} evaluatorId 评价者ID
+     * @apiParam {double} scoreChange 分数变化
+     * @apiParam {String} description 行为描述
+     * @apiParam {String} evidenceImage 证据图片
+     * @apiParam {long} recordTime 记录时间
+     * @apiParam {long} createTime 创建时间
+     * @apiSuccess (Success 200){int} code 200
+     */
+    public CompletionStage<Result> addHabitRecordByGroup(Http.Request request) {
+        JsonNode jsonNode = request.body().asJson();
+        return businessUtils.getUserIdByAuthToken(request).thenApplyAsync((admin) -> {
+            if (null == admin) return unauth403();
+
+            Long groupId = jsonNode.has("group") && !jsonNode.get("group").isNull()
+                    ? jsonNode.get("group").asLong()
+                    : null;
+
+            if (groupId == null || groupId <= 0) {
+                return ok(Json.newObject().put(CODE, CODE500).put("message", "请选择小组"));
+            }
+
+            //获取班级小组成员
+            List<Long> studentIds = StudentGroup.find.query()
+                    .select("studentId")
+                    .where()
+                    .eq("group_id", groupId)
+                    .findIds();
+
+            Double sumScoreChange = 0.0;
+
+            List<HabitRecord> list = new ArrayList<>();
+            for (Long studentId : studentIds) {
+
+                Student student = Student.find.byId(studentId);
+                if (null == student) return okCustomJson(CODE40001, "学生不存在");
+                long classId = student.getClassId();
+                SchoolClass schoolClass = SchoolClass.find.byId(classId);
+                if (null == schoolClass) return okCustomJson(CODE40001, "班级不存在");
+
+                boolean isTeacher = ClassTeacherRelation.isTeacherInClass(admin.id, schoolClass.id);
+                boolean isHeadTeacher = ClassTeacherRelation.isHeadTeacherInClass(admin.id, schoolClass.id);
+                boolean isParent = ParentStudentRelation.isParentOfStudent(admin.id, student.id);
+                
+                // 为每个学生创建新的 HabitRecord 对象
+                HabitRecord habitRecord = Json.fromJson(jsonNode, HabitRecord.class);
+                habitRecord.setOrgId(admin.getOrgId());
+                habitRecord.setStudentId(studentId);
+
+                try {
+                    if (isHeadTeacher) {
+                        habitRecord.validate("班主任");
+                        habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
+                    } else if (isTeacher) {
+                        habitRecord.validate("科任教师");
+                        habitRecord.validate(admin.id, classId, habitRecord.scoreChange);
+                    } else if (isParent) {
+                        habitRecord.validate("家长");
+                        habitRecord.validate(admin.id, habitRecord.scoreChange);
+                    } else {
+                        return okCustomJson(CODE40001, "账号角色不属于可评分角色");
+                    }
+                }catch (Exception e){
+                    return okCustomJson(CODE40001, e.getMessage());
+                }
+                long currentTimeBySecond = dateUtils.getCurrentTimeByMilliSecond();
+                habitRecord.setEvaluatorId(admin.id);
+                habitRecord.setCreateTime(currentTimeBySecond);
+                habitRecord.setStatus(HabitRecord.STATUS_UNSETTLED);
+                habitRecord.calculateEndMonthNew();
+                habitRecord.setOrgId(admin.orgId);
+                habitRecord.setStudentId(studentId);
+                list.add(habitRecord);
+                sumScoreChange += Math.abs(habitRecord.scoreChange);
+            }
+            DB.saveAll(list);
+
+            Long studentId = list.get(0).studentId;
+            Long classId = Objects.requireNonNull(Student.find.byId(studentId)).getClassId();
+
+            //记录保存了，更新月额度表
+            MonthlyRatingQuota quota = MonthlyRatingQuota.find.query()
+                    .where()
+                    .eq("evaluator_id", admin.id)
+                    .eq("class_id", classId)
+                    .findOne();
+
+            if(quota != null){
+                quota.setCapValue(quota.getCapValue() - sumScoreChange);
+                quota.setRatingAmount(quota.getRatingAmount() + sumScoreChange);
+                quota.update();
+            }
+
+            for (HabitRecord habitRecord : list) {
+                HabitRecord.recalculateStudentHabitScore(habitRecord);
+            }
+            return okJSON200();
+        });
     }
 
 

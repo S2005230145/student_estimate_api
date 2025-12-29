@@ -130,25 +130,25 @@ public class HabitRecord  extends Model {
         }
 
         // 验证习惯类型
-        if (this.habitType < HABIT_STUDY || this.habitType > HABIT_BEHAVIOR) {
-            errors.add("习惯类型无效");
-        }
+//        if (this.habitType < HABIT_STUDY || this.habitType > HABIT_BEHAVIOR) {
+//            errors.add("习惯类型无效");
+//        }
 
         // 验证分数变化范围（加/扣分绝对值应在范围内）
         switch (evaluatorRole) {
+            case "班主任" -> {
+                double absScoreChange = Math.abs(this.scoreChange);
+                if (absScoreChange < HEAD_TEACHER_SCORE_MIN || absScoreChange > HEAD_TEACHER_SCORE_MAX) {
+                    errors.add("班主任加/扣分范围应为" + HEAD_TEACHER_SCORE_MIN + "~" + HEAD_TEACHER_SCORE_MAX + "分");
+                }
+                this.evaluatorType = "header_teacher";
+            }
             case "科任教师" -> {
                 double absScoreChange = Math.abs(this.scoreChange);
                 if (absScoreChange < TEACHER_SCORE_MIN || absScoreChange > TEACHER_SCORE_MAX) {
                     errors.add("科任教师加/扣分范围应为" + TEACHER_SCORE_MIN + "~" + TEACHER_SCORE_MAX + "分");
                 }
                 this.evaluatorType = "teacher";
-            }
-            case "班主任" -> {
-                double absScoreChange = Math.abs(this.scoreChange);
-                if (absScoreChange < HEAD_TEACHER_SCORE_MIN || absScoreChange > HEAD_TEACHER_SCORE_MAX) {
-                    errors.add("班主任加/扣分范围应为" + HEAD_TEACHER_SCORE_MIN + "~" + HEAD_TEACHER_SCORE_MAX + "分");
-                }
-                this.evaluatorType = "head_teacher";
             }
             case "家长" -> {
                 double absScoreChange = Math.abs(this.scoreChange);
@@ -229,15 +229,16 @@ public class HabitRecord  extends Model {
         }
 
         // 计算总得分变化（只计算教师和班主任的记录）
-        double totalScoreChange = records.stream()
-                .mapToDouble(r -> r.scoreChange)
-                .sum();
 
         // 计算新的习惯积分
-        double newPoints = BASE_SCORE + totalScoreChange;
+        //double newPoints = BASE_SCORE + totalScoreChange;
+        double newPoints = records.stream()
+                .mapToDouble(r1 -> r1.scoreChange)
+                .sum();
 
         // 确保得分在合理范围内
-        newPoints = Math.max(MIN_SCORE, Math.min(newPoints, MAX_SCORE));
+        //newPoints = Math.max(MIN_SCORE, Math.min(newPoints, MAX_SCORE));
+        newPoints =  Math.max(0.0, newPoints);
 
         // 更新学生习惯积分
         student.setPoints(newPoints);
@@ -288,7 +289,7 @@ public class HabitRecord  extends Model {
             errors.add("当前评价人所在的班级没有分配评价额度");
         }
 
-        if (quota != null && quota.ratingAmount < scoreChange) {
+        if (quota != null && quota.capValue < scoreChange) {
             errors.add("当前评价人所在的班级的评价额度不足");
         }
 

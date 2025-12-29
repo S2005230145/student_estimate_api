@@ -43,7 +43,8 @@ public class AcademicRecordController extends BaseSecurityController {
      * @apiName listAcademicRecord
      * @apiGroup 学业模块
      * @apiParam {int} page 页码
-     * @apiParam {String} filter 搜索栏()
+     * @apiParam {String} studentName 学生姓名
+     * @apiParam {String} className 班级名称
      * @apiSuccess (Success 200) {long} orgId 机构ID
      * @apiSuccess (Success 200) {long} id 唯一标识
      * @apiSuccess (Success 200) {long} studentId 学生ID
@@ -72,6 +73,7 @@ public class AcademicRecordController extends BaseSecurityController {
             // 安全地提取参数
             int page = 0;
             String studentName = "";
+            String className = "";
 
             if (jsonNode != null) {
                 JsonNode pageNode = jsonNode.get("page");
@@ -82,6 +84,11 @@ public class AcademicRecordController extends BaseSecurityController {
                 JsonNode studentNameNode = jsonNode.get("studentName");
                 if (studentNameNode != null) {
                     studentName = studentNameNode.asText("");
+                }
+
+                JsonNode classNameNode = jsonNode.get("className");
+                if (classNameNode != null){
+                    className = classNameNode.asText("");
                 }
             }
 
@@ -102,6 +109,29 @@ public class AcademicRecordController extends BaseSecurityController {
                     // 如果找不到匹配的学生，返回空结果
                     expressionList.raw("1=0");
                 }
+            }
+
+            if(!ValidationUtil.isEmpty(className)){
+                List<SchoolClass> schoolClasses = SchoolClass.find.query()
+                        .where()
+                        .eq("org_id", adminMember.getOrgId())
+                        .icontains("class_name", className)
+                        .findList();
+
+                if(!schoolClasses.isEmpty()){
+                    List<Long> studentIds = Student.find.query()
+                            .where()
+                            .eq("org_id", adminMember.getOrgId())
+                            .in("class_id", schoolClasses.stream().map(schoolClass -> schoolClass.id).toList())
+                            .findList()
+                            .stream()
+                            .map(student -> student.id)
+                            .toList();
+                    expressionList.in("student_id", studentIds);
+                }else{
+                    expressionList.raw("1=0");
+                }
+
             }
 
             ObjectNode result = Json.newObject();

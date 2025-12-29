@@ -255,6 +255,7 @@ public class SpecialtyAwardController extends BaseSecurityController {
                 }
                 specialtyAward.processSingleAward();
             }
+            specialtyAward.calculateEndMonthNew();
             specialtyAward.save();
             return okJSON200();
         });

@@ -138,7 +138,7 @@ public class UrbanManagementTiming {
 
 
     /**
-     * 每月月底统计每个学生月习惯分数
+     * 每月初统计每个学生月习惯分数
      */
     private void calculateMonthlyHabits() {
 
@@ -149,18 +149,18 @@ public class UrbanManagementTiming {
             String year = String.valueOf(lastMonth.getYear());
             String month = String.valueOf(lastMonth.getMonthValue());
 
-            // 计算上个月的时间范围（上个月第一天00:00:00 到 上个月最后一天23:59:59）
-            LocalDateTime lastMonthStart = lastMonth.atDay(1).atStartOfDay();
-            LocalDateTime lastMonthEnd = lastMonth.atEndOfMonth().atTime(23, 59, 59);
-            long lastMonthStartTimestamp = lastMonthStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            long lastMonthEndTimestamp = lastMonthEnd.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            // 计算上个月月底时间（与 HabitRecord.calculateEndMonthNew() 逻辑一致）
+            LocalDate lastDay = lastMonth.atEndOfMonth();
+            long lastMonthEndTimestamp = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
 
             // 查询上个月所有审核通过的习惯记录
             List<HabitRecord> habitRecordList = HabitRecord.find.query()
                     .where()
                     .eq("status", HabitRecord.STATUS_UNSETTLED)
-                    .ge("award_date", lastMonthStartTimestamp)
-                    .le("award_date", lastMonthEndTimestamp)
+                    .eq("month_end_time", lastMonthEndTimestamp)
                     .findList();
 
 
@@ -173,7 +173,6 @@ public class UrbanManagementTiming {
 
             //如果没有习惯记录，则返回
             if (habitRecordList.isEmpty()) return;
-
 
             //统计月生活素养达到40分+家长的月习惯记录分数，按年级Student的grade去习惯记录表进行排名
             //1.将所有学生按年级进行分组
@@ -269,18 +268,18 @@ public class UrbanManagementTiming {
             String year = String.valueOf(lastMonth.getYear());
             String month = String.valueOf(lastMonth.getMonthValue());
 
-            // 计算上个月的时间范围（上个月第一天00:00:00 到 上个月最后一天23:59:59）
-            LocalDateTime lastMonthStart = lastMonth.atDay(1).atStartOfDay();
-            LocalDateTime lastMonthEnd = lastMonth.atEndOfMonth().atTime(23, 59, 59);
-            long lastMonthStartTimestamp = lastMonthStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            long lastMonthEndTimestamp = lastMonthEnd.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            // 计算上个月月底时间（与 HabitRecord.calculateEndMonthNew() 逻辑一致）
+            LocalDate lastDay = lastMonth.atEndOfMonth();
+            long lastMonthEndTimestamp = lastDay.atTime(23, 59, 59, 999_999_999)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
 
             // 查询上个月所有审核通过的奖项记录
             List<SpecialtyAward> awards = SpecialtyAward.find.query()
                     .where()
                     .eq("status", SpecialtyAward.STATUS_APPROVED)
-                    .ge("createTime", lastMonthStartTimestamp)
-                    .le("createTime", lastMonthEndTimestamp)
+                    .eq("month_end_time", lastMonthEndTimestamp)
                     .findList();
 
             //如果没有奖项记录，则返回

@@ -93,7 +93,8 @@ public class ClassTeacherRelation extends Model {
         return find.query()
                 .where()
                 .eq("class_id", classId)
-                .eq("is_head_teacher", teacherId)
+                .eq("teacher_id", teacherId)
+                .eq("is_head_teacher", 1)
                 .findCount() > 0;
     }
 

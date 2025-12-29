@@ -184,14 +184,14 @@ public class TeacherImportExcel {
             
             // 根据是否是班主任和科目来设置额度
             if (relation.isHeadTeacher) {
-                monthlyRatingQuota.setRatingAmount(300);
+                monthlyRatingQuota.setCapValue(300);
             } else if (relation.getSubject().equals("语文") || relation.getSubject().equals("数学") || relation.getSubject().equals("英语")) {
-                monthlyRatingQuota.setRatingAmount(200);
+                monthlyRatingQuota.setCapValue(200);
             } else if (relation.getSubject().equals("美术") || relation.getSubject().equals("音乐") || relation.getSubject().equals("体育")) {
-                monthlyRatingQuota.setRatingAmount(50);
+                monthlyRatingQuota.setCapValue(50);
             } else {
                 // 其他科目默认额度
-                monthlyRatingQuota.setRatingAmount(50);
+                monthlyRatingQuota.setCapValue(50);
             }
             
             monthlyRatingQuota.setCreateTime(currentTimeBySecond);
