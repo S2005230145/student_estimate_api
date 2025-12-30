@@ -1,24 +1,20 @@
 package models.business;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.ebean.DB;
 import io.ebean.Finder;
 import io.ebean.Model;
 import io.ebean.Transaction;
-import io.ebean.annotation.DbArray;
 import io.ebean.annotation.DbComment;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhenModified;
 import jakarta.persistence.*;
 import lombok.Data;
-import models.excel.AcademicRecordExcel;
 import myannotation.EscapeHtmlAuthoritySerializer;
-import myannotation.Translation;
+
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 

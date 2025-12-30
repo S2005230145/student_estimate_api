@@ -73,6 +73,7 @@ public class HomeVisitController extends BaseSecurityController {
                     homeVisit.setTeacherName(Objects.requireNonNull(ShopAdmin.find.byId(homeVisit.teacherId)).realName);
                     homeVisit.setClassName(Objects.requireNonNull(SchoolClass.find.byId(homeVisit.classId)).getClassName());
                     homeVisit.setStudentNumber(Objects.requireNonNull(Student.find.byId(homeVisit.studentId)).getStudentNumber());
+                    homeVisit.setStudentName(Objects.requireNonNull(Student.find.byId(homeVisit.studentId)).getName());
                 });
 
                 result.put("pages", pagedList.getTotalPageCount());

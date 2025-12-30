@@ -104,6 +104,9 @@ public class HomeVisit  extends Model {
     @Transient
     public String studentNumber;
 
+    @Transient
+    public String studentName;
+
     public static Finder<Long, HomeVisit> find = new Finder<>(HomeVisit.class);
 
     public void calcBonusScore() {

@@ -17,25 +17,30 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * 文件上传控制器
- * 用于上传图片到本地服务器
+ * 用于上传图片和视频到本地服务器
  */
 public class FileController extends BaseController {
 
-    // 允许的图片扩展名
-    private static final String[] ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "bmp", "webp"};
+    // 允许的文件扩展名（图片和视频）
+    private static final String[] ALLOWED_EXTENSIONS = {
+            // 图片格式
+            "jpg", "jpeg", "png", "gif", "bmp", "webp",
+            // 视频格式
+            "mp4", "avi", "mov", "wmv", "flv", "mkv", "webm", "m4v", "3gp", "mpg", "mpeg"
+    };
 
     /**
-     * @api {POST} /v2/p/file/upload_image/ 上传图片（通用，服务器）
+     * @api {POST} /v2/p/file/upload_file/ 上传图片或视频（通用，服务器）
      * @apiName uploadImage
      * @apiGroup 文件上传模块
-     * @apiParam {file} file 图片文件
+     * @apiParam {file} file 图片或视频文件（支持格式：jpg, jpeg, png, gif, bmp, webp, mp4, avi, mov, wmv, flv, mkv, webm等）
      * @apiParam {String} style 文件模块类型  徽章：badge 奖项：award  习惯评价：habit
      * @apiSuccess (Success 200) {int} code 200
-     * @apiSuccess (Success 200) {String} url 图片访问路径
+     * @apiSuccess (Success 200) {String} url 文件访问路径
      * @apiSuccess (Error 40001) {int} code 40001 参数错误
      * @apiSuccess (Error 40003) {int} code 40003 上传失败
      */
-    public CompletionStage<Result> uploadImage(Http.Request request) {
+    public CompletionStage<Result> uploadFile(Http.Request request) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Http.MultipartFormData<Files.TemporaryFile> body = request.body().asMultipartFormData();
@@ -63,7 +68,7 @@ public class FileController extends BaseController {
 
                 String extension = FilenameUtils.getExtension(fileName).toLowerCase();
                 if (!isAllowedExtension(extension)) {
-                    return okCustomJson(CODE40001, "不支持的文件格式，仅支持: " + String.join(", ", ALLOWED_EXTENSIONS));
+                    return okCustomJson(CODE40001, "不支持的文件格式，仅支持图片和视频格式: " + String.join(", ", ALLOWED_EXTENSIONS));
                 }
 
                 // 基础存储目录（与 BaseController.FILE_DIR_LOCATION 保持一致）

@@ -8,7 +8,7 @@ POST        /v2/p/upload2/                                    controllers.basic.
 POST        /v2/p/upload_base64/                              controllers.basic.UploaderManager.uploadBase64(request: Request)
 +nocsrf
 #文件上传(通用)
-POST        /v2/p/file/upload_image/                           controllers.basic.FileController.uploadImage(request: Request)
+POST        /v2/p/file/upload_file/                           controllers.basic.FileController.uploadFile(request: Request)
 #ADMIN MODULE
 
 POST        /v2/p/reset_login_password/                       controllers.basic.LoginController.resetLoginPassword(request: Request)
