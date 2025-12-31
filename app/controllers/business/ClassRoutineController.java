@@ -23,7 +23,7 @@ public class ClassRoutineController extends BaseSecurityController {
     /**
      * @api {POST} /v2/p/class_routine_list/   01列表-班级常规评比
      * @apiName listClassRoutine
-     * @apiGroup CLASS-ROUTINE-CONTROLLER
+     * @apiGroup 班级常规
      * @apiParam {int} page 页码
      * @apiParam {String} className 班级名称
      * @apiSuccess (Success 200) {long} orgId 机构ID
